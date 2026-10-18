@@ -2,17 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
 import { AreaTesto, Campo, Messaggio, Selezione } from "@/components/campo";
 import { Pulsante } from "@/components/ui";
 import { aggiornaFase, aggiungiFase, eliminaFase, spostaFase } from "@/lib/azioni";
 import type { Commessa } from "@/lib/dati";
+import { AllegatiFase } from "./allegati-fase";
 import { STATI_FASE } from "@/lib/dominio";
 import { cn, formattaData, formattaEuro } from "@/lib/utils";
 
 type Fase = NonNullable<Commessa["fasi"]>[number];
 type Profilo = Commessa["profiliStudio"][number];
 type VoceCatalogo = Commessa["catalogoFasi"][number];
+type Documento = NonNullable<Commessa["documenti"]>[number];
 
 /** Colore per stato della fase (stessa famiglia degli stati di commessa). */
 export const COLORI_FASE: Record<string, string> = {
@@ -41,8 +43,10 @@ export function FasiCommessa({
   profili,
   catalogo,
   committenza,
+  documenti,
 }: {
   commessaId: string;
+  documenti: Documento[];
   fasi: Fase[];
   profili: Profilo[];
   catalogo: VoceCatalogo[];
@@ -60,6 +64,8 @@ export function FasiCommessa({
             <RigaFase
               key={f.id}
               fase={f}
+              commessaId={commessaId}
+              documenti={documenti.filter((d) => d.fase_id === f.id)}
               profili={profili}
               aperta={aperta === f.id}
               onApri={() => setAperta(aperta === f.id ? null : f.id)}
@@ -77,6 +83,8 @@ export function FasiCommessa({
 
 function RigaFase({
   fase: f,
+  commessaId,
+  documenti,
   profili,
   aperta,
   onApri,
@@ -85,6 +93,8 @@ function RigaFase({
   ultima,
 }: {
   fase: Fase;
+  commessaId: string;
+  documenti: Documento[];
   profili: Profilo[];
   aperta: boolean;
   onApri: () => void;
@@ -112,6 +122,12 @@ function RigaFase({
           </span>
         </span>
         <span className="flex items-center gap-2">
+          {documenti.length ? (
+            <span className="hidden items-center gap-1 text-sm text-tenue sm:inline-flex" data-suggerimento={`${documenti.length} allegati`}>
+              <Paperclip className="size-3.5" strokeWidth={1.8} />
+              <span className="numeri">{documenti.length}</span>
+            </span>
+          ) : null}
           {f.responsabile ? (
             <span
               className="hidden size-7 place-items-center rounded-full bg-superficie text-[0.6875rem] font-medium text-inchiostro-2 shadow-[0_0_0_1px_var(--linea)] md:grid"
@@ -127,7 +143,14 @@ function RigaFase({
         </span>
         <ChevronDown className={cn("hidden size-4 text-tenue transition-transform md:block", aperta && "rotate-180")} strokeWidth={1.8} />
       </button>
-      {aperta ? <EditorFase fase={f} profili={profili} onChiudi={onChiudi} prima={prima} ultima={ultima} /> : null}
+      {aperta ? (
+        <>
+          <EditorFase fase={f} profili={profili} onChiudi={onChiudi} prima={prima} ultima={ultima} />
+          <div className="mx-5 border-t border-dashed border-linea pb-5 pt-4 md:mx-6">
+            <AllegatiFase commessaId={commessaId} faseId={f.id} documenti={documenti} />
+          </div>
+        </>
+      ) : null}
     </li>
   );
 }

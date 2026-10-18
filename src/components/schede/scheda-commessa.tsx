@@ -48,6 +48,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
             profili={c.profiliStudio}
             catalogo={c.catalogoFasi}
             committenza={c.committenza}
+            documenti={c.documenti ?? []}
           />
           {c.descrizione ? (
             <div className="border-t border-linea px-5 py-5 md:px-6">

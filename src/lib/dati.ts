@@ -78,6 +78,7 @@ export async function leggiCommessa(id: string) {
          fasi:commesse_fasi(*, responsabile:profili(id, nome, cognome, iniziali)),
          team:commesse_team(profilo_id, ruolo_commessa, profilo:profili(id, nome, cognome, iniziali, qualifica)),
          diario:commesse_diario(id, tipo, testo, data_evento, autore:profili(nome, cognome, iniziali)),
+         documenti(id, fase_id, categoria, titolo, nome_file, mime_type, dimensione_byte, storage_path, created_at),
          preventivi(id, numero),
          prefattibilita(id, numero)`,
       )
@@ -91,6 +92,7 @@ export async function leggiCommessa(id: string) {
   if (!commessa) return null;
   commessa.fasi?.sort((a, b) => a.ordine - b.ordine);
   commessa.diario?.sort((a, b) => b.data_evento.localeCompare(a.data_evento));
+  commessa.documenti?.sort((a, b) => b.created_at.localeCompare(a.created_at));
   return { ...commessa, profiliStudio: profili.data ?? [], catalogoFasi: catalogo.data ?? [] };
 }
 
