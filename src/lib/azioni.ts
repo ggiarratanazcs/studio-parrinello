@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/database.types";
 import { propostaFasi } from "@/lib/fasi";
+import { geocodifica } from "@/lib/geocodifica";
 
 export type Esito = { ok: true; id: string } | { ok: false; errore: string };
 
@@ -19,6 +20,29 @@ function aggiornaElenchi() {
   revalidatePath("/", "layout");
 }
 
+type ClienteSupabase = NonNullable<Awaited<ReturnType<typeof clientAutenticato>>>;
+
+/**
+ * Dopo la creazione di una pratica: se il suo immobile non è ancora sulla mappa,
+ * ne cerca le coordinate dall'indirizzo e le salva. Se non lo trova, resta da posizionare a mano.
+ */
+async function posizionaImmobileDi(supabase: ClienteSupabase, tabella: "commesse" | "preventivi" | "prefattibilita", id: string) {
+  try {
+    const { data: riga } = await supabase.from(tabella).select("immobile_id").eq("id", id).maybeSingle();
+    if (!riga?.immobile_id) return;
+    const { data: imm } = await supabase
+      .from("immobili")
+      .select("id, indirizzo, cap, comune, provincia, latitudine")
+      .eq("id", riga.immobile_id)
+      .maybeSingle();
+    if (!imm || imm.latitudine != null) return;
+    const p = await geocodifica(imm);
+    if (p) await supabase.from("immobili").update({ latitudine: p.lat, longitudine: p.lng }).eq("id", imm.id);
+  } catch {
+    // la posizione è un di più: un errore qui non deve bloccare la creazione
+  }
+}
+
 /* ── Creazione ─────────────────────────────────────────────────────────── */
 
 export async function creaCommessa(dati: Json): Promise<Esito> {
@@ -26,6 +50,7 @@ export async function creaCommessa(dati: Json): Promise<Esito> {
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
   const { data, error } = await supabase.rpc("crea_commessa", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare la commessa. Controlla i dati obbligatori e riprova." };
+  await posizionaImmobileDi(supabase, "commesse", data);
   aggiornaElenchi();
   return { ok: true, id: data };
 }
@@ -35,6 +60,7 @@ export async function creaPreventivo(dati: Json): Promise<Esito> {
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
   const { data, error } = await supabase.rpc("crea_preventivo", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare il preventivo. Controlla i dati obbligatori e riprova." };
+  await posizionaImmobileDi(supabase, "preventivi", data);
   aggiornaElenchi();
   return { ok: true, id: data };
 }
@@ -44,6 +70,7 @@ export async function creaPrefattibilita(dati: Json): Promise<Esito> {
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
   const { data, error } = await supabase.rpc("crea_prefattibilita", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare la pre-fattibilità. Controlla i dati obbligatori e riprova." };
+  await posizionaImmobileDi(supabase, "prefattibilita", data);
   aggiornaElenchi();
   return { ok: true, id: data };
 }
@@ -339,4 +366,31 @@ export async function posizionaImmobile(id: string, posizione: { lat: number; ln
   if (error) return { ok: false, errore: "Non è stato possibile salvare la posizione." };
   aggiornaElenchi();
   return { ok: true, id };
+}
+
+/**
+ * Posiziona in automatico gli immobili che non sono ancora sulla mappa (al massimo 10 per volta,
+ * per rispettare i limiti del servizio di ricerca). Restituisce quanti sono stati trovati.
+ */
+export async function posizionaImmobiliMancanti(): Promise<{ ok: true; trovati: number; restanti: number } | { ok: false; errore: string }> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: mancanti, error } = await supabase
+    .from("immobili")
+    .select("id, indirizzo, cap, comune, provincia")
+    .is("latitudine", null)
+    .limit(10);
+  if (error) return { ok: false, errore: "Non è stato possibile leggere gli immobili." };
+  let trovati = 0;
+  for (const imm of mancanti ?? []) {
+    const p = await geocodifica(imm);
+    if (p) {
+      const { error: e } = await supabase.from("immobili").update({ latitudine: p.lat, longitudine: p.lng }).eq("id", imm.id);
+      if (!e) trovati++;
+    }
+    await new Promise((r) => setTimeout(r, 1100));
+  }
+  const { count } = await supabase.from("immobili").select("id", { count: "exact", head: true }).is("latitudine", null);
+  aggiornaElenchi();
+  return { ok: true, trovati, restanti: count ?? 0 };
 }

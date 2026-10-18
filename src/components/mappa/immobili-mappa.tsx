@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Crosshair, Loader2, MapPin, MapPinOff } from "lucide-react";
+import { Crosshair, Loader2, MapPin, MapPinOff, Wand2 } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Pannello, Pulsante, Vuoto } from "@/components/ui";
-import { posizionaImmobile } from "@/lib/azioni";
+import { posizionaImmobile, posizionaImmobiliMancanti } from "@/lib/azioni";
 import type { ImmobileElenco } from "@/lib/dati";
 import { cn } from "@/lib/utils";
 import { MappaImmobili, SceltaPosizione, STATI_IMMOBILE, statoImmobile } from "./mappa";
@@ -15,6 +15,26 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
   const [evidenzia, setEvidenzia] = useState<string | null>(null);
   const [inModifica, setInModifica] = useState<string | null>(null);
   const posizionati = immobili.filter((i) => i.latitudine != null && i.longitudine != null).length;
+  const mancanti = immobili.length - posizionati;
+  const router = useRouter();
+  const [inCorso, avvia] = useTransition();
+  const [esito, setEsito] = useState<string | null>(null);
+
+  function posizionaTutti() {
+    setEsito(null);
+    avvia(async () => {
+      const r = await posizionaImmobiliMancanti();
+      if (!r.ok) setEsito(r.errore);
+      else {
+        setEsito(
+          r.trovati === 0
+            ? "Nessun indirizzo trovato automaticamente: usa il mirino per posizionarli a mano."
+            : `${r.trovati} ${r.trovati === 1 ? "immobile posizionato" : "immobili posizionati"}${r.restanti ? `, ${r.restanti} ancora da posizionare` : ""}.`,
+        );
+        router.refresh();
+      }
+    });
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,10 +47,17 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
               {s.etichetta}
             </span>
           ))}
-          <span className="ml-auto text-tenue">
+          <span className="ml-auto flex items-center gap-3 text-tenue">
             {posizionati} di {immobili.length} sulla mappa
+            {mancanti > 0 ? (
+              <Pulsante type="button" variante="secondario" className="h-9 rounded-full px-3.5 text-sm" onClick={posizionaTutti} disabled={inCorso}>
+                {inCorso ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" strokeWidth={1.8} />}
+                {inCorso ? "Cerco gli indirizzi…" : `Posiziona in automatico (${mancanti})`}
+              </Pulsante>
+            ) : null}
           </span>
         </div>
+        {esito ? <p className="border-t border-linea px-5 py-2.5 text-sm text-inchiostro-2 md:px-6">{esito}</p> : null}
       </Pannello>
 
       <Pannello>
