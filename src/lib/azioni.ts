@@ -321,3 +321,22 @@ export async function eliminaNota(id: string): Promise<Esito> {
   aggiornaElenchi();
   return { ok: true, id };
 }
+
+/* ── Immobili ── */
+
+/** Salva (o toglie, con null) la posizione dell'immobile sulla mappa. */
+export async function posizionaImmobile(id: string, posizione: { lat: number; lng: number } | null): Promise<Esito> {
+  if (posizione && (Math.abs(posizione.lat) > 90 || Math.abs(posizione.lng) > 180)) return { ok: false, errore: "Posizione non valida." };
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { error } = await supabase
+    .from("immobili")
+    .update({
+      latitudine: posizione ? Number(posizione.lat.toFixed(6)) : null,
+      longitudine: posizione ? Number(posizione.lng.toFixed(6)) : null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, errore: "Non è stato possibile salvare la posizione." };
+  aggiornaElenchi();
+  return { ok: true, id };
+}

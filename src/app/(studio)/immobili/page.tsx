@@ -1,7 +1,8 @@
-import { Building, MapPin } from "lucide-react";
+import { Building, Map, MapPin } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Scheletro, Vuoto } from "@/components/ui";
+import { ImmobiliConMappa } from "@/components/mappa/immobili-mappa";
+import { Pannello, Scheletro } from "@/components/ui";
 import { elencoImmobili } from "@/lib/dati";
 
 export const metadata = { title: "Immobili" };
@@ -31,34 +32,14 @@ async function ElencoImmobili() {
     <>
       <Cartiglio
         titolo="Immobili"
-        sottotitolo="Gli edifici e i terreni su cui lavora lo studio, con dati catastali e inquadramento urbanistico."
+        sottotitolo="Gli edifici e i terreni su cui lavora o ha lavorato lo studio, sulla mappa e in elenco."
         celle={[
           { etichetta: "Immobili", valore: immobili.length, icona: Building },
           { etichetta: "Comuni", valore: comuni, icona: MapPin },
+          { etichetta: "Sulla mappa", valore: immobili.filter((i) => i.latitudine != null).length, icona: Map },
         ]}
       />
-      <Pannello>
-        {immobili.length === 0 ? (
-          <Vuoto
-            titolo="Nessun immobile registrato"
-            testo="Ogni immobile raccoglie indirizzo, foglio, particella e subalterno, zona urbanistica e vincoli. Lo stesso immobile può essere collegato a più commesse nel tempo."
-          />
-        ) : (
-          <ul className="elenco divide-y divide-linea">
-            {immobili.map((i) => (
-              <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{i.denominazione ?? i.indirizzo}</span>
-                  <span className="block truncate text-sm text-tenue">
-                    {[i.indirizzo, i.comune].filter(Boolean).join(", ")}
-                  </span>
-                </span>
-                <span className="etichetta shrink-0">{i.zona_urbanistica ? `Zona ${i.zona_urbanistica}` : ""}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Pannello>
+      <ImmobiliConMappa immobili={immobili} />
     </>
   );
 }

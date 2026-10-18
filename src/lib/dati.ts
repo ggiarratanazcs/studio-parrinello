@@ -26,15 +26,23 @@ export async function elencoClienti() {
   return data ?? [];
 }
 
+/** Immobili con posizione e pratiche collegate (per elenco e mappa). */
 export async function elencoImmobili() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("immobili")
-    .select("id, denominazione, indirizzo, comune, destinazione_uso, zona_urbanistica")
+    .select(
+      `id, denominazione, indirizzo, cap, comune, provincia, destinazione_uso, zona_urbanistica, latitudine, longitudine,
+       commesse(id, codice, titolo, stato),
+       preventivi(id, numero, stato),
+       prefattibilita(id, numero, stato)`,
+    )
     .order("comune");
   if (error) throw new Error(`Impossibile leggere gli immobili: ${error.message}`);
   return data ?? [];
 }
+
+export type ImmobileElenco = Awaited<ReturnType<typeof elencoImmobili>>[number];
 
 export async function contaDocumenti() {
   const supabase = await createClient();

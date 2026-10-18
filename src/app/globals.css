@@ -314,3 +314,48 @@ body {
   line-height: 1.08;
   color: #f6efe3;
 }
+
+/* Mappe: toni caldi sul fondo OpenStreetMap, segnaposto a pallino, popup coordinati */
+.mappa-studio {
+  background: var(--superficie-2);
+  font-family: inherit;
+  z-index: 0;
+}
+.mappa-studio .leaflet-tile-pane {
+  filter: sepia(0.28) saturate(0.75) brightness(1.03) contrast(0.95);
+}
+.segnaposto-studio span {
+  display: block;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 55%, #fff) 0%, var(--c) 60%);
+  border: 2.5px solid #fff;
+  box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--c) 80%, transparent), 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+}
+.segnaposto-studio:hover span {
+  transform: scale(1.15);
+}
+.mappa-studio .leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 14px 30px -14px rgba(43, 42, 40, 0.55);
+  font-size: 0.875rem;
+  color: var(--inchiostro);
+}
+.mappa-studio .leaflet-popup-content {
+  margin: 12px 14px;
+  line-height: 1.45;
+}
+.mappa-studio .leaflet-popup-content .tenue {
+  color: var(--tenue);
+}
+.mappa-studio .leaflet-popup-content .commesse {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--linea);
+}
+.mappa-studio .leaflet-popup-content a {
+  color: var(--accento);
+}
+.mappa-studio .leaflet-control-zoom a {
+  color: var(--inchiostro);
+}
