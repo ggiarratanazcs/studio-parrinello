@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { Cartiglio } from "@/components/cartiglio";
-import { AvanzamentoFasi, Pannello, Pulsante, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import Link from "next/link";
+import { AvanzamentoFasi, LinkPulsante, Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse } from "@/lib/dati";
 import { TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
@@ -9,10 +10,10 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 export const metadata = { title: "Commesse" };
 
 const nuovaCommessa = (
-  <Pulsante disabled title="Disponibile nel prossimo rilascio">
+  <LinkPulsante href="/commesse/nuova">
     <Plus className="size-4" strokeWidth={2} />
     Nuova commessa
-  </Pulsante>
+  </LinkPulsante>
 );
 
 /** Colonne della tabella su schermi grandi (impaginazione laterale). */
@@ -57,12 +58,12 @@ async function ElencoCommesse() {
       <Pannello>
         {commesse.length === 0 ? (
           <Vuoto
+            azione={nuovaCommessa}
             titolo="Ancora nessuna commessa"
             testo={
               <>
-                Una commessa nasce dal primo contatto con il committente. Con il prossimo rilascio potrai
-                crearla qui: il codice viene assegnato in automatico (per esempio{" "}
-                <span className="numeri text-inchiostro">2026-001</span>).
+                Una commessa nasce dal primo contatto con il committente. Il codice viene assegnato in
+                automatico (per esempio <span className="numeri text-inchiostro">2026-001</span>).
               </>
             }
           />
@@ -82,10 +83,11 @@ async function ElencoCommesse() {
 
             <div role="rowgroup" className="elenco divide-y divide-linea">
               {commesse.map((c) => (
-                <div
+                <Link
                   key={c.id}
+                  href={`/commesse/${c.id}`}
                   role="row"
-                  className={`grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 md:items-center md:px-6 ${COLONNE}`}
+                  className={`grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 transition-colors hover:bg-superficie-2/50 md:items-center md:px-6 ${COLONNE}`}
                 >
                   <span role="cell" className="numeri etichetta col-start-1 row-start-1 md:col-auto md:row-auto">
                     {c.codice}
@@ -120,7 +122,7 @@ async function ElencoCommesse() {
                   <span role="cell" className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
                     <StatoBadge stato={c.stato} />
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

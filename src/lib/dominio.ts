@@ -35,3 +35,28 @@ export const RUOLI: Record<string, string> = {
   collaboratore: "Collaboratore",
   amministrazione: "Amministrazione",
 };
+
+export const STATI_FASE: Record<string, string> = {
+  da_avviare: "Da avviare",
+  in_corso: "In corso",
+  in_revisione: "In revisione",
+  completata: "Completata",
+  sospesa: "Sospesa",
+  annullata: "Annullata",
+};
+
+export const AMBITI: Record<string, string> = {
+  residenziale: "Residenziale",
+  ricettivo: "Ricettivo",
+  commerciale: "Commerciale",
+  industriale: "Industriale",
+  urbano: "Urbano",
+  pubblico: "Edificio pubblico",
+  altro: "Altro",
+};
+
+export const TIPI_CLIENTE: Record<string, string> = {
+  persona_fisica: "Privato",
+  azienda: "Azienda",
+  ente_pubblico: "Ente pubblico",
+};

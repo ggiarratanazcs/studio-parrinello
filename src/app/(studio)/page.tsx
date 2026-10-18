@@ -51,6 +51,11 @@ async function PanoramicaContenuto() {
         </div>
         {aperte.length === 0 ? (
           <Vuoto
+            azione={
+              <Link href="/commesse/nuova" className="text-sm font-medium text-accento hover:underline">
+                Crea la prima commessa
+              </Link>
+            }
             titolo="Nessuna commessa aperta"
             testo="Quando registri un primo contatto con un cliente, la commessa compare qui e la segui fino alla chiusura."
           />
@@ -104,7 +109,11 @@ function Percorso({ commesse }: { commesse: CommessaSintesi[] }) {
 
 function RigaCommessa({ c }: { c: CommessaSintesi }) {
   return (
-    <li className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center md:px-6">
+    <li>
+      <Link
+        href={`/commesse/${c.id}`}
+        className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 transition-colors hover:bg-superficie-2/50 md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center md:px-6"
+      >
       <span className="numeri etichetta col-start-1 row-start-1 md:col-auto md:row-auto">{c.codice}</span>
       <span className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:row-auto">
         <span className="block truncate font-medium">{c.titolo}</span>
@@ -116,6 +125,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
       <span className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
         <StatoBadge stato={c.stato} />
       </span>
+      </Link>
     </li>
   );
 }

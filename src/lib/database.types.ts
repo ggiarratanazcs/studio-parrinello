@@ -124,7 +124,15 @@ export type Database = {
           ruolo?: string | null
           telefono?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clienti_referenti_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clienti"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commesse: {
         Row: {
@@ -211,7 +219,36 @@ export type Database = {
           titolo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commesse_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clienti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_immobile_id_fkey"
+            columns: ["immobile_id"]
+            isOneToOne: false
+            referencedRelation: "immobili"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_responsabile_id_fkey"
+            columns: ["responsabile_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commesse_contatori: {
         Row: { anno: number; ultimo: number }
@@ -247,7 +284,15 @@ export type Database = {
           testo?: string
           tipo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commesse_diario_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commesse_fasi: {
         Row: {
@@ -310,13 +355,50 @@ export type Database = {
           stato?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commesse_fasi_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_fasi_fase_catalogo_id_fkey"
+            columns: ["fase_catalogo_id"]
+            isOneToOne: false
+            referencedRelation: "fasi_catalogo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_fasi_responsabile_id_fkey"
+            columns: ["responsabile_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commesse_team: {
         Row: { commessa_id: string; profilo_id: string; ruolo_commessa: string | null }
         Insert: { commessa_id: string; profilo_id: string; ruolo_commessa?: string | null }
         Update: { commessa_id?: string; profilo_id?: string; ruolo_commessa?: string | null }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commesse_team_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commesse_team_profilo_id_fkey"
+            columns: ["profilo_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documenti: {
         Row: {
@@ -373,7 +455,22 @@ export type Database = {
           tag?: string[] | null
           titolo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documenti_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documenti_fase_id_fkey"
+            columns: ["fase_id"]
+            isOneToOne: false
+            referencedRelation: "commesse_fasi"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fasi_catalogo: {
         Row: {
@@ -511,7 +608,15 @@ export type Database = {
           sezione?: string | null
           subalterno?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "immobili_catasto_immobile_id_fkey"
+            columns: ["immobile_id"]
+            isOneToOne: false
+            referencedRelation: "immobili"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prefattibilita: {
         Row: {
@@ -596,7 +701,15 @@ export type Database = {
           vincoli_note?: string | null
           zona_urbanistica?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prefattibilita_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       preventivi: {
         Row: {
@@ -686,7 +799,15 @@ export type Database = {
           validita_giorni?: number
           versione?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "preventivi_commessa_id_fkey"
+            columns: ["commessa_id"]
+            isOneToOne: false
+            referencedRelation: "commesse"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       preventivi_rate: {
         Row: {
@@ -713,7 +834,15 @@ export type Database = {
           percentuale?: number | null
           preventivo_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "preventivi_rate_preventivo_id_fkey"
+            columns: ["preventivo_id"]
+            isOneToOne: false
+            referencedRelation: "preventivi"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       preventivi_voci: {
         Row: {
@@ -753,7 +882,15 @@ export type Database = {
           quantita?: number
           unita_misura?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "preventivi_voci_preventivo_id_fkey"
+            columns: ["preventivo_id"]
+            isOneToOne: false
+            referencedRelation: "preventivi"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profili: {
         Row: {
@@ -847,6 +984,7 @@ export type Database = {
       }
     }
     Functions: {
+      crea_commessa: { Args: { dati: Json }; Returns: string }
       ha_ruolo: { Args: { ruoli: string[] }; Returns: boolean }
       is_membro_studio: { Args: never; Returns: boolean }
       ruolo_corrente: { Args: never; Returns: string }

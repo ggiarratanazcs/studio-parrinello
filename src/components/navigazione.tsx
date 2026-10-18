@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -24,13 +25,13 @@ export const VOCI: Voce[] = [
   { href: "/impostazioni", etichetta: "Impostazioni", icona: Settings2, mobile: false },
 ];
 
-function attiva(pathname: string, href: string) {
+function attiva(pathname: string | null, href: string) {
+  if (!pathname) return false;
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 /** Navigazione verticale per schermi grandi. */
-export function NavLaterale() {
-  const pathname = usePathname();
+function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="Sezioni" className="flex flex-col gap-0.5">
       {VOCI.map(({ href, etichetta, icona: Icona }) => {
@@ -64,8 +65,7 @@ export function NavLaterale() {
 }
 
 /** Navigazione a schede in alto (impaginazione Materia, schermi grandi). */
-export function NavSuperiore() {
-  const pathname = usePathname();
+function NavSuperioreCorpo({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="Sezioni" className="flex flex-wrap items-center gap-1">
       {VOCI.filter((v) => v.mobile).map(({ href, etichetta }) => {
@@ -89,8 +89,7 @@ export function NavSuperiore() {
 }
 
 /** Barra a schede in basso per telefono. */
-export function NavMobile() {
-  const pathname = usePathname();
+function NavMobileCorpo({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="Sezioni"
@@ -119,4 +118,55 @@ export function NavMobile() {
       </ul>
     </nav>
   );
+}
+
+/**
+ * Il percorso corrente è noto solo a richiesta: la versione senza voce attiva
+ * fa parte della parte statica della pagina, quella con la voce evidenziata la sostituisce.
+ */
+export function NavLaterale() {
+  return (
+    <Suspense fallback={<NavLateraleCorpo pathname={null} />}>
+      <NavLateraleConPercorso />
+    </Suspense>
+  );
+}
+
+function NavLateraleConPercorso() {
+  const pathname = usePathname();
+  return <NavLateraleCorpo pathname={pathname} />;
+}
+
+/**
+ * Il percorso corrente è noto solo a richiesta: la versione senza voce attiva
+ * fa parte della parte statica della pagina, quella con la voce evidenziata la sostituisce.
+ */
+export function NavSuperiore() {
+  return (
+    <Suspense fallback={<NavSuperioreCorpo pathname={null} />}>
+      <NavSuperioreConPercorso />
+    </Suspense>
+  );
+}
+
+function NavSuperioreConPercorso() {
+  const pathname = usePathname();
+  return <NavSuperioreCorpo pathname={pathname} />;
+}
+
+/**
+ * Il percorso corrente è noto solo a richiesta: la versione senza voce attiva
+ * fa parte della parte statica della pagina, quella con la voce evidenziata la sostituisce.
+ */
+export function NavMobile() {
+  return (
+    <Suspense fallback={<NavMobileCorpo pathname={null} />}>
+      <NavMobileConPercorso />
+    </Suspense>
+  );
+}
+
+function NavMobileConPercorso() {
+  const pathname = usePathname();
+  return <NavMobileCorpo pathname={pathname} />;
 }
