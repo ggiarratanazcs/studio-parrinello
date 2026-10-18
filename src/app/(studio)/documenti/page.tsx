@@ -1,3 +1,4 @@
+import { Files } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Vuoto } from "@/components/ui";
@@ -32,7 +33,7 @@ async function Documenti() {
       <Cartiglio
         titolo="Documenti"
         sottotitolo="Allegati e foto di tutte le commesse, in un archivio privato dello studio."
-        celle={[{ etichetta: "File archiviati", valore: totale }]}
+        celle={[{ etichetta: "File archiviati", valore: totale, icona: Files }]}
       />
       <Pannello>
         <Vuoto

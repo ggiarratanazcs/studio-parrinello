@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { ArrowRightLeft, Layers, Percent } from "lucide-react";
+import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
-import { Badge, LinkPulsante, Pannello, Vuoto } from "@/components/ui";
+import { Badge, Pannello, Vuoto } from "@/components/ui";
 import type { Pratica } from "@/lib/dati";
 import { STATI_PREFATTIBILITA, STATI_PREVENTIVO } from "@/lib/preventivo";
 import { formattaData, formattaEuro } from "@/lib/utils";
@@ -40,10 +41,7 @@ export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefa
   const tasso = chiuse ? Math.round((proseguite / chiuse) * 100) : null;
 
   const nuovo = (
-    <LinkPulsante href={t.href}>
-      <Plus className="size-4" strokeWidth={2} />
-      {t.nuovo}
-    </LinkPulsante>
+    <PulsanteNuovo href={t.href}>{t.nuovo}</PulsanteNuovo>
   );
 
   return (
@@ -52,9 +50,9 @@ export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefa
         titolo={t.titolo}
         sottotitolo={t.sottotitolo}
         celle={[
-          { etichetta: "Totale", valore: pratiche.length },
-          { etichetta: "In commessa", valore: convertite },
-          { etichetta: "Conversione", valore: tasso === null ? "—" : `${tasso}%` },
+          { etichetta: "Totale", valore: pratiche.length, icona: Layers },
+          { etichetta: "In commessa", valore: convertite, icona: ArrowRightLeft },
+          { etichetta: "Conversione", valore: tasso === null ? "—" : `${tasso}%`, icona: Percent },
         ]}
         azioni={nuovo}
       />

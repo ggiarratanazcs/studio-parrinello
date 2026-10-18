@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
+import { Tessere, type Cella } from "@/components/tessere";
 
-export type Cella = { etichetta: string; valore: ReactNode };
+export type { Cella };
 
 /**
- * Intestazione di pagina ispirata al cartiglio delle tavole di progetto:
- * titolo a sinistra, blocco di dati incasellati a destra.
+ * Intestazione di pagina: titolo a sinistra, riquadri informativi e azioni a destra.
  */
 export function Cartiglio({
   titolo,
@@ -25,23 +25,8 @@ export function Cartiglio({
       </div>
 
       <div className="flex flex-col gap-4 md:items-end">
-        {celle.length > 0 ? (
-          <dl
-            className="grid border border-linea-forte"
-            style={{ gridTemplateColumns: `repeat(${celle.length}, minmax(0, auto))` }}
-          >
-            {celle.map((c, i) => (
-              <div
-                key={c.etichetta}
-                className={`min-w-24 px-3 py-2 ${i > 0 ? "border-l border-linea-forte" : ""}`}
-              >
-                <dt className="etichetta text-[0.75rem]">{c.etichetta}</dt>
-                <dd className="numeri mt-0.5 text-[0.9375rem] font-medium">{c.valore}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-        {azioni ? <div className="flex gap-2">{azioni}</div> : null}
+        {celle.length > 0 ? <Tessere celle={celle} className="md:justify-end" /> : null}
+        {azioni ? <div className="flex flex-wrap gap-2 md:justify-end">{azioni}</div> : null}
       </div>
     </header>
   );

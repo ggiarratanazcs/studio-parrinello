@@ -1,17 +1,8 @@
-import type { ComponentType, CSSProperties, ReactNode } from "react";
-import type { LucideProps } from "lucide-react";
+import type { ReactNode } from "react";
+import { Tessere, type Cella } from "@/components/tessere";
 import Link from "next/link";
 import { Pannello, Scheletro } from "@/components/ui";
 import { cn } from "@/lib/utils";
-
-/** Riquadro informativo della testata: pallino con icona, etichetta e valore. */
-export type Cella = {
-  etichetta: string;
-  valore: ReactNode;
-  icona: ComponentType<LucideProps>;
-  /** Colore del pallino (es. colore dello stato); senza, il pallino è perla. */
-  tinta?: string;
-};
 
 /** Intestazione di una scheda: numero/codice, titolo, sottotitolo, riquadri informativi e azioni. */
 export function TestataScheda({
@@ -35,33 +26,7 @@ export function TestataScheda({
           <h1 className="titolo-display mt-1 text-[1.75rem] md:text-[2.25rem]">{titolo}</h1>
           {sottotitolo ? <p className="mt-2 text-[0.9375rem] text-tenue">{sottotitolo}</p> : null}
         </div>
-        {celle?.length ? (
-          <dl className="flex shrink-0 flex-wrap gap-2.5">
-            {celle.map(({ etichetta, valore, icona: Icona, tinta }) => {
-              const vuoto = valore === null || valore === undefined || valore === "" || valore === "—";
-              return (
-                <div key={etichetta} className="tessera flex items-center gap-3 rounded-[18px] py-2.5 pl-2.5 pr-4">
-                  <span
-                    aria-hidden
-                    className={cn("pallino-tessera grid size-9 shrink-0 place-items-center rounded-full", tinta && "colorato")}
-                    style={tinta ? ({ ["--tinta" as string]: tinta } as CSSProperties) : undefined}
-                  >
-                    <Icona className="size-4" strokeWidth={1.9} />
-                  </span>
-                  <div className="min-w-0">
-                    <dt className="etichetta text-[0.75rem]">{etichetta}</dt>
-                    <dd
-                      className={cn("numeri mt-0.5 whitespace-nowrap text-[0.9375rem] font-medium", vuoto && "font-normal text-tenue")}
-                      style={tinta && !vuoto ? { color: tinta } : undefined}
-                    >
-                      {vuoto ? "—" : valore}
-                    </dd>
-                  </div>
-                </div>
-              );
-            })}
-          </dl>
-        ) : null}
+        {celle?.length ? <Tessere celle={celle} className="shrink-0" /> : null}
       </div>
       {azioni ? <div className="flex flex-wrap items-center gap-2">{azioni}</div> : null}
     </header>

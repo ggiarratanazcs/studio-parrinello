@@ -1,3 +1,4 @@
+import { Building2, Landmark, User } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, Vuoto } from "@/components/ui";
@@ -38,9 +39,9 @@ async function ElencoClienti() {
         titolo="Clienti"
         sottotitolo="Committenti privati, aziende ed enti pubblici, con i loro referenti."
         celle={[
-          { etichetta: "Privati", valore: conta("persona_fisica") },
-          { etichetta: "Aziende", valore: conta("azienda") },
-          { etichetta: "Enti", valore: conta("ente_pubblico") },
+          { etichetta: "Privati", valore: conta("persona_fisica"), icona: User },
+          { etichetta: "Aziende", valore: conta("azienda"), icona: Building2 },
+          { etichetta: "Enti", valore: conta("ente_pubblico"), icona: Landmark },
         ]}
       />
       <Pannello>

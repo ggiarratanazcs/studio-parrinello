@@ -1,8 +1,9 @@
 import { Suspense } from "react";
-import { Plus } from "lucide-react";
+import { Landmark, Layers, User } from "lucide-react";
+import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
 import Link from "next/link";
-import { AvanzamentoFasi, LinkPulsante, Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import { AvanzamentoFasi, Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse } from "@/lib/dati";
 import { TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
@@ -10,10 +11,7 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 export const metadata = { title: "Commesse" };
 
 const nuovaCommessa = (
-  <LinkPulsante href="/nuova/commessa">
-    <Plus className="size-4" strokeWidth={2} />
-    Nuova commessa
-  </LinkPulsante>
+  <PulsanteNuovo href="/nuova/commessa">Nuova commessa</PulsanteNuovo>
 );
 
 /** Colonne della tabella su schermi grandi (impaginazione laterale). */
@@ -48,9 +46,9 @@ async function ElencoCommesse() {
         titolo="Commesse"
         sottotitolo="Ogni incarico dello studio, dal primo contatto alla chiusura."
         celle={[
-          { etichetta: "Totale", valore: commesse.length },
-          { etichetta: "Private", valore: commesse.length - pubbliche },
-          { etichetta: "Pubbliche", valore: pubbliche },
+          { etichetta: "Totale", valore: commesse.length, icona: Layers },
+          { etichetta: "Private", valore: commesse.length - pubbliche, icona: User },
+          { etichetta: "Pubbliche", valore: pubbliche, icona: Landmark },
         ]}
         azioni={nuovaCommessa}
       />

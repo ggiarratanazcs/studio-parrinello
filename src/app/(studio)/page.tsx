@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Activity, Euro, FolderOpen } from "lucide-react";
+import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
-import { LinkPulsante, Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
 import { formattaEuro } from "@/lib/utils";
 
@@ -12,18 +13,13 @@ const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sos
 
 const azioni = (
   <>
-    <LinkPulsante href="/nuova/preventivo">
-      <Plus className="size-4" strokeWidth={2} />
-      Preventivo
-    </LinkPulsante>
-    <LinkPulsante href="/nuova/prefattibilita" variante="secondario">
-      <Plus className="size-4" strokeWidth={2} />
+    <PulsanteNuovo href="/nuova/preventivo">Preventivo</PulsanteNuovo>
+    <PulsanteNuovo href="/nuova/prefattibilita" secondario>
       Pre-fattibilità
-    </LinkPulsante>
-    <LinkPulsante href="/nuova/commessa" variante="secondario">
-      <Plus className="size-4" strokeWidth={2} />
+    </PulsanteNuovo>
+    <PulsanteNuovo href="/nuova/commessa" secondario>
       Commessa
-    </LinkPulsante>
+    </PulsanteNuovo>
   </>
 );
 
@@ -75,9 +71,9 @@ async function PanoramicaContenuto() {
         titolo="Panoramica"
         sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione."
         celle={[
-          { etichetta: "Commesse aperte", valore: aperte.length },
-          { etichetta: "In corso", valore: inCorso.length },
-          { etichetta: "Onorari in corso", valore: formattaEuro(portafoglio) },
+          { etichetta: "Commesse aperte", valore: aperte.length, icona: FolderOpen },
+          { etichetta: "In corso", valore: inCorso.length, icona: Activity },
+          { etichetta: "Onorari in corso", valore: formattaEuro(portafoglio), icona: Euro },
         ]}
         azioni={azioni}
       />

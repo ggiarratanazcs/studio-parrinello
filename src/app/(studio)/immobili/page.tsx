@@ -1,3 +1,4 @@
+import { Building, MapPin } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, Vuoto } from "@/components/ui";
@@ -32,8 +33,8 @@ async function ElencoImmobili() {
         titolo="Immobili"
         sottotitolo="Gli edifici e i terreni su cui lavora lo studio, con dati catastali e inquadramento urbanistico."
         celle={[
-          { etichetta: "Immobili", valore: immobili.length },
-          { etichetta: "Comuni", valore: comuni },
+          { etichetta: "Immobili", valore: immobili.length, icona: Building },
+          { etichetta: "Comuni", valore: comuni, icona: MapPin },
         ]}
       />
       <Pannello>
