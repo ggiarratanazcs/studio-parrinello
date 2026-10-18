@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { TEMA_PREDEFINITO } from "@/lib/temi";
+import { IMPAGINAZIONE_PREDEFINITA, SCRIPT_IMPAGINAZIONE } from "@/lib/impaginazione";
 import "./globals.css";
 
 const archivo = localFont({
@@ -10,6 +11,16 @@ const archivo = localFont({
   ],
   weight: "100 900",
   variable: "--font-archivo",
+  display: "swap",
+});
+
+const epilogue = localFont({
+  src: [
+    { path: "../fonts/epilogue-latin-wght-normal.woff2", style: "normal" },
+    { path: "../fonts/epilogue-latin-ext-wght-normal.woff2", style: "normal" },
+  ],
+  weight: "100 900",
+  variable: "--font-epilogue",
   display: "swap",
 });
 
@@ -38,7 +49,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="it" data-theme={TEMA_PREDEFINITO} className={`${archivo.variable} h-full antialiased`}>
+    <html
+      lang="it"
+      data-theme={TEMA_PREDEFINITO}
+      data-impaginazione={IMPAGINAZIONE_PREDEFINITA}
+      className={`${archivo.variable} ${epilogue.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_IMPAGINAZIONE }} />
+      </head>
       <body className="min-h-full">{children}</body>
     </html>
   );

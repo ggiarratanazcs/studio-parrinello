@@ -43,7 +43,7 @@ async function ElencoImmobili() {
             testo="Ogni immobile raccoglie indirizzo, foglio, particella e subalterno, zona urbanistica e vincoli. Lo stesso immobile può essere collegato a più commesse nel tempo."
           />
         ) : (
-          <ul className="divide-y divide-linea">
+          <ul className="elenco divide-y divide-linea">
             {immobili.map((i) => (
               <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
                 <span className="min-w-0">

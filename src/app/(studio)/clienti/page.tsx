@@ -50,7 +50,7 @@ async function ElencoClienti() {
             testo="Qui troverai l'anagrafica di ogni committente: dati fiscali, codice SDI o IPA per la fattura elettronica, PEC e referenti come il RUP o l'amministratore di condominio."
           />
         ) : (
-          <ul className="divide-y divide-linea">
+          <ul className="elenco divide-y divide-linea">
             {clienti.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
                 <span className="min-w-0">

@@ -36,7 +36,62 @@
   --raggio-m: 8px;
   --raggio-l: 14px;
 
+  --font-corpo: var(--font-archivo);
+
   color-scheme: light;
+}
+
+/* =====================================================================
+   IMPAGINAZIONI
+   "laterale": barra a sinistra, elenchi in tabella (predefinita)
+   "materia":  sezioni in alto, elenchi su piani di pietra, monogramma di sfondo
+   Gli elementi marcati .solo-laterale / .solo-materia compaiono solo nella
+   rispettiva impaginazione.
+   ===================================================================== */
+[data-impaginazione="materia"] {
+  --sfondo: #e9e1d3;
+  --superficie: #f5f0e7;
+  --raggio-l: 18px;
+  --font-corpo: var(--font-epilogue);
+}
+
+[data-impaginazione="materia"] .solo-laterale,
+[data-impaginazione="laterale"] .solo-materia {
+  display: none !important;
+}
+
+/* Riquadri: in Materia diventano piani senza bordo */
+[data-impaginazione="materia"] .pannello {
+  border-color: transparent;
+}
+
+/* Elenchi: in Materia ogni riga è un piano separato */
+[data-impaginazione="materia"] .pannello:has(.elenco) {
+  background: transparent;
+}
+[data-impaginazione="materia"] .elenco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[data-impaginazione="materia"] .elenco > * {
+  background: var(--superficie);
+  border: 0;
+  border-radius: var(--raggio-l);
+}
+[data-impaginazione="materia"] .elenco-intestazione {
+  display: none !important;
+}
+
+/* Titoli: in Materia più compatti e senza larghezza variabile */
+[data-impaginazione="materia"] .titolo-display {
+  font-variation-settings: normal;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+[data-impaginazione="materia"] .etichetta {
+  font-variation-settings: normal;
+  font-weight: 400;
 }
 
 @theme inline {
@@ -54,7 +109,7 @@
   --color-accento-tenue: var(--accento-tenue);
   --color-su-accento: var(--su-accento);
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-corpo), ui-sans-serif, system-ui, sans-serif;
 
   --radius-s: var(--raggio-s);
   --radius-m: var(--raggio-m);

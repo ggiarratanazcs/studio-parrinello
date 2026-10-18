@@ -55,7 +55,7 @@ async function PanoramicaContenuto() {
             testo="Quando registri un primo contatto con un cliente, la commessa compare qui e la segui fino alla chiusura."
           />
         ) : (
-          <ul className="divide-y divide-linea">
+          <ul className="elenco divide-y divide-linea">
             {aperte.slice(0, 6).map((c) => (
               <RigaCommessa key={c.id} c={c} />
             ))}

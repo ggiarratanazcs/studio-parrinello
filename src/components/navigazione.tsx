@@ -63,6 +63,31 @@ export function NavLaterale() {
   );
 }
 
+/** Navigazione a schede in alto (impaginazione Materia, schermi grandi). */
+export function NavSuperiore() {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Sezioni" className="flex flex-wrap items-center gap-1">
+      {VOCI.filter((v) => v.mobile).map(({ href, etichetta }) => {
+        const corrente = attiva(pathname, href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={corrente ? "page" : undefined}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-[0.9375rem] transition-colors",
+              corrente ? "bg-inchiostro text-superficie" : "text-tenue hover:bg-superficie/70 hover:text-inchiostro",
+            )}
+          >
+            {etichetta}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 /** Barra a schede in basso per telefono. */
 export function NavMobile() {
   const pathname = usePathname();

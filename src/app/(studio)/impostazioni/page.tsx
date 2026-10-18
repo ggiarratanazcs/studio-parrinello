@@ -5,13 +5,14 @@ import { LinkPulsante, Pannello, Scheletro } from "@/components/ui";
 import { getProfilo } from "@/lib/auth";
 import { RUOLI } from "@/lib/dominio";
 import { TEMI, TEMA_PREDEFINITO } from "@/lib/temi";
+import { SceltaImpaginazione } from "@/components/scelta-impaginazione";
 
 export const metadata = { title: "Impostazioni" };
 
 export default function PaginaImpostazioni() {
   return (
     <>
-      <Cartiglio titolo="Impostazioni" sottotitolo="Il tuo profilo e l'aspetto dell'applicazione." />
+      <Cartiglio titolo="Impostazioni" sottotitolo="Il tuo profilo e l'aspetto dell'applicazione. Impaginazione e tema valgono su questo dispositivo." />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Pannello>
@@ -26,6 +27,11 @@ export default function PaginaImpostazioni() {
           >
             <Profilo />
           </Suspense>
+        </Pannello>
+
+        <Pannello>
+          <h2 className="border-b border-linea px-5 py-4 text-base font-medium md:px-6">Impaginazione</h2>
+          <SceltaImpaginazione />
         </Pannello>
 
         <Pannello>

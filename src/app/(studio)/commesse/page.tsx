@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { Plus } from "lucide-react";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Pulsante, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import { AvanzamentoFasi, Pannello, Pulsante, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse } from "@/lib/dati";
-import { TIPOLOGIE_INTERVENTO } from "@/lib/dominio";
+import { TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
 
 export const metadata = { title: "Commesse" };
@@ -14,6 +14,9 @@ const nuovaCommessa = (
     Nuova commessa
   </Pulsante>
 );
+
+/** Colonne della tabella su schermi grandi (impaginazione laterale). */
+const COLONNE = "md:grid-cols-[6.5rem_minmax(0,1fr)_11rem_7rem_7rem_8rem]";
 
 export default function PaginaCommesse() {
   return (
@@ -64,43 +67,63 @@ async function ElencoCommesse() {
             }
           />
         ) : (
-          <table className="w-full text-left">
-            <thead className="hidden border-b border-linea md:table-header-group">
-              <tr className="etichetta">
-                <th className="px-6 py-3 font-medium">Codice</th>
-                <th className="px-3 py-3 font-medium">Commessa</th>
-                <th className="px-3 py-3 font-medium">Intervento</th>
-                <th className="px-3 py-3 text-right font-medium">Onorario</th>
-                <th className="px-3 py-3 font-medium">Apertura</th>
-                <th className="px-6 py-3 font-medium">Stato</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-linea">
+          <div role="table" aria-label="Elenco commesse">
+            <div
+              role="row"
+              className={`elenco-intestazione solo-laterale etichetta hidden border-b border-linea px-6 py-3 md:grid ${COLONNE} md:gap-x-4`}
+            >
+              <span role="columnheader">Codice</span>
+              <span role="columnheader">Commessa</span>
+              <span role="columnheader">Intervento</span>
+              <span role="columnheader" className="text-right">Onorario</span>
+              <span role="columnheader">Apertura</span>
+              <span role="columnheader">Stato</span>
+            </div>
+
+            <div role="rowgroup" className="elenco divide-y divide-linea">
               {commesse.map((c) => (
-                <tr key={c.id} className="grid grid-cols-[1fr_auto] gap-1 px-5 py-4 md:table-row md:px-0 md:py-0">
-                  <td className="numeri etichetta col-start-1 row-start-1 md:px-6 md:py-4">{c.codice}</td>
-                  <td className="col-span-2 row-start-2 min-w-0 md:px-3 md:py-4">
+                <div
+                  key={c.id}
+                  role="row"
+                  className={`grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 md:items-center md:px-6 ${COLONNE}`}
+                >
+                  <span role="cell" className="numeri etichetta col-start-1 row-start-1 md:col-auto md:row-auto">
+                    {c.codice}
+                  </span>
+                  <span role="cell" className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:row-auto">
                     <span className="block truncate font-medium">{c.titolo}</span>
                     <span className="block truncate text-sm text-tenue">
                       {[c.cliente, c.comune].filter(Boolean).join(", ")}
                     </span>
-                  </td>
-                  <td className="hidden text-sm text-inchiostro-2 md:table-cell md:px-3 md:py-4">
+                  </span>
+
+                  {/* Colonne tabellari: solo impaginazione laterale */}
+                  <span role="cell" className="solo-laterale hidden text-sm text-inchiostro-2 md:block">
                     {TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""] ?? "—"}
-                  </td>
-                  <td className="numeri hidden text-right text-sm md:table-cell md:px-3 md:py-4">
+                  </span>
+                  <span role="cell" className="solo-laterale numeri hidden text-right text-sm md:block">
                     {formattaEuro(c.onorario_concordato)}
-                  </td>
-                  <td className="numeri hidden text-sm text-inchiostro-2 md:table-cell md:px-3 md:py-4">
+                  </span>
+                  <span role="cell" className="solo-laterale numeri hidden text-sm text-inchiostro-2 md:block">
                     {formattaData(c.data_apertura)}
-                  </td>
-                  <td className="col-start-2 row-start-1 justify-self-end md:px-6 md:py-4">
+                  </span>
+
+                  {/* Avanzamento delle fasi: solo impaginazione Materia */}
+                  <span role="cell" className="solo-materia col-span-2 row-start-3 mt-2 md:col-span-3 md:row-auto md:mt-0">
+                    <AvanzamentoFasi
+                      completate={c.fasi_completate ?? 0}
+                      totali={c.fasi_totali ?? 0}
+                      colore={statoCommessa(c.stato).colore}
+                    />
+                  </span>
+
+                  <span role="cell" className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
                     <StatoBadge stato={c.stato} />
-                  </td>
-                </tr>
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
         )}
       </Pannello>
     </>

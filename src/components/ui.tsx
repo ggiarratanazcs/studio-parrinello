@@ -32,7 +32,7 @@ export function LinkPulsante({
 
 /** Riquadro con bordo sottile, senza ombra. */
 export function Pannello({ className, ...props }: ComponentProps<"section">) {
-  return <section className={cn("rounded-l border border-linea bg-superficie", className)} {...props} />;
+  return <section className={cn("pannello rounded-l border border-linea bg-superficie", className)} {...props} />;
 }
 
 export function StatoBadge({ stato }: { stato: string | null }) {
@@ -68,4 +68,33 @@ export function Vuoto({
 
 export function Scheletro({ className }: { className?: string }) {
   return <span aria-hidden className={cn("block animate-pulse rounded-s bg-pietra/60", className)} />;
+}
+
+/** Barra a segmenti con le fasi completate sul totale (mostrata in impaginazione Materia). */
+export function AvanzamentoFasi({
+  completate,
+  totali,
+  colore = "var(--accento)",
+}: {
+  completate: number;
+  totali: number;
+  colore?: string;
+}) {
+  const segmenti = Math.max(totali, 1);
+  return (
+    <span className="block w-full max-w-44">
+      <span className="flex gap-[3px]" aria-hidden>
+        {Array.from({ length: segmenti }, (_, i) => (
+          <span
+            key={i}
+            className="h-1.5 flex-1 rounded-full"
+            style={{ background: i < completate ? colore : "var(--linea)" }}
+          />
+        ))}
+      </span>
+      <span className="etichetta mt-1.5 block">
+        {totali === 0 ? "Fasi da definire" : `${completate} di ${totali} fasi completate`}
+      </span>
+    </span>
+  );
 }
