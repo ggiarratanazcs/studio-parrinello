@@ -76,7 +76,7 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
         </header>
 
         <main className="px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-12 lg:pb-16">
-          <div className="max-w-6xl">{children}</div>
+          <div className="w-full">{children}</div>
         </main>
       </div>
 
