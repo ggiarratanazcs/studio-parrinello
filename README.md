@@ -51,5 +51,5 @@ npm run dev
 
 ## Pubblicazione
 
-Il progetto è pensato per Vercel: importare il repository, impostare le variabili
-`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, poi Deploy.
+Il progetto è pensato per Vercel: importare il repository e premere Deploy. URL e chiave pubblica di Supabase sono già in `src/lib/supabase/config.ts`;
+le variabili `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, se impostate, hanno la precedenza.
