@@ -211,3 +211,48 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Barra fluttuante in fondo alle schede: sopra la navigazione su telefono, a filo nella modale */
+.piede-scheda {
+  bottom: calc(84px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .piede-scheda {
+    bottom: 24px;
+  }
+}
+[role="dialog"] .piede-scheda {
+  bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+/* Pallini delle azioni: ombra colorata con la tinta del pallino */
+.pallino {
+  box-shadow:
+    0 8px 18px -8px rgba(var(--ombra), 0.7),
+    0 2px 4px -2px rgba(var(--ombra), 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.pallino:hover {
+  box-shadow:
+    0 12px 24px -8px rgba(var(--ombra), 0.75),
+    0 3px 6px -3px rgba(var(--ombra), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.pallino:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 3px;
+}
+/* Il nome dell'azione sotto il pallino compare solo sui dispositivi touch (senza passaggio del mouse) */
+.etichetta-pallino {
+  display: none;
+  max-width: 5.5rem;
+  text-align: center;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: var(--tenue);
+}
+@media (pointer: coarse) {
+  .etichetta-pallino {
+    display: block;
+  }
+}

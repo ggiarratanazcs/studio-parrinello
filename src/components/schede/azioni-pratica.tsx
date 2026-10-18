@@ -1,37 +1,120 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ComponentType, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRightLeft, Loader2 } from "lucide-react";
+import {
+  Archive,
+  ArrowRightLeft,
+  Check,
+  FilePlus2,
+  Loader2,
+  PackageCheck,
+  RotateCcw,
+  Send,
+  Undo2,
+  X,
+  type LucideProps,
+} from "lucide-react";
 import { Messaggio } from "@/components/campo";
-import { LinkPulsante, Pulsante } from "@/components/ui";
 import { aggiornaStatoPrefattibilita, aggiornaStatoPreventivo, convertiInCommessa } from "@/lib/azioni";
 
-type Azione = { stato: string; etichetta: string };
+/* ── Tinte dei pallini: gradiente, ombra colorata, colore dell'icona ── */
+type Tinta = "bronzo" | "salvia" | "petrolio" | "mattone" | "ardesia" | "neutra";
+
+const TINTE: Record<Tinta, { sfondo: string; ombra: string; testo: string }> = {
+  bronzo: { sfondo: "linear-gradient(145deg,#c08a4c 0%,#8a5a2b 100%)", ombra: "138,90,43", testo: "#fff8ee" },
+  salvia: { sfondo: "linear-gradient(145deg,#8fae7b 0%,#5c7a4c 100%)", ombra: "92,122,76", testo: "#f6fbf2" },
+  petrolio: { sfondo: "linear-gradient(145deg,#6d90a3 0%,#3f5a6b 100%)", ombra: "63,90,107", testo: "#f2f8fb" },
+  mattone: { sfondo: "linear-gradient(145deg,#d3684f 0%,#9a3d2b 100%)", ombra: "154,61,43", testo: "#fff5f1" },
+  ardesia: { sfondo: "linear-gradient(145deg,#76879a 0%,#45535f 100%)", ombra: "69,83,95", testo: "#f3f6f9" },
+  neutra: { sfondo: "linear-gradient(145deg,#ffffff 0%,#ece5da 100%)", ombra: "43,42,40", testo: "#2b2a28" },
+};
+
+type Icona = ComponentType<LucideProps>;
+type Azione = { stato: string; etichetta: string; icona: Icona; tinta: Tinta };
 
 const AZIONI_PREVENTIVO: Record<string, Azione[]> = {
-  bozza: [{ stato: "inviato", etichetta: "Segna come inviato" }],
+  bozza: [{ stato: "inviato", etichetta: "Segna come inviato", icona: Send, tinta: "petrolio" }],
   inviato: [
-    { stato: "rifiutato", etichetta: "Segna come rifiutato" },
-    { stato: "bozza", etichetta: "Riporta in bozza" },
+    { stato: "rifiutato", etichetta: "Segna come rifiutato", icona: X, tinta: "mattone" },
+    { stato: "bozza", etichetta: "Riporta in bozza", icona: Undo2, tinta: "neutra" },
   ],
-  rifiutato: [{ stato: "inviato", etichetta: "Riapri" }],
+  rifiutato: [{ stato: "inviato", etichetta: "Riapri", icona: RotateCcw, tinta: "neutra" }],
   superato: [],
   accettato: [],
 };
 
 const AZIONI_PREFATTIBILITA: Record<string, Azione[]> = {
-  in_corso: [{ stato: "consegnata", etichetta: "Segna come consegnata" }],
+  in_corso: [{ stato: "consegnata", etichetta: "Segna come consegnata", icona: PackageCheck, tinta: "salvia" }],
   consegnata: [
-    { stato: "archiviata", etichetta: "Archivia" },
-    { stato: "in_corso", etichetta: "Riporta in lavorazione" },
+    { stato: "archiviata", etichetta: "Archivia", icona: Archive, tinta: "neutra" },
+    { stato: "in_corso", etichetta: "Riporta in lavorazione", icona: Undo2, tinta: "neutra" },
   ],
-  archiviata: [{ stato: "consegnata", etichetta: "Riapri" }],
+  archiviata: [{ stato: "consegnata", etichetta: "Riapri", icona: RotateCcw, tinta: "neutra" }],
   convertita: [],
 };
 
+/* ── Pallino: pulsante rotondo con icona, ombra colorata e suggerimento ── */
+const classePallino =
+  "pallino group relative grid size-11 shrink-0 place-items-center rounded-full transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50";
+
+function stilePallino(tinta: Tinta): CSSProperties {
+  const t = TINTE[tinta];
+  return {
+    background: t.sfondo,
+    color: t.testo,
+    ["--ombra" as string]: t.ombra,
+  };
+}
+
+function Pallino({
+  etichetta,
+  icona: I,
+  tinta,
+  onClick,
+  disabled,
+  inCorso,
+}: {
+  etichetta: string;
+  icona: Icona;
+  tinta: Tinta;
+  onClick: () => void;
+  disabled?: boolean;
+  inCorso?: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={etichetta}
+        data-suggerimento={etichetta}
+        className={classePallino}
+        style={stilePallino(tinta)}
+      >
+        {inCorso ? <Loader2 className="size-[18px] animate-spin" /> : <I className="size-[18px]" strokeWidth={2} />}
+      </button>
+      <span className="etichetta-pallino">{etichetta}</span>
+    </div>
+  );
+}
+
+function PallinoLink({ href, etichetta, icona: I, tinta }: { href: string; etichetta: string; icona: Icona; tinta: Tinta }) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <Link href={href} aria-label={etichetta} data-suggerimento={etichetta} className={classePallino} style={stilePallino(tinta)}>
+        <I className="size-[18px]" strokeWidth={2} />
+      </Link>
+      <span className="etichetta-pallino">{etichetta}</span>
+    </div>
+  );
+}
+
 /**
- * Azioni di una pratica: cambio di stato e trasformazione in commessa.
+ * Azioni di una pratica come pallini colorati con icona: cambio di stato e trasformazione in commessa.
+ * Il nome dell'azione compare nel suggerimento (e sotto il pallino sui dispositivi touch).
  * Dopo la trasformazione si apre la scheda della nuova commessa.
  */
 export function AzioniPratica({
@@ -80,42 +163,51 @@ export function AzioniPratica({
 
   return (
     <div className="flex w-full flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {conferma ? (
-          <>
-            <span className="text-[0.9375rem]">
-              {tipo === "preventivo"
-                ? "Il preventivo risulterà accettato e nascerà la commessa con le fasi delle voci."
-                : "Nascerà la commessa con le fasi tipiche dell'intervento."}
-            </span>
-            <Pulsante type="button" onClick={trasforma} disabled={inCorso}>
-              {inCorso && chi === "commessa" ? <Loader2 className="size-4 animate-spin" /> : null}
-              Conferma e crea commessa
-            </Pulsante>
-            <Pulsante type="button" variante="discreto" onClick={() => setConferma(false)} disabled={inCorso}>
-              Annulla
-            </Pulsante>
-          </>
-        ) : (
-          <>
-            <Pulsante type="button" onClick={() => setConferma(true)} disabled={inCorso}>
-              <ArrowRightLeft className="size-4" strokeWidth={1.8} />
-              Trasforma in commessa
-            </Pulsante>
-            {tipo === "prefattibilita" ? (
-              <LinkPulsante href={`/nuova/preventivo?da=${id}`} variante="secondario">
-                Crea preventivo
-              </LinkPulsante>
-            ) : null}
-            {azioni.map((a) => (
-              <Pulsante key={a.stato} type="button" variante="secondario" onClick={() => cambiaStato(a.stato)} disabled={inCorso}>
-                {inCorso && chi === a.stato ? <Loader2 className="size-4 animate-spin" /> : null}
-                {a.etichetta}
-              </Pulsante>
-            ))}
-          </>
-        )}
-      </div>
+      {conferma ? (
+        <div className="flex w-fit max-w-full flex-wrap items-center gap-3 rounded-[22px] border border-linea bg-superficie py-2 pl-5 pr-2 shadow-[0_12px_28px_-16px_rgba(43,42,40,0.45)]">
+          <span className="text-[0.9375rem]">
+            {tipo === "preventivo"
+              ? "Il preventivo risulterà accettato e nascerà la commessa con le fasi delle voci."
+              : "Nascerà la commessa con le fasi tipiche dell'intervento."}
+          </span>
+          <div className="flex items-center gap-2">
+            <Pallino
+              etichetta="Conferma e crea commessa"
+              icona={Check}
+              tinta="bronzo"
+              onClick={trasforma}
+              disabled={inCorso}
+              inCorso={inCorso && chi === "commessa"}
+            />
+            <Pallino etichetta="Annulla" icona={X} tinta="neutra" onClick={() => setConferma(false)} disabled={inCorso} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-start gap-3">
+          <Pallino
+            etichetta="Trasforma in commessa"
+            icona={ArrowRightLeft}
+            tinta="bronzo"
+            onClick={() => setConferma(true)}
+            disabled={inCorso}
+          />
+          {tipo === "prefattibilita" ? (
+            <PallinoLink href={`/nuova/preventivo?da=${id}`} etichetta="Crea preventivo" icona={FilePlus2} tinta="ardesia" />
+          ) : null}
+          {azioni.length ? <span aria-hidden className="mx-1 mt-2.5 h-6 w-px bg-linea-forte" /> : null}
+          {azioni.map((a) => (
+            <Pallino
+              key={a.stato}
+              etichetta={a.etichetta}
+              icona={a.icona}
+              tinta={a.tinta}
+              onClick={() => cambiaStato(a.stato)}
+              disabled={inCorso}
+              inCorso={inCorso && chi === a.stato}
+            />
+          ))}
+        </div>
+      )}
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
     </div>
   );

@@ -35,12 +35,7 @@ export async function SchedaPreventivo({ id }: { id: string }) {
           { etichetta: "Emesso il", valore: formattaData(p.data_emissione) },
           { etichetta: "Totale", valore: formattaEuro(t.totale) },
         ]}
-        azioni={
-          <div className="flex w-full flex-col gap-3">
-            <EsportaPreventivo id={p.id} numero={p.numero} />
-            <AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />
-          </div>
-        }
+        azioni={<AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />}
       />
 
       {p.commessa ? (
@@ -116,6 +111,8 @@ export async function SchedaPreventivo({ id }: { id: string }) {
           </Blocco>
         </div>
       </div>
+
+      <EsportaPreventivo id={p.id} numero={p.numero} totale={formattaEuro(t.totale)} />
     </>
   );
 }
