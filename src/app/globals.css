@@ -256,3 +256,26 @@ body {
     display: block;
   }
 }
+
+/* Riquadri informativi della testata delle schede, nello stile dei pallini */
+.tessera {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--superficie) 70%, #ffffff) 0%, var(--superficie) 100%);
+  border: 1px solid color-mix(in srgb, var(--linea) 70%, transparent);
+  box-shadow:
+    0 10px 24px -16px rgba(43, 42, 40, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.pallino-tessera {
+  color: var(--tenue);
+  background: linear-gradient(145deg, #ffffff 0%, #ece5da 100%);
+  box-shadow:
+    0 6px 14px -8px rgba(43, 42, 40, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.pallino-tessera.colorato {
+  color: #fff;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--tinta) 72%, #ffffff) 0%, var(--tinta) 100%);
+  box-shadow:
+    0 6px 14px -6px color-mix(in srgb, var(--tinta) 75%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}

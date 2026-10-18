@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, Minus } from "lucide-react";
-import { Badge, Pannello } from "@/components/ui";
+import { Calculator, Check, CircleDot, ClipboardCheck, Minus } from "lucide-react";
+import { Pannello } from "@/components/ui";
 import { leggiPrefattibilita } from "@/lib/dati";
 import { ESITI_PREFATTIBILITA, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, TITOLI_EDILIZI } from "@/lib/dominio";
 import { STATI_PREFATTIBILITA } from "@/lib/preventivo";
@@ -30,9 +30,9 @@ export async function SchedaPrefattibilita({ id }: { id: string }) {
         titolo={f.titolo ?? "Pre-fattibilità"}
         sottotitolo={[f.cliente?.denominazione, f.immobile?.comune].filter(Boolean).join(", ")}
         celle={[
-          { etichetta: "Stato", valore: <Badge etichetta={stato.etichetta} colore={stato.colore} /> },
-          { etichetta: "Esito", valore: ESITI_PREFATTIBILITA[f.esito ?? ""] ?? "—" },
-          { etichetta: "Costo opere", valore: formattaEuro(f.costo_opere_stimato) },
+          { etichetta: "Stato", valore: stato.etichetta, tinta: stato.colore, icona: CircleDot },
+          { etichetta: "Esito", valore: ESITI_PREFATTIBILITA[f.esito ?? ""] ?? "—", icona: ClipboardCheck },
+          { etichetta: "Costo opere", valore: formattaEuro(f.costo_opere_stimato), icona: Calculator },
         ]}
         azioni={<AzioniPratica tipo="prefattibilita" id={f.id} stato={f.stato} convertita={Boolean(f.commessa)} />}
       />

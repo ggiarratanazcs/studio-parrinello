@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { AvanzamentoFasi, Pannello, StatoBadge } from "@/components/ui";
+import { CalendarDays, CircleDot, Euro } from "lucide-react";
+import { AvanzamentoFasi, Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
 import { AMBITI, STATI_FASE, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
@@ -25,9 +26,9 @@ export async function SchedaCommessa({ id }: { id: string }) {
         titolo={c.titolo}
         sottotitolo={[cliente?.denominazione, immobile?.comune].filter(Boolean).join(", ")}
         celle={[
-          { etichetta: "Stato", valore: <StatoBadge stato={c.stato} /> },
-          { etichetta: "Apertura", valore: formattaData(c.data_apertura) },
-          { etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato) },
+          { etichetta: "Stato", valore: statoCommessa(c.stato).etichetta, tinta: statoCommessa(c.stato).colore, icona: CircleDot },
+          { etichetta: "Apertura", valore: formattaData(c.data_apertura), icona: CalendarDays },
+          { etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato), icona: Euro },
         ]}
       />
 

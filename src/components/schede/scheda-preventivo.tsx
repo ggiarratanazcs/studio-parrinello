@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Pannello } from "@/components/ui";
+import { CalendarDays, CircleDot, Euro } from "lucide-react";
+import { Pannello } from "@/components/ui";
 import { leggiPreventivo } from "@/lib/dati";
 import { TIPI_CLIENTE, TIPOLOGIE_INTERVENTO } from "@/lib/dominio";
 import { METODI_CALCOLO, STATI_PREVENTIVO, calcolaTotali } from "@/lib/preventivo";
@@ -31,9 +32,9 @@ export async function SchedaPreventivo({ id }: { id: string }) {
         titolo={p.titolo ?? p.oggetto ?? "Preventivo"}
         sottotitolo={[p.cliente?.denominazione, p.immobile?.comune].filter(Boolean).join(", ")}
         celle={[
-          { etichetta: "Stato", valore: <Badge etichetta={stato.etichetta} colore={stato.colore} /> },
-          { etichetta: "Emesso il", valore: formattaData(p.data_emissione) },
-          { etichetta: "Totale", valore: formattaEuro(t.totale) },
+          { etichetta: "Stato", valore: stato.etichetta, tinta: stato.colore, icona: CircleDot },
+          { etichetta: "Emesso il", valore: formattaData(p.data_emissione), icona: CalendarDays },
+          { etichetta: "Totale", valore: formattaEuro(t.totale), icona: Euro },
         ]}
         azioni={<AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />}
       />
