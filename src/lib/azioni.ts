@@ -108,3 +108,216 @@ export async function convertiInCommessa(origine: "preventivo" | "prefattibilita
   aggiornaElenchi();
   return { ok: true, id: data };
 }
+
+/* ── Commessa operativa ────────────────────────────────────────────────── */
+
+const STATI_COMMESSA_AMMESSI = ["attiva", "sospesa", "conclusa", "annullata"];
+const STATI_FASE_AMMESSI = ["da_avviare", "in_corso", "in_revisione", "completata", "sospesa", "annullata"];
+const TIPI_NOTA = ["nota", "telefonata", "riunione", "sopralluogo", "email", "decisione"];
+const DATA = /^\d{4}-\d{2}-\d{2}$/;
+/** Data di oggi a Siracusa (AAAA-MM-GG), indipendente dal fuso del server. */
+const oggiIso = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date());
+
+function numeroO(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+function dataO(v: unknown): string | null {
+  return typeof v === "string" && DATA.test(v) ? v : null;
+}
+
+/** Cambia lo stato della commessa; alla chiusura registra la data, alla riapertura la toglie. */
+export async function aggiornaStatoCommessa(id: string, stato: string): Promise<Esito> {
+  if (!STATI_COMMESSA_AMMESSI.includes(stato)) return { ok: false, errore: "Stato non valido." };
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const chiusa = stato === "conclusa" || stato === "annullata";
+  const { error } = await supabase
+    .from("commesse")
+    .update({ stato, data_chiusura: chiusa ? oggiIso() : null })
+    .eq("id", id);
+  if (error) return { ok: false, errore: "Non è stato possibile aggiornare lo stato della commessa." };
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+export type DatiFase = {
+  stato: string;
+  responsabile_id: string | null;
+  data_inizio_prev: string | null;
+  data_fine_prev: string | null;
+  onorario: string | number | null;
+  ore_budget: string | number | null;
+  avanzamento_pct: number;
+  note: string | null;
+};
+
+/**
+ * Aggiorna una fase. Le date effettive si registrano da sole: l'inizio quando la fase
+ * passa "in corso", la fine quando è completata (che porta anche l'avanzamento al 100%).
+ */
+export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
+  if (!STATI_FASE_AMMESSI.includes(dati.stato)) return { ok: false, errore: "Stato della fase non valido." };
+  const inizio = dataO(dati.data_inizio_prev);
+  const fine = dataO(dati.data_fine_prev);
+  if (inizio && fine && fine < inizio) return { ok: false, errore: "La fine prevista non può precedere l'inizio." };
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+
+  const { data: attuale, error: errLettura } = await supabase
+    .from("commesse_fasi")
+    .select("stato, data_inizio_eff, data_fine_eff")
+    .eq("id", id)
+    .maybeSingle();
+  if (errLettura || !attuale) return { ok: false, errore: "Fase non trovata." };
+
+  const avviata = ["in_corso", "in_revisione", "completata"].includes(dati.stato);
+  const completata = dati.stato === "completata";
+  const avanzamento = completata ? 100 : Math.max(0, Math.min(100, Math.round(Number(dati.avanzamento_pct) || 0)));
+
+  const { error } = await supabase
+    .from("commesse_fasi")
+    .update({
+      stato: dati.stato,
+      responsabile_id: dati.responsabile_id || null,
+      data_inizio_prev: inizio,
+      data_fine_prev: fine,
+      onorario: numeroO(dati.onorario),
+      ore_budget: numeroO(dati.ore_budget),
+      avanzamento_pct: avanzamento,
+      note: dati.note?.trim() || null,
+      data_inizio_eff: avviata ? (attuale.data_inizio_eff ?? oggiIso()) : null,
+      data_fine_eff: completata ? (attuale.data_fine_eff ?? oggiIso()) : null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, errore: "Non è stato possibile salvare la fase." };
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+/** Aggiunge una fase dal catalogo (o personalizzata con un nome) in fondo all'elenco. */
+export async function aggiungiFase(commessaId: string, scelta: { catalogoId?: string; nome?: string }): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+
+  let fase: { fase_catalogo_id: string | null; codice: string | null; nome: string };
+  if (scelta.catalogoId) {
+    const { data } = await supabase.from("fasi_catalogo").select("id, codice, nome").eq("id", scelta.catalogoId).maybeSingle();
+    if (!data) return { ok: false, errore: "Fase del catalogo non trovata." };
+    fase = { fase_catalogo_id: data.id, codice: data.codice, nome: data.nome };
+  } else {
+    const nome = scelta.nome?.trim();
+    if (!nome) return { ok: false, errore: "Scrivi il nome della fase." };
+    fase = { fase_catalogo_id: null, codice: null, nome };
+  }
+
+  const { data: ultime } = await supabase
+    .from("commesse_fasi")
+    .select("ordine")
+    .eq("commessa_id", commessaId)
+    .order("ordine", { ascending: false })
+    .limit(1);
+  const ordine = (ultime?.[0]?.ordine ?? 0) + 10;
+
+  const { data, error } = await supabase
+    .from("commesse_fasi")
+    .insert({ commessa_id: commessaId, ...fase, ordine })
+    .select("id")
+    .single();
+  if (error || !data) return { ok: false, errore: "Non è stato possibile aggiungere la fase." };
+  aggiornaElenchi();
+  return { ok: true, id: data.id };
+}
+
+export async function eliminaFase(id: string): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data, error } = await supabase.from("commesse_fasi").delete().eq("id", id).select("id");
+  if (error) return { ok: false, errore: "Non è stato possibile eliminare la fase." };
+  if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare le fasi." };
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+/** Sposta una fase di un posto in su o in giù scambiando l'ordine con la vicina. */
+export async function spostaFase(id: string, verso: "su" | "giu"): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: fase } = await supabase.from("commesse_fasi").select("id, commessa_id, ordine").eq("id", id).maybeSingle();
+  if (!fase) return { ok: false, errore: "Fase non trovata." };
+  const { data: tutte } = await supabase.from("commesse_fasi").select("id, ordine").eq("commessa_id", fase.commessa_id).order("ordine");
+  const elenco = tutte ?? [];
+  const i = elenco.findIndex((f) => f.id === id);
+  const j = verso === "su" ? i - 1 : i + 1;
+  if (i < 0 || j < 0 || j >= elenco.length) return { ok: true, id };
+  // Rinumera per evitare ordini uguali, poi scambia
+  const nuovi = elenco.map((f, k) => ({ id: f.id, ordine: (k + 1) * 10 }));
+  [nuovi[i].ordine, nuovi[j].ordine] = [nuovi[j].ordine, nuovi[i].ordine];
+  for (const f of nuovi) {
+    const { error } = await supabase.from("commesse_fasi").update({ ordine: f.ordine }).eq("id", f.id);
+    if (error) return { ok: false, errore: "Non è stato possibile riordinare le fasi." };
+  }
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+/* ── Team ── */
+
+export async function aggiungiMembro(commessaId: string, profiloId: string, ruolo: string): Promise<Esito> {
+  if (!profiloId) return { ok: false, errore: "Scegli una persona." };
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { error } = await supabase
+    .from("commesse_team")
+    .upsert({ commessa_id: commessaId, profilo_id: profiloId, ruolo_commessa: ruolo.trim() || null });
+  if (error) return { ok: false, errore: "Non è stato possibile aggiungere la persona al team." };
+  aggiornaElenchi();
+  return { ok: true, id: profiloId };
+}
+
+export async function rimuoviMembro(commessaId: string, profiloId: string): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data, error } = await supabase
+    .from("commesse_team")
+    .delete()
+    .eq("commessa_id", commessaId)
+    .eq("profilo_id", profiloId)
+    .select("profilo_id");
+  if (error) return { ok: false, errore: "Non è stato possibile togliere la persona dal team." };
+  if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono modificare il team." };
+  aggiornaElenchi();
+  return { ok: true, id: profiloId };
+}
+
+/* ── Diario ── */
+
+export async function aggiungiNota(commessaId: string, dati: { tipo: string; testo: string; data: string }): Promise<Esito> {
+  if (!TIPI_NOTA.includes(dati.tipo)) return { ok: false, errore: "Tipo di nota non valido." };
+  const testo = dati.testo.trim();
+  if (!testo) return { ok: false, errore: "Scrivi il testo della nota." };
+  const giorno = dataO(dati.data) ?? oggiIso();
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  // Se la data è oggi si registra anche l'ora; per date passate vale mezzogiorno
+  const quando = giorno === oggiIso() ? new Date().toISOString() : `${giorno}T12:00:00Z`;
+  const { data, error } = await supabase
+    .from("commesse_diario")
+    .insert({ commessa_id: commessaId, tipo: dati.tipo, testo, data_evento: quando })
+    .select("id")
+    .single();
+  if (error || !data) return { ok: false, errore: "Non è stato possibile salvare la nota." };
+  aggiornaElenchi();
+  return { ok: true, id: data.id };
+}
+
+export async function eliminaNota(id: string): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data, error } = await supabase.from("commesse_diario").delete().eq("id", id).select("id");
+  if (error) return { ok: false, errore: "Non è stato possibile eliminare la nota." };
+  if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare le note." };
+  aggiornaElenchi();
+  return { ok: true, id };
+}

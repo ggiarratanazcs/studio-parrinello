@@ -292,6 +292,13 @@ export type Database = {
             referencedRelation: "commesse"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "commesse_diario_autore_id_fkey"
+            columns: ["autore_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
         ]
       }
       commesse_fasi: {

@@ -2,9 +2,12 @@ import { notFound } from "next/navigation";
 import { CalendarDays, CircleDot, Euro } from "lucide-react";
 import { AvanzamentoFasi, Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
-import { AMBITI, STATI_FASE, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
+import { AMBITI, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
+import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
+import { FasiCommessa } from "./fasi-commessa";
+import { DiarioCommessa, TeamCommessa } from "./team-diario";
 
 export async function SchedaCommessa({ id }: { id: string }) {
   if (!UUID.test(id)) notFound();
@@ -30,6 +33,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
           { etichetta: "Apertura", valore: formattaData(c.data_apertura), icona: CalendarDays },
           { etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato), icona: Euro },
         ]}
+        azioni={<AzioniCommessa id={c.id} stato={c.stato} />}
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
@@ -38,28 +42,13 @@ export async function SchedaCommessa({ id }: { id: string }) {
             <h2 className="text-base font-medium">Fasi</h2>
             <AvanzamentoFasi completate={completate} totali={fasi.length} colore={statoCommessa(c.stato).colore} />
           </div>
-          {fasi.length === 0 ? (
-            <p className="px-5 py-8 text-[0.9375rem] text-tenue md:px-6">Nessuna fase definita.</p>
-          ) : (
-            <ol className="divide-y divide-linea">
-              {fasi.map((f) => (
-                <li key={f.id} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3.5 md:px-6">
-                  <span className="numeri etichetta">{f.codice}</span>
-                  <span className="min-w-0">
-                    <span className="block truncate">{f.nome}</span>
-                    {f.onorario || f.data_fine_prev ? (
-                      <span className="block text-sm text-tenue">
-                        {[f.onorario ? formattaEuro(f.onorario) : null, f.data_fine_prev ? `entro il ${formattaData(f.data_fine_prev)}` : null]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="text-sm text-tenue">{STATI_FASE[f.stato] ?? f.stato}</span>
-                </li>
-              ))}
-            </ol>
-          )}
+          <FasiCommessa
+            commessaId={c.id}
+            fasi={fasi}
+            profili={c.profiliStudio}
+            catalogo={c.catalogoFasi}
+            committenza={c.committenza}
+          />
           {c.descrizione ? (
             <div className="border-t border-linea px-5 py-5 md:px-6">
               <h3 className="etichetta">Descrizione</h3>
@@ -68,7 +57,20 @@ export async function SchedaCommessa({ id }: { id: string }) {
           ) : null}
         </Pannello>
 
-        <div className="flex flex-col gap-6">
+        <Pannello className="lg:col-start-1">
+          <div className="border-b border-linea px-5 py-4 md:px-6">
+            <h2 className="text-base font-medium">Diario di commessa</h2>
+            <p className="mt-0.5 text-sm text-tenue">Sopralluoghi, telefonate, riunioni e decisioni, in ordine di data.</p>
+          </div>
+          <DiarioCommessa commessaId={c.id} diario={c.diario ?? []} />
+        </Pannello>
+
+        <div className="flex flex-col gap-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <Pannello className="px-5 py-5">
+            <h2 className="mb-4 text-base font-medium">Team</h2>
+            <TeamCommessa commessaId={c.id} team={c.team ?? []} profili={c.profiliStudio} />
+          </Pannello>
+
           <Blocco titolo="Incarico">
             <Dato etichetta="Committenza" valore={c.committenza === "pubblica" ? "Pubblica" : "Privata"} />
             <Dato etichetta="Intervento" valore={TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""]} />

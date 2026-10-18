@@ -67,24 +67,34 @@ export type DatiProcedura = Awaited<ReturnType<typeof datiProcedura>>;
 /** Scheda completa di una commessa. Restituisce null se non esiste o non è visibile. */
 export async function leggiCommessa(id: string) {
   const supabase = await createClient();
-  const { data: commessa, error } = await supabase
-    .from("commesse")
-    .select(
-      `*,
-       cliente:clienti(*),
-       immobile:immobili(*, catasto:immobili_catasto(*)),
-       responsabile:profili!commesse_responsabile_id_fkey(nome, cognome),
-       fasi:commesse_fasi(*),
-       preventivi(id, numero),
-       prefattibilita(id, numero)`,
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const [risposta, profili, catalogo] = await Promise.all([
+    supabase
+      .from("commesse")
+      .select(
+        `*,
+         cliente:clienti(*),
+         immobile:immobili(*, catasto:immobili_catasto(*)),
+         responsabile:profili!commesse_responsabile_id_fkey(nome, cognome),
+         fasi:commesse_fasi(*, responsabile:profili(id, nome, cognome, iniziali)),
+         team:commesse_team(profilo_id, ruolo_commessa, profilo:profili(id, nome, cognome, iniziali, qualifica)),
+         diario:commesse_diario(id, tipo, testo, data_evento, autore:profili(nome, cognome, iniziali)),
+         preventivi(id, numero),
+         prefattibilita(id, numero)`,
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.from("profili").select("id, nome, cognome, iniziali, qualifica").eq("attivo", true).order("cognome"),
+    supabase.from("fasi_catalogo").select("id, codice, nome, ambito, ordine").eq("attiva", true).order("ordine"),
+  ]);
+  const { data: commessa, error } = risposta;
   if (error) throw new Error(`Impossibile leggere la commessa: ${error.message}`);
   if (!commessa) return null;
   commessa.fasi?.sort((a, b) => a.ordine - b.ordine);
-  return commessa;
+  commessa.diario?.sort((a, b) => b.data_evento.localeCompare(a.data_evento));
+  return { ...commessa, profiliStudio: profili.data ?? [], catalogoFasi: catalogo.data ?? [] };
 }
+
+export type Commessa = NonNullable<Awaited<ReturnType<typeof leggiCommessa>>>;
 
 export type Pratica = Tables<"v_pratiche">;
 
