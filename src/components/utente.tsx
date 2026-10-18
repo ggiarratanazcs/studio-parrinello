@@ -21,7 +21,7 @@ export async function UtenteLaterale() {
   const nome = [p.nome, p.cognome].filter(Boolean).join(" ") || p.email;
   return (
     <div className="blocco-utente flex items-center gap-2">
-      <Link href="/impostazioni" title={nome} className="flex min-w-0 flex-1 items-center gap-3 rounded-[12px] p-1 hover:bg-superficie-2">
+      <Link href="/impostazioni" data-suggerimento={`${nome} · Impostazioni`} data-suggerimento-lato="destra" data-suggerimento-se-barra-chiusa className="flex min-w-0 flex-1 items-center gap-3 rounded-[12px] p-1 hover:bg-superficie-2">
         <Avatar iniziali={p.iniziali} />
         <span className="solo-barra-aperta min-w-0">
           <span className="block truncate text-sm font-medium">{nome}</span>
@@ -31,7 +31,7 @@ export async function UtenteLaterale() {
       <form action="/auth/esci" method="post" className="solo-barra-aperta">
         <button
           type="submit"
-          title="Esci"
+          data-suggerimento="Esci"
           className="grid size-9 place-items-center rounded-[10px] text-tenue hover:bg-superficie-2 hover:text-inchiostro"
         >
           <LogOut className="size-[18px]" strokeWidth={1.6} />

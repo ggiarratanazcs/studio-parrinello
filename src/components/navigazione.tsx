@@ -24,7 +24,9 @@ function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
           <Link
             key={href}
             href={href}
-            title={etichetta}
+            data-suggerimento={etichetta}
+            data-suggerimento-lato="destra"
+            data-suggerimento-se-barra-chiusa
             aria-current={corrente ? "page" : undefined}
             className={cn(
               "voce-barra flex h-10 items-center gap-3 rounded-[12px] px-3 text-[0.9375rem] transition-[background-color,color,box-shadow] duration-200",

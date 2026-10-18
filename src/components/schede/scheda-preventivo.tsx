@@ -6,6 +6,7 @@ import { TIPI_CLIENTE, TIPOLOGIE_INTERVENTO } from "@/lib/dominio";
 import { METODI_CALCOLO, STATI_PREVENTIVO, calcolaTotali } from "@/lib/preventivo";
 import { formattaData, formattaEuro } from "@/lib/utils";
 import { AzioniPratica } from "./azioni-pratica";
+import { EsportaPreventivo } from "./esporta-preventivo";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
 
 export async function SchedaPreventivo({ id }: { id: string }) {
@@ -34,7 +35,12 @@ export async function SchedaPreventivo({ id }: { id: string }) {
           { etichetta: "Emesso il", valore: formattaData(p.data_emissione) },
           { etichetta: "Totale", valore: formattaEuro(t.totale) },
         ]}
-        azioni={<AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />}
+        azioni={
+          <div className="flex w-full flex-col gap-3">
+            <EsportaPreventivo id={p.id} numero={p.numero} />
+            <AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />
+          </div>
+        }
       />
 
       {p.commessa ? (

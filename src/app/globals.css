@@ -194,6 +194,15 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
+/* Suggerimenti: comparsa morbida */
+@keyframes suggerimento-entra {
+  from { opacity: 0; filter: blur(2px); }
+  to { opacity: 1; filter: blur(0); }
+}
+.suggerimento {
+  animation: suggerimento-entra 140ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

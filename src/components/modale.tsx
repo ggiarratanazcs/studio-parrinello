@@ -67,7 +67,8 @@ export function Modale({
           <a
             href={paginaIntera}
             className="grid size-9 place-items-center rounded-full bg-white/10 text-[#f3ece0] backdrop-blur-md transition-colors hover:bg-white/20"
-            title="Apri a pagina intera"
+            data-suggerimento="Apri a pagina intera"
+            data-suggerimento-lato="sotto"
           >
             <Maximize2 className="size-4" strokeWidth={1.8} />
             <span className="sr-only">Apri a pagina intera</span>
@@ -76,7 +77,8 @@ export function Modale({
             type="button"
             onClick={() => router.back()}
             className="grid size-9 place-items-center rounded-full bg-white/10 text-[#f3ece0] backdrop-blur-md transition-colors hover:bg-white/20"
-            title="Chiudi"
+            data-suggerimento="Chiudi (Esc)"
+            data-suggerimento-lato="sotto"
           >
             <X className="size-5" strokeWidth={1.8} />
             <span className="sr-only">Chiudi</span>

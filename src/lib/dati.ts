@@ -107,9 +107,9 @@ export async function leggiPreventivo(id: string) {
     .from("preventivi")
     .select(
       `*,
-       cliente:clienti(id, tipo, denominazione, email, telefono, pec),
+       cliente:clienti(id, tipo, denominazione, email, telefono, pec, codice_fiscale, partita_iva, indirizzo, cap, comune, provincia, codice_sdi, codice_ipa),
        immobile:immobili(id, denominazione, indirizzo, comune),
-       responsabile:profili!preventivi_responsabile_id_fkey(nome, cognome),
+       responsabile:profili!preventivi_responsabile_id_fkey(nome, cognome, qualifica),
        voci:preventivi_voci(*),
        commessa:commesse(id, codice),
        origine:prefattibilita!preventivi_prefattibilita_id_fkey(id, numero)`,

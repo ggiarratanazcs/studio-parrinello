@@ -33,7 +33,8 @@ export function PulsanteBarra() {
       type="button"
       onClick={alterna}
       aria-label={chiusa ? "Apri la barra laterale" : "Chiudi la barra laterale"}
-      title={chiusa ? "Apri la barra" : "Chiudi la barra"}
+      data-suggerimento={chiusa ? "Apri la barra" : "Chiudi la barra"}
+      data-suggerimento-lato="destra"
       className="absolute -right-3.5 top-9 z-10 grid size-7 place-items-center rounded-full border border-linea bg-superficie text-tenue shadow-[0_4px_12px_-4px_rgba(43,42,40,0.35)] transition-colors hover:text-inchiostro"
     >
       <ChevronsLeft className={`size-4 transition-transform duration-300 ${chiusa ? "rotate-180" : ""}`} strokeWidth={1.8} />

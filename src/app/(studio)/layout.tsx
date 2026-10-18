@@ -16,7 +16,7 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
       <aside className="barra-laterale solo-laterale sticky top-0 hidden h-dvh shrink-0 p-3 lg:block">
         <div className="relative flex h-full flex-col rounded-[22px] border border-linea/70 bg-superficie px-3 py-5 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.35),0_8px_16px_-12px_rgba(43,42,40,0.2)]">
           <PulsanteBarra />
-          <Link href="/" title="Panoramica" className="mb-8 flex items-center gap-3 px-1.5">
+          <Link href="/" data-suggerimento="Panoramica" data-suggerimento-lato="destra" data-suggerimento-se-barra-chiusa className="mb-8 flex items-center gap-3 px-1.5">
             <Monogramma className="h-9 shrink-0" />
             <span className="solo-barra-aperta leading-tight">
               <span className="block whitespace-nowrap text-[1.0625rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>

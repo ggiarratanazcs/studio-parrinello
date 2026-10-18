@@ -293,6 +293,7 @@ export function ProceduraNuovoPreventivo({
                     onClick={() => setVoci(righe.filter((x) => x.chiave !== v.chiave))}
                     className="grid size-10 place-items-center rounded-m text-tenue hover:bg-superficie-2 hover:text-inchiostro md:order-last"
                     aria-label={`Togli ${v.descrizione || "voce"}`}
+                    data-suggerimento="Togli la voce"
                   >
                     <X className="size-4" />
                   </button>

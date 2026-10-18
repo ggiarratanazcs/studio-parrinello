@@ -103,3 +103,12 @@ export function AvanzamentoFasi({
     </span>
   );
 }
+
+/** Collegamento semplice (non intercettato dal router) con l'aspetto di un pulsante: per file e PDF. */
+export function AncoraPulsante({
+  variante = "primario",
+  className,
+  ...props
+}: ComponentProps<"a"> & { variante?: VariantePulsante }) {
+  return <a className={cn(basePulsante, stiliPulsante[variante], className)} {...props} />;
+}

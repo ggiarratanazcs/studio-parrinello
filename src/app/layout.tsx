@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { TEMA_PREDEFINITO } from "@/lib/temi";
 import { IMPAGINAZIONE_PREDEFINITA, SCRIPT_IMPAGINAZIONE } from "@/lib/impaginazione";
+import { Suggerimenti } from "@/components/suggerimenti";
 import "./globals.css";
 
 const archivo = localFont({
@@ -59,7 +60,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: SCRIPT_IMPAGINAZIONE }} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <Suggerimenti />
+      </body>
     </html>
   );
 }
