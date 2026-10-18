@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Search } from "lucide-react";
+import { SceltaLocalita } from "./scelta-localita";
 import { Campo, Messaggio, Segmenti } from "@/components/campo";
 import { TIPI_CLIENTE } from "@/lib/dominio";
 import type { DatiProcedura } from "@/lib/dati";
@@ -346,8 +347,12 @@ function FormCliente({
         <Campo etichetta="PEC" id="c-pec" type="email" value={c.pec} onChange={set("pec")} />
         <Campo etichetta="Email" id="c-email" type="email" value={c.email} onChange={set("email")} />
         <Campo etichetta="Telefono" id="c-tel" type="tel" value={c.telefono} onChange={set("telefono")} />
-        <Campo etichetta="Comune" id="c-comune" value={c.comune} onChange={set("comune")} />
-        <Campo etichetta="Provincia" id="c-prov" value={c.provincia} onChange={set("provincia")} maxLength={2} className="uppercase" placeholder="SR" />
+        <SceltaLocalita
+          prefisso="c"
+          mostraCap={false}
+          valore={{ provincia: c.provincia, comune: c.comune }}
+          onCambia={(v) => onCambia({ ...c, provincia: v.provincia, comune: v.comune })}
+        />
       </div>
     </div>
   );
@@ -372,13 +377,14 @@ function FormImmobile({
         <div className="md:col-span-2">
           <Campo etichetta="Nome dell'immobile" id="i-nome" value={i.denominazione} onChange={set("denominazione")} placeholder="Villa M" aiuto="Facoltativo: il nome con cui lo chiamate in studio." />
         </div>
+        <SceltaLocalita
+          prefisso="i"
+          valore={{ provincia: i.provincia, comune: i.comune, cap: i.cap }}
+          onCambia={(v) => onCambia({ ...i, ...v })}
+          errore={errori.comune_immobile}
+        />
         <div className="md:col-span-2">
-          <Campo etichetta="Indirizzo" id="i-ind" obbligatorio value={i.indirizzo} onChange={set("indirizzo")} errore={errori.indirizzo} placeholder="Via Temistocle 2" />
-        </div>
-        <Campo etichetta="Comune" id="i-comune" obbligatorio value={i.comune} onChange={set("comune")} errore={errori.comune_immobile} placeholder="Siracusa" />
-        <div className="grid grid-cols-2 gap-3">
-          <Campo etichetta="Provincia" id="i-prov" value={i.provincia} onChange={set("provincia")} maxLength={2} className="uppercase" placeholder="SR" />
-          <Campo etichetta="CAP" id="i-cap" value={i.cap} onChange={set("cap")} inputMode="numeric" maxLength={5} />
+          <Campo etichetta="Indirizzo e civico" id="i-ind" obbligatorio value={i.indirizzo} onChange={set("indirizzo")} errore={errori.indirizzo} placeholder="Via Temistocle 2" />
         </div>
         <Campo etichetta="Zona urbanistica" id="i-zona" value={i.zona_urbanistica} onChange={set("zona_urbanistica")} placeholder="B2" />
       </div>
