@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Monogramma } from "@/components/monogramma";
 import { NavLaterale, NavMobile, NavSuperiore } from "@/components/navigazione";
 import { UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/utente";
+import { PulsanteBarra } from "@/components/pulsante-barra";
 
 /**
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
@@ -11,24 +12,27 @@ import { UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/ute
 export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
   return (
     <div className="relative min-h-dvh lg:flex">
-      {/* ── Impaginazione "laterale": barra a sinistra, schermi grandi ── */}
-      <aside className="solo-laterale sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-linea bg-superficie-2 px-4 py-6 lg:flex">
-        <Link href="/" className="mb-10 flex items-center gap-3 px-2">
-          <Monogramma className="h-9" />
-          <span className="leading-tight">
-            <span className="block text-[1.0625rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>
-              Studio Parrinello
+      {/* ── Impaginazione "laterale": barra fluttuante a sinistra, richiudibile ── */}
+      <aside className="barra-laterale solo-laterale sticky top-0 hidden h-dvh shrink-0 p-3 lg:block">
+        <div className="relative flex h-full flex-col rounded-[22px] border border-linea/70 bg-superficie px-3 py-5 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.35),0_8px_16px_-12px_rgba(43,42,40,0.2)]">
+          <PulsanteBarra />
+          <Link href="/" title="Panoramica" className="mb-8 flex items-center gap-3 px-1.5">
+            <Monogramma className="h-9 shrink-0" />
+            <span className="solo-barra-aperta leading-tight">
+              <span className="block whitespace-nowrap text-[1.0625rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>
+                Studio Parrinello
+              </span>
+              <span className="etichetta block whitespace-nowrap">Architettura e design</span>
             </span>
-            <span className="etichetta block">Architettura e design</span>
-          </span>
-        </Link>
+          </Link>
 
-        <NavLaterale />
+          <NavLaterale />
 
-        <div className="mt-auto border-t border-linea pt-4">
-          <Suspense fallback={<UtenteSegnaposto />}>
-            <UtenteLaterale />
-          </Suspense>
+          <div className="mt-auto border-t border-linea pt-3">
+            <Suspense fallback={<UtenteSegnaposto />}>
+              <UtenteLaterale />
+            </Suspense>
+          </div>
         </div>
       </aside>
 
@@ -75,7 +79,7 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-12 lg:pb-16">
+        <main className="px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-10 lg:pb-16">
           <div className="w-full">{children}</div>
         </main>
       </div>

@@ -17,30 +17,24 @@ function attiva(pathname: string | null, href: string) {
 /** Navigazione verticale per schermi grandi. */
 function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
   return (
-    <nav aria-label="Sezioni" className="flex flex-col gap-0.5">
+    <nav aria-label="Sezioni" className="flex flex-col gap-1">
       {VOCI.filter((v) => v.laterale).map(({ href, etichetta, icona: Icona }) => {
         const corrente = attiva(pathname, href);
         return (
           <Link
             key={href}
             href={href}
+            title={etichetta}
             aria-current={corrente ? "page" : undefined}
             className={cn(
-              "group relative flex items-center gap-3 rounded-m px-3 py-2 text-[0.9375rem] transition-colors",
+              "voce-barra flex h-10 items-center gap-3 rounded-[12px] px-3 text-[0.9375rem] transition-[background-color,color,box-shadow] duration-200",
               corrente
-                ? "bg-superficie text-inchiostro"
-                : "text-inchiostro-2 hover:bg-superficie/60 hover:text-inchiostro",
+                ? "bg-inchiostro text-superficie shadow-[0_6px_16px_-8px_rgba(43,42,40,0.6)]"
+                : "text-inchiostro-2 hover:bg-superficie-2 hover:text-inchiostro",
             )}
           >
-            <span
-              aria-hidden
-              className={cn(
-                "absolute inset-y-2 left-0 w-[2px] rounded-full bg-accento transition-opacity",
-                corrente ? "opacity-100" : "opacity-0",
-              )}
-            />
-            <Icona className="size-[18px] shrink-0" strokeWidth={1.6} />
-            {etichetta}
+            <Icona className="size-[18px] shrink-0" strokeWidth={corrente ? 1.9 : 1.6} />
+            <span className="solo-barra-aperta truncate">{etichetta}</span>
           </Link>
         );
       })}

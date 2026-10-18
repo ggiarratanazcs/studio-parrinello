@@ -20,5 +20,7 @@ export type IdImpaginazione = (typeof IMPAGINAZIONI)[number]["id"];
 export const IMPAGINAZIONE_PREDEFINITA: IdImpaginazione = "laterale";
 export const CHIAVE_IMPAGINAZIONE = "sp-impaginazione";
 
-/** Script eseguito prima del rendering per evitare il cambio visibile di impaginazione. */
-export const SCRIPT_IMPAGINAZIONE = `try{var v=localStorage.getItem("${CHIAVE_IMPAGINAZIONE}");if(v==="materia"||v==="laterale")document.documentElement.dataset.impaginazione=v}catch(e){}`;
+export const CHIAVE_BARRA = "sp-barra";
+
+/** Script eseguito prima del rendering: applica impaginazione e stato della barra senza sfarfallio. */
+export const SCRIPT_IMPAGINAZIONE = `try{var d=document.documentElement,v=localStorage.getItem("${CHIAVE_IMPAGINAZIONE}");if(v==="materia"||v==="laterale")d.dataset.impaginazione=v;if(localStorage.getItem("${CHIAVE_BARRA}")==="chiusa")d.dataset.barra="chiusa"}catch(e){}`;

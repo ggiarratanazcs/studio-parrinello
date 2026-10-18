@@ -11,14 +11,25 @@ import { Monogramma } from "@/components/monogramma";
  * fuori; la chiusura torna alla pagina precedente (l'indirizzo resta condivisibile).
  * Su telefono occupa tutto lo schermo.
  */
+/** Colore di fondo della testata per tipo di scheda (stesso disegno, materia diversa). */
+const FONDI = {
+  commessa: { base: "#2f3a2b", rgb: "47,58,43", riflesso: "120,140,96" },      // oliva scuro
+  preventivo: { base: "#4a321c", rgb: "74,50,28", riflesso: "176,124,64" },    // bronzo brunito
+  prefattibilita: { base: "#2b3540", rgb: "43,53,64", riflesso: "110,130,150" }, // ardesia
+} as const;
+
+export type TipoScheda = keyof typeof FONDI;
+
 export function Modale({
   children,
   paginaIntera,
   etichetta,
+  tipo,
 }: {
   children: ReactNode;
   paginaIntera: string;
   etichetta: string;
+  tipo: TipoScheda;
 }) {
   const router = useRouter();
   const pannello = useRef<HTMLDivElement>(null);
@@ -52,7 +63,7 @@ export function Modale({
         tabIndex={-1}
         className="relative flex h-full w-full max-w-[1400px] flex-col overflow-hidden bg-sfondo outline-none md:h-auto md:max-h-full md:rounded-l md:shadow-[0_30px_80px_-24px_rgba(43,42,40,0.55)]"
       >
-        <TestataModale etichetta={etichetta}>
+        <TestataModale etichetta={etichetta} tipo={tipo}>
           <a
             href={paginaIntera}
             className="grid size-9 place-items-center rounded-full bg-white/10 text-[#f3ece0] backdrop-blur-md transition-colors hover:bg-white/20"
@@ -78,12 +89,13 @@ export function Modale({
 }
 
 /**
- * Testata: fondo antracite con il prospetto di una villa disegnato a linee chiare,
+ * Testata: fondo colorato per tipo di scheda con il prospetto di una villa disegnato a linee chiare,
  * velatura in bronzo verso sinistra per la leggibilità, monogramma grande in trasparenza.
  */
-function TestataModale({ etichetta, children }: { etichetta: string; children: ReactNode }) {
+function TestataModale({ etichetta, tipo, children }: { etichetta: string; tipo: TipoScheda; children: ReactNode }) {
+  const f = FONDI[tipo];
   return (
-    <div className="pt-sicuro relative shrink-0 overflow-hidden bg-[#2b2a28] text-[#f3ece0]">
+    <div className="pt-sicuro relative shrink-0 overflow-hidden text-[#f3ece0]" style={{ background: f.base }}>
       {/* Prospetto architettonico */}
       <div
         aria-hidden
@@ -96,7 +108,7 @@ function TestataModale({ etichetta, children }: { etichetta: string; children: R
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(43,42,40,0.94) 0%, rgba(43,42,40,0.72) 32%, rgba(43,42,40,0.15) 70%, rgba(138,90,43,0.18) 100%)",
+            `linear-gradient(90deg, rgba(${f.rgb},0.95) 0%, rgba(${f.rgb},0.7) 32%, rgba(${f.rgb},0.12) 70%, rgba(${f.riflesso},0.22) 100%)`,
         }}
       />
       {/* Monogramma in trasparenza */}

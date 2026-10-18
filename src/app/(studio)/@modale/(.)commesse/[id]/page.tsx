@@ -6,7 +6,7 @@ import { SchedaSegnaposto } from "@/components/schede/comuni";
 /** Scheda aperta in finestra modale sopra l'elenco. */
 export default function ModaleSchedaCommessa({ params }: PageProps<"/commesse/[id]">) {
   return (
-    <Suspense fallback={<Modale paginaIntera="/commesse" etichetta="Commessa"><SchedaSegnaposto /></Modale>}>
+    <Suspense fallback={<Modale paginaIntera="/commesse" etichetta="Commessa" tipo="commessa"><SchedaSegnaposto /></Modale>}>
       <Contenuto params={params} />
     </Suspense>
   );
@@ -15,7 +15,7 @@ export default function ModaleSchedaCommessa({ params }: PageProps<"/commesse/[i
 async function Contenuto({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
-    <Modale paginaIntera={`/commesse/${id}`} etichetta="Commessa">
+    <Modale paginaIntera={`/commesse/${id}`} etichetta="Commessa" tipo="commessa">
       <Suspense fallback={<SchedaSegnaposto />}>
         <SchedaCommessa id={id} />
       </Suspense>

@@ -94,6 +94,28 @@
   font-weight: 400;
 }
 
+/* =====================================================================
+   BARRA LATERALE RICHIUDIBILE
+   Aperta: 272px con etichette. Chiusa: solo icone (data-barra="chiusa" su <html>).
+   ===================================================================== */
+.barra-laterale {
+  width: 272px;
+  transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-barra="chiusa"] .barra-laterale {
+  width: 88px;
+}
+[data-barra="chiusa"] .barra-laterale .solo-barra-aperta {
+  display: none;
+}
+[data-barra="chiusa"] .barra-laterale .voce-barra {
+  justify-content: center;
+  padding-inline: 0;
+}
+[data-barra="chiusa"] .barra-laterale .blocco-utente {
+  justify-content: center;
+}
+
 @theme inline {
   --color-sfondo: var(--sfondo);
   --color-superficie: var(--superficie);
