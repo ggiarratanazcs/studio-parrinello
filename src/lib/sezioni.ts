@@ -5,7 +5,7 @@ import {
   Ellipsis,
   Files,
   LandPlot,
-  PanelsTopLeft,
+  House,
   ReceiptText,
   Settings2,
   Users,
@@ -23,10 +23,12 @@ export type Voce = {
   superiore: boolean;
   /** Barra laterale */
   laterale: boolean;
+  /** Mostrata solo con l'icona (il nome resta nel suggerimento e per gli screen reader) */
+  soloIcona?: boolean;
 };
 
 export const VOCI: Voce[] = [
-  { href: "/", etichetta: "Panoramica", icona: PanelsTopLeft, mobile: true, superiore: true, laterale: true },
+  { href: "/", etichetta: "Home", icona: House, soloIcona: true, mobile: true, superiore: true, laterale: true },
   { href: "/preventivi", etichetta: "Preventivi", icona: ReceiptText, mobile: true, superiore: true, laterale: true },
   { href: "/prefattibilita", etichetta: "Pre-fattibilità", breve: "Fattibilità", icona: LandPlot, mobile: true, superiore: true, laterale: true },
   { href: "/commesse", etichetta: "Commesse", icona: DraftingCompass, mobile: true, superiore: true, laterale: true },

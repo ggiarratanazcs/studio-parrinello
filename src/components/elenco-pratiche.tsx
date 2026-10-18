@@ -41,12 +41,12 @@ export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefa
   const tasso = chiuse ? Math.round((proseguite / chiuse) * 100) : null;
 
   const nuovo = (
-    <PulsanteNuovo href={t.href}>{t.nuovo}</PulsanteNuovo>
+    <PulsanteNuovo href={t.href} tipo={tipo}>{t.nuovo}</PulsanteNuovo>
   );
 
   return (
     <>
-      <Cartiglio
+      <Cartiglio tipo={tipo}
         titolo={t.titolo}
         sottotitolo={t.sottotitolo}
         celle={[

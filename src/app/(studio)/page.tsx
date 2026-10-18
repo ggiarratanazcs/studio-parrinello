@@ -1,29 +1,29 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Activity, Euro, FolderOpen } from "lucide-react";
+import { Activity, Euro, FolderOpen, House } from "lucide-react";
 import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
 import { formattaEuro } from "@/lib/utils";
 
-export const metadata = { title: "Panoramica" };
+export const metadata = { title: { absolute: "Studio Parrinello" } };
 
 const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
 
 const azioni = (
   <>
-    <PulsanteNuovo href="/nuova/preventivo">Preventivo</PulsanteNuovo>
-    <PulsanteNuovo href="/nuova/prefattibilita" secondario>
+    <PulsanteNuovo href="/nuova/preventivo" tipo="preventivo">Preventivo</PulsanteNuovo>
+    <PulsanteNuovo href="/nuova/prefattibilita" tipo="prefattibilita">
       Pre-fattibilità
     </PulsanteNuovo>
-    <PulsanteNuovo href="/nuova/commessa" secondario>
+    <PulsanteNuovo href="/nuova/commessa" tipo="commessa">
       Commessa
     </PulsanteNuovo>
   </>
 );
 
-export default function Panoramica() {
+export default function HomePage() {
   return (
     <Suspense fallback={<PanoramicaSegnaposto />}>
       <PanoramicaContenuto />
@@ -68,7 +68,7 @@ async function PanoramicaContenuto() {
   return (
     <>
       <Cartiglio
-        titolo="Panoramica"
+        titolo="Home" icona={House}
         sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione."
         celle={[
           { etichetta: "Commesse aperte", valore: aperte.length, icona: FolderOpen },
@@ -149,7 +149,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio titolo="Panoramica" sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione." azioni={azioni} />
+      <Cartiglio titolo="Home" icona={House} sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione." azioni={azioni} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />

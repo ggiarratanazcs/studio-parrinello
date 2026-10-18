@@ -1,6 +1,7 @@
 import type { ComponentProps, ComponentType, CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { Plus, type LucideProps } from "lucide-react";
+import { FONDI, type TipoFondo } from "@/lib/fondi";
 import { cn } from "@/lib/utils";
 
 /** Riquadro informativo: pallino con icona, etichetta e valore. */
@@ -48,19 +49,22 @@ export function Tessere({ celle, className }: { celle: Cella[]; className?: stri
 
 /**
  * Pulsante a pillola per creare qualcosa di nuovo, coordinato con pallini e riquadri:
- * il "+" sta in un piccolo pallino. Primario in bronzo, secondario perla.
+ * il "+" sta in un piccolo pallino; il colore è quello della sezione (come nelle modali).
  */
 export function PulsanteNuovo({
   href,
   children,
-  secondario,
+  tipo,
   className,
+  style,
   ...props
-}: Omit<ComponentProps<typeof Link>, "href"> & { href: string; secondario?: boolean }) {
+}: Omit<ComponentProps<typeof Link>, "href"> & { href: string; tipo: TipoFondo }) {
+  const f = FONDI[tipo];
   return (
     <Link
       href={href}
-      className={cn("pulsante-nuovo inline-flex h-11 items-center gap-2.5 rounded-full py-1 pl-1.5 pr-5 text-[0.9375rem] font-medium", secondario ? "perla" : "bronzo", className)}
+      className={cn("pulsante-nuovo inline-flex h-11 items-center gap-2.5 rounded-full py-1 pl-1.5 pr-5 text-[0.9375rem] font-medium", className)}
+      style={{ background: `linear-gradient(145deg, ${f.chiaro} 0%, ${f.base} 100%)`, ["--ombra" as string]: f.rgb, ...style }}
       {...props}
     >
       <span aria-hidden className="pallino-piu grid size-8 place-items-center rounded-full">

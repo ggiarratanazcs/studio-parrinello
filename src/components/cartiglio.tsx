@@ -1,33 +1,80 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
+import type { LucideProps } from "lucide-react";
+import { Monogramma } from "@/components/monogramma";
 import { Tessere, type Cella } from "@/components/tessere";
+import { FONDI, type TipoFondo } from "@/lib/fondi";
 
 export type { Cella };
 
 /**
- * Intestazione di pagina: titolo a sinistra, riquadri informativi e azioni a destra.
+ * Intestazione di pagina: testata scura con la pianta del Teatro Greco di Siracusa disegnata
+ * a linee chiare (colore per sezione, come le modali), titolo e sottotitolo in chiaro;
+ * sotto, le azioni a sinistra e i riquadri informativi a destra, sollevati sul bordo della testata.
  */
 export function Cartiglio({
   titolo,
   sottotitolo,
   celle = [],
   azioni,
+  tipo = "studio",
+  sopratitolo = "Studio Parrinello",
+  icona: IconaTitolo,
 }: {
   titolo: string;
   sottotitolo?: string;
   celle?: Cella[];
   azioni?: ReactNode;
+  tipo?: TipoFondo;
+  sopratitolo?: string;
+  /** Al posto del titolo scritto (es. la casa per la home): il titolo resta per gli screen reader. */
+  icona?: ComponentType<LucideProps>;
 }) {
+  const f = FONDI[tipo];
   return (
-    <header className="mb-8 flex flex-col gap-6 border-b border-linea-forte pb-6 md:mb-10 md:flex-row md:items-end md:justify-between">
-      <div className="max-w-2xl">
-        <h1 className="titolo-display text-[2rem] md:text-[2.75rem]">{titolo}</h1>
-        {sottotitolo ? <p className="mt-3 text-[0.9375rem] text-tenue">{sottotitolo}</p> : null}
+    <header className="mb-8 md:mb-10">
+      <div
+        className="testata-pagina relative overflow-hidden rounded-[26px] text-[#f3ece0] shadow-[0_24px_50px_-28px_rgba(43,42,40,0.7)]"
+        style={{ background: f.base }}
+      >
+        {/* Disegno della sezione */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-90 md:bg-[position:right_center]"
+          style={{ backgroundImage: `url(${f.disegno})` }}
+        />
+        {/* Velatura: piena a sinistra per il testo, si apre sul disegno a destra */}
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(90deg, rgba(${f.rgb},0.97) 0%, rgba(${f.rgb},0.82) 34%, rgba(${f.rgb},0.25) 68%, rgba(${f.riflesso},0.18) 100%)`,
+          }}
+        />
+        {/* Su telefono il disegno passa sotto il testo: velatura più piena */}
+        <div aria-hidden className="absolute inset-0 md:hidden" style={{ background: `rgba(${f.rgb},0.55)` }} />
+        <div className="relative flex min-h-44 flex-col justify-end px-6 pb-7 pt-8 md:min-h-56 md:px-10 md:pb-10">
+          <p className="flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#f3ece0]/60">
+            <Monogramma titolo="" className="h-4 text-[#f3ece0]/70" />
+            {sopratitolo}
+          </p>
+          {IconaTitolo ? (
+            <h1 className="mt-3">
+              <IconaTitolo aria-hidden className="size-12 text-[#f6efe3] md:size-14" strokeWidth={1} />
+              <span className="sr-only">{titolo}</span>
+            </h1>
+          ) : (
+            <h1 className="titolo-pagina mt-3">{titolo}</h1>
+          )}
+          {sottotitolo ? <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-[#f3ece0]/70">{sottotitolo}</p> : null}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-4 md:items-end">
-        {celle.length > 0 ? <Tessere celle={celle} className="md:justify-end" /> : null}
-        {azioni ? <div className="flex flex-wrap gap-2 md:justify-end">{azioni}</div> : null}
-      </div>
+      {celle.length > 0 || azioni ? (
+        <div className="mt-4 flex flex-col gap-4 md:flex-row-reverse md:items-start md:justify-between md:px-6">
+          {celle.length > 0 ? <Tessere celle={celle} className="relative z-10 md:-mt-12 md:justify-end" /> : null}
+          {azioni ? <div className="flex flex-wrap gap-2 md:pt-1">{azioni}</div> : null}
+        </div>
+      ) : null}
     </header>
   );
 }

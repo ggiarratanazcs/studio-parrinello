@@ -10,7 +10,7 @@ export const metadata = { title: "Nuovo preventivo" };
 export default function PaginaNuovoPreventivo({ searchParams }: PageProps<"/nuova/preventivo">) {
   return (
     <>
-      <Cartiglio
+      <Cartiglio tipo="preventivo"
         titolo="Nuovo preventivo"
         sottotitolo="Riceve un numero P-anno-progressivo. Quando il committente accetta, lo trasformi in commessa."
       />

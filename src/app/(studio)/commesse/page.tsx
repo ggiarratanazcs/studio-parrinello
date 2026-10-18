@@ -11,7 +11,7 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 export const metadata = { title: "Commesse" };
 
 const nuovaCommessa = (
-  <PulsanteNuovo href="/nuova/commessa">Nuova commessa</PulsanteNuovo>
+  <PulsanteNuovo href="/nuova/commessa" tipo="commessa">Nuova commessa</PulsanteNuovo>
 );
 
 /** Colonne della tabella su schermi grandi (impaginazione laterale). */
@@ -22,7 +22,7 @@ export default function PaginaCommesse() {
     <Suspense
       fallback={
         <>
-          <Cartiglio titolo="Commesse" azioni={nuovaCommessa} />
+          <Cartiglio tipo="commessa" titolo="Commesse" azioni={nuovaCommessa} />
           <Pannello className="p-6">
             <Scheletro className="h-4 w-full" />
             <Scheletro className="mt-4 h-4 w-5/6" />
@@ -42,7 +42,7 @@ async function ElencoCommesse() {
 
   return (
     <>
-      <Cartiglio
+      <Cartiglio tipo="commessa"
         titolo="Commesse"
         sottotitolo="Ogni incarico dello studio, dal primo contatto alla chiusura."
         celle={[

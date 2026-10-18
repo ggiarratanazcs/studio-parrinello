@@ -280,40 +280,37 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* Pulsanti "nuovo" a pillola, con il + in un pallino */
+/* Pulsanti "nuovo" a pillola, con il + in un pallino; colore della sezione impostato dal componente */
 .pulsante-nuovo {
+  color: #fbf6ee;
+  box-shadow:
+    0 10px 22px -10px rgba(var(--ombra), 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .pulsante-nuovo:hover {
   transform: translateY(-2px);
-}
-.pulsante-nuovo.bronzo {
-  color: #fff8ee;
-  background: linear-gradient(145deg, #a8763f 0%, #8a5a2b 100%);
   box-shadow:
-    0 10px 22px -10px rgba(138, 90, 43, 0.75),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 14px 26px -10px rgba(var(--ombra), 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
-.pulsante-nuovo.bronzo .pallino-piu {
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.pulsante-nuovo.perla {
-  color: var(--inchiostro);
-  background: linear-gradient(160deg, color-mix(in srgb, var(--superficie) 70%, #ffffff) 0%, var(--superficie) 100%);
-  border: 1px solid color-mix(in srgb, var(--linea) 70%, transparent);
-  box-shadow:
-    0 10px 24px -16px rgba(43, 42, 40, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-.pulsante-nuovo.perla .pallino-piu {
-  color: var(--accento);
-  background: linear-gradient(145deg, #ffffff 0%, #ece5da 100%);
-  box-shadow:
-    0 4px 10px -6px rgba(43, 42, 40, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+.pulsante-nuovo .pallino-piu {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 .pulsante-nuovo:focus-visible {
   outline: 2px solid var(--accento);
   outline-offset: 3px;
+}
+
+/* Titolo delle pagine nella testata scura: lettering tecnico del cartiglio (maiuscolo, largo, spaziato) */
+.titolo-pagina {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-weight: 300;
+  font-variation-settings: "wdth" 125;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.08;
+  color: #f6efe3;
 }

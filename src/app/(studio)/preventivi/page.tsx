@@ -11,7 +11,7 @@ export default function Pagina() {
     <Suspense
       fallback={
         <>
-          <Cartiglio titolo="Preventivi" />
+          <Cartiglio tipo="preventivo" titolo="Preventivi" />
           <Pannello className="p-6">
             <Scheletro className="h-4 w-full" />
             <Scheletro className="mt-4 h-4 w-5/6" />

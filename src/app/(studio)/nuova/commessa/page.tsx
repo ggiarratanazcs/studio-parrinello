@@ -10,7 +10,7 @@ export const metadata = { title: "Nuova commessa" };
 export default function PaginaNuovaCommessa() {
   return (
     <>
-      <Cartiglio
+      <Cartiglio tipo="commessa"
         titolo="Nuova commessa"
         sottotitolo="Per un incarico già affidato. Se devi ancora proporre un'offerta, parti da un preventivo o da una pre-fattibilità."
       />

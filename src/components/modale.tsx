@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Maximize2, X } from "lucide-react";
 import { Monogramma } from "@/components/monogramma";
+import { FONDI, type TipoFondo } from "@/lib/fondi";
 
 /**
  * Finestra modale per le schede. In alto una testata con il prospetto architettonico
@@ -11,14 +12,7 @@ import { Monogramma } from "@/components/monogramma";
  * fuori; la chiusura torna alla pagina precedente (l'indirizzo resta condivisibile).
  * Su telefono occupa tutto lo schermo.
  */
-/** Colore di fondo della testata per tipo di scheda (stesso disegno, materia diversa). */
-const FONDI = {
-  commessa: { base: "#2f3a2b", rgb: "47,58,43", riflesso: "120,140,96" },      // oliva scuro
-  preventivo: { base: "#4a321c", rgb: "74,50,28", riflesso: "176,124,64" },    // bronzo brunito
-  prefattibilita: { base: "#2b3540", rgb: "43,53,64", riflesso: "110,130,150" }, // ardesia
-} as const;
-
-export type TipoScheda = keyof typeof FONDI;
+export type TipoScheda = Exclude<TipoFondo, "studio">;
 
 export function Modale({
   children,

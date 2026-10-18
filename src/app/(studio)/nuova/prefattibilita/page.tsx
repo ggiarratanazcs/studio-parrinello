@@ -10,7 +10,7 @@ export const metadata = { title: "Nuova pre-fattibilità" };
 export default function PaginaNuovaPrefattibilita() {
   return (
     <>
-      <Cartiglio
+      <Cartiglio tipo="prefattibilita"
         titolo="Nuova pre-fattibilità"
         sottotitolo="Analisi urbanistica, conformità, titolo edilizio e stima dei costi. Riceve un numero F-anno-progressivo."
       />
