@@ -37,10 +37,15 @@ export function Pannello({ className, ...props }: ComponentProps<"section">) {
 
 export function StatoBadge({ stato }: { stato: string | null }) {
   const s = statoCommessa(stato);
+  return <Badge etichetta={s.etichetta} colore={s.colore} />;
+}
+
+/** Pallino colorato con etichetta: stato di commessa, preventivo o pre-fattibilità. */
+export function Badge({ etichetta, colore }: { etichetta: string; colore: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[0.8125rem]" style={{ color: s.colore }}>
-      <span aria-hidden className="size-1.5 rounded-full" style={{ background: s.colore }} />
-      {s.etichetta}
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.8125rem]" style={{ color: colore }}>
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: colore }} />
+      {etichetta}
     </span>
   );
 }

@@ -8,7 +8,7 @@ import { UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/ute
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
  * in Impostazioni (attributo data-impaginazione su <html>).
  */
-export default function LayoutStudio({ children }: LayoutProps<"/">) {
+export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
   return (
     <div className="relative min-h-dvh lg:flex">
       {/* ── Impaginazione "laterale": barra a sinistra, schermi grandi ── */}
@@ -81,6 +81,7 @@ export default function LayoutStudio({ children }: LayoutProps<"/">) {
       </div>
 
       <NavMobile />
+      {modale}
     </div>
   );
 }

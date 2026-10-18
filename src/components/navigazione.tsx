@@ -3,38 +3,22 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Building2,
-  DraftingCompass,
-  Files,
-  PanelsTopLeft,
-  Settings2,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type Voce = { href: string; etichetta: string; icona: LucideIcon; mobile: boolean };
-
-export const VOCI: Voce[] = [
-  { href: "/", etichetta: "Panoramica", icona: PanelsTopLeft, mobile: true },
-  { href: "/commesse", etichetta: "Commesse", icona: DraftingCompass, mobile: true },
-  { href: "/clienti", etichetta: "Clienti", icona: Users, mobile: true },
-  { href: "/immobili", etichetta: "Immobili", icona: Building2, mobile: true },
-  { href: "/documenti", etichetta: "Documenti", icona: Files, mobile: true },
-  { href: "/impostazioni", etichetta: "Impostazioni", icona: Settings2, mobile: false },
-];
+import { VOCI, VOCI_ALTRO } from "@/lib/sezioni";
 
 function attiva(pathname: string | null, href: string) {
   if (!pathname) return false;
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  if (href === "/") return pathname === "/";
+  if (href === "/altro") return pathname === "/altro" || VOCI_ALTRO.some((v) => pathname.startsWith(v.href));
+  return pathname === href || pathname.startsWith(`${href}/`) || (href === "/commesse" && pathname === "/nuova/commessa") ||
+    (href === "/preventivi" && pathname === "/nuova/preventivo") || (href === "/prefattibilita" && pathname === "/nuova/prefattibilita");
 }
 
 /** Navigazione verticale per schermi grandi. */
 function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="Sezioni" className="flex flex-col gap-0.5">
-      {VOCI.map(({ href, etichetta, icona: Icona }) => {
+      {VOCI.filter((v) => v.laterale).map(({ href, etichetta, icona: Icona }) => {
         const corrente = attiva(pathname, href);
         return (
           <Link
@@ -68,7 +52,7 @@ function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
 function NavSuperioreCorpo({ pathname }: { pathname: string | null }) {
   return (
     <nav aria-label="Sezioni" className="flex flex-wrap items-center gap-1">
-      {VOCI.filter((v) => v.mobile).map(({ href, etichetta }) => {
+      {VOCI.filter((v) => v.superiore).map(({ href, etichetta }) => {
         const corrente = attiva(pathname, href);
         return (
           <Link
@@ -96,7 +80,7 @@ function NavMobileCorpo({ pathname }: { pathname: string | null }) {
       className="pb-sicuro fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-superficie/95 backdrop-blur-md lg:hidden"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-5">
-        {VOCI.filter((v) => v.mobile).map(({ href, etichetta, icona: Icona }) => {
+        {VOCI.filter((v) => v.mobile).map(({ href, etichetta, breve, icona: Icona }) => {
           const corrente = attiva(pathname, href);
           return (
             <li key={href}>
@@ -110,7 +94,7 @@ function NavMobileCorpo({ pathname }: { pathname: string | null }) {
                 style={{ fontVariationSettings: '"wdth" 88' }}
               >
                 <Icona className="size-[22px]" strokeWidth={corrente ? 1.9 : 1.5} />
-                {etichetta}
+                {breve ?? etichetta}
               </Link>
             </li>
           );

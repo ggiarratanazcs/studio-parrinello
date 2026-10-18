@@ -1,16 +1,31 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
-import { elencoCommesse, type CommessaSintesi } from "@/lib/dati";
-import { STATI_COMMESSA, type StatoCommessa } from "@/lib/dominio";
+import { LinkPulsante, Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
 import { formattaEuro } from "@/lib/utils";
 
 export const metadata = { title: "Panoramica" };
 
-/** Le fasi del ciclo di vita, nell'ordine in cui una commessa le attraversa. */
-const PERCORSO: StatoCommessa[] = ["contatto", "prefattibilita", "preventivo", "attiva", "conclusa"];
-const APERTE: StatoCommessa[] = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
+const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
+
+const azioni = (
+  <>
+    <LinkPulsante href="/nuova/preventivo">
+      <Plus className="size-4" strokeWidth={2} />
+      Preventivo
+    </LinkPulsante>
+    <LinkPulsante href="/nuova/prefattibilita" variante="secondario">
+      <Plus className="size-4" strokeWidth={2} />
+      Pre-fattibilità
+    </LinkPulsante>
+    <LinkPulsante href="/nuova/commessa" variante="secondario">
+      <Plus className="size-4" strokeWidth={2} />
+      Commessa
+    </LinkPulsante>
+  </>
+);
 
 export default function Panoramica() {
   return (
@@ -21,26 +36,74 @@ export default function Panoramica() {
 }
 
 async function PanoramicaContenuto() {
-  const commesse = await elencoCommesse();
-  const perStato = (s: StatoCommessa) => commesse.filter((c) => c.stato === s).length;
-  const aperte = commesse.filter((c) => APERTE.includes(c.stato as StatoCommessa));
-  const portafoglio = commesse
-    .filter((c) => c.stato === "attiva")
-    .reduce((somma, c) => somma + (c.onorario_concordato ?? 0), 0);
+  const [commesse, preventivi, prefattibilita] = await Promise.all([
+    elencoCommesse(),
+    elencoPratiche("preventivo"),
+    elencoPratiche("prefattibilita"),
+  ]);
+
+  const aperte = commesse.filter((c) => STATI_APERTI.includes(c.stato ?? ""));
+  const inCorso = commesse.filter((c) => c.stato === "attiva");
+  const portafoglio = inCorso.reduce((somma, c) => somma + (c.onorario_concordato ?? 0), 0);
+
+  const imbuto = [
+    {
+      etichetta: "Pre-fattibilità aperte",
+      valore: prefattibilita.filter((p) => !p.commessa_id && !p.preventivo_id && (p.stato === "in_corso" || p.stato === "consegnata")).length,
+      colore: "var(--stato-prefattibilita)",
+      href: "/prefattibilita",
+    },
+    {
+      etichetta: "Preventivi in attesa",
+      valore: preventivi.filter((p) => p.stato === "bozza" || p.stato === "inviato").length,
+      colore: "var(--stato-preventivo)",
+      href: "/preventivi",
+    },
+    { etichetta: "Commesse in corso", valore: inCorso.length, colore: "var(--stato-attiva)", href: "/commesse" },
+    {
+      etichetta: "Commesse concluse",
+      valore: commesse.filter((c) => c.stato === "conclusa").length,
+      colore: "var(--stato-conclusa)",
+      href: "/commesse",
+    },
+  ];
+  const massimo = Math.max(1, ...imbuto.map((v) => v.valore));
 
   return (
     <>
       <Cartiglio
         titolo="Panoramica"
-        sottotitolo="Lo stato dello studio: dove si trovano le commesse e cosa richiede attenzione."
+        sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione."
         celle={[
           { etichetta: "Commesse aperte", valore: aperte.length },
-          { etichetta: "In corso", valore: perStato("attiva") },
+          { etichetta: "In corso", valore: inCorso.length },
           { etichetta: "Onorari in corso", valore: formattaEuro(portafoglio) },
         ]}
+        azioni={azioni}
       />
 
-      <Percorso commesse={commesse} />
+      <Pannello className="px-5 py-5 md:px-6">
+        <h2 className="text-base font-medium">Dalla proposta alla commessa</h2>
+        <p className="mt-1 text-sm text-tenue">Pre-fattibilità e preventivi aperti, commesse in corso e concluse.</p>
+        <ol className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-4">
+          {imbuto.map((v) => (
+            <li key={v.etichetta} className="min-w-0">
+              <Link href={v.href} className="group block">
+                <span className="block h-16 overflow-hidden rounded-s bg-superficie-2 md:h-20">
+                  <span
+                    className="block h-full origin-left transition-transform duration-700"
+                    style={{ background: v.colore, transform: `scaleX(${v.valore ? Math.max(v.valore / massimo, 0.06) : 0})` }}
+                  />
+                </span>
+                <span className="numeri mt-2 block text-xl font-medium" style={{ fontVariationSettings: '"wdth" 110' }}>
+                  {v.valore}
+                </span>
+                <span className="etichetta block leading-tight group-hover:text-inchiostro">{v.etichetta}</span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </Pannello>
 
       <Pannello className="mt-6">
         <div className="flex items-baseline justify-between border-b border-linea px-5 py-4 md:px-6">
@@ -51,13 +114,8 @@ async function PanoramicaContenuto() {
         </div>
         {aperte.length === 0 ? (
           <Vuoto
-            azione={
-              <Link href="/commesse/nuova" className="text-sm font-medium text-accento hover:underline">
-                Crea la prima commessa
-              </Link>
-            }
             titolo="Nessuna commessa aperta"
-            testo="Quando registri un primo contatto con un cliente, la commessa compare qui e la segui fino alla chiusura."
+            testo="Le commesse nascono da un preventivo accettato o da una pre-fattibilità, oppure direttamente se l'incarico è già affidato."
           />
         ) : (
           <ul className="elenco divide-y divide-linea">
@@ -71,42 +129,6 @@ async function PanoramicaContenuto() {
   );
 }
 
-/** Barra a segmenti: quante commesse si trovano in ciascuna fase del percorso. */
-function Percorso({ commesse }: { commesse: CommessaSintesi[] }) {
-  const totale = PERCORSO.reduce((n, s) => n + commesse.filter((c) => c.stato === s).length, 0);
-
-  return (
-    <Pannello className="px-5 py-5 md:px-6">
-      <h2 className="text-base font-medium">Percorso delle commesse</h2>
-      <p className="mt-1 text-sm text-tenue">Dal primo contatto alla chiusura dei lavori.</p>
-
-      <ol className="mt-5 grid grid-cols-5 gap-1.5">
-        {PERCORSO.map((s) => {
-          const n = commesse.filter((c) => c.stato === s).length;
-          const quota = totale ? n / totale : 0;
-          return (
-            <li key={s} className="min-w-0">
-              <div className="relative h-16 overflow-hidden rounded-s bg-superficie-2 md:h-20">
-                <div
-                  className="absolute inset-x-0 bottom-0 transition-[height] duration-700"
-                  style={{
-                    height: `${Math.max(quota * 100, n > 0 ? 8 : 0)}%`,
-                    background: STATI_COMMESSA[s].colore,
-                  }}
-                />
-              </div>
-              <p className="numeri mt-2 text-xl font-medium" style={{ fontVariationSettings: '"wdth" 110' }}>
-                {n}
-              </p>
-              <p className="etichetta leading-tight [overflow-wrap:anywhere]">{STATI_COMMESSA[s].etichetta}</p>
-            </li>
-          );
-        })}
-      </ol>
-    </Pannello>
-  );
-}
-
 function RigaCommessa({ c }: { c: CommessaSintesi }) {
   return (
     <li>
@@ -114,17 +136,15 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
         href={`/commesse/${c.id}`}
         className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 transition-colors hover:bg-superficie-2/50 md:grid-cols-[6rem_1fr_10rem_9rem] md:items-center md:px-6"
       >
-      <span className="numeri etichetta col-start-1 row-start-1 md:col-auto md:row-auto">{c.codice}</span>
-      <span className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:row-auto">
-        <span className="block truncate font-medium">{c.titolo}</span>
-        <span className="block truncate text-sm text-tenue">
-          {[c.cliente, c.comune].filter(Boolean).join(", ")}
+        <span className="numeri etichetta col-start-1 row-start-1 md:col-auto md:row-auto">{c.codice}</span>
+        <span className="col-span-2 row-start-2 min-w-0 md:col-span-1 md:row-auto">
+          <span className="block truncate font-medium">{c.titolo}</span>
+          <span className="block truncate text-sm text-tenue">{[c.cliente, c.comune].filter(Boolean).join(", ")}</span>
         </span>
-      </span>
-      <span className="hidden text-sm text-inchiostro-2 md:block">{c.responsabile ?? "—"}</span>
-      <span className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
-        <StatoBadge stato={c.stato} />
-      </span>
+        <span className="hidden text-sm text-inchiostro-2 md:block">{c.responsabile ?? "—"}</span>
+        <span className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
+          <StatoBadge stato={c.stato} />
+        </span>
       </Link>
     </li>
   );
@@ -133,10 +153,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio
-        titolo="Panoramica"
-        sottotitolo="Lo stato dello studio: dove si trovano le commesse e cosa richiede attenzione."
-      />
+      <Cartiglio titolo="Panoramica" sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione." azioni={azioni} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />

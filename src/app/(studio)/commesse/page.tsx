@@ -10,7 +10,7 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 export const metadata = { title: "Commesse" };
 
 const nuovaCommessa = (
-  <LinkPulsante href="/commesse/nuova">
+  <LinkPulsante href="/nuova/commessa">
     <Plus className="size-4" strokeWidth={2} />
     Nuova commessa
   </LinkPulsante>

@@ -620,9 +620,21 @@ export type Database = {
       }
       prefattibilita: {
         Row: {
+          numero: string | null
+          titolo: string | null
+          cliente_id: string | null
+          immobile_id: string | null
+          committenza: string
+          tipologia_intervento: string | null
+          stato: string
+          onorario: number | null
+          responsabile_id: string | null
+          preventivo_id: string | null
+          data_conversione: string | null
+          created_by: string | null
           accesso_atti_data: string | null
           accesso_atti_richiesto: boolean | null
-          commessa_id: string
+          commessa_id: string | null
           costo_opere_stimato: number | null
           costo_parametrico_mq: number | null
           created_at: string
@@ -648,9 +660,21 @@ export type Database = {
           zona_urbanistica: string | null
         }
         Insert: {
+          numero?: string | null
+          titolo?: string | null
+          cliente_id?: string | null
+          immobile_id?: string | null
+          committenza?: string
+          tipologia_intervento?: string | null
+          stato?: string
+          onorario?: number | null
+          responsabile_id?: string | null
+          preventivo_id?: string | null
+          data_conversione?: string | null
+          created_by?: string | null
           accesso_atti_data?: string | null
           accesso_atti_richiesto?: boolean | null
-          commessa_id: string
+          commessa_id?: string | null
           costo_parametrico_mq?: number | null
           created_at?: string
           data_redazione?: string | null
@@ -675,6 +699,18 @@ export type Database = {
           zona_urbanistica?: string | null
         }
         Update: {
+          numero?: string | null
+          titolo?: string | null
+          cliente_id?: string | null
+          immobile_id?: string | null
+          committenza?: string
+          tipologia_intervento?: string | null
+          stato?: string
+          onorario?: number | null
+          responsabile_id?: string | null
+          preventivo_id?: string | null
+          data_conversione?: string | null
+          created_by?: string | null
           accesso_atti_data?: string | null
           accesso_atti_richiesto?: boolean | null
           commessa_id?: string
@@ -703,6 +739,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "prefattibilita_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clienti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prefattibilita_immobile_id_fkey"
+            columns: ["immobile_id"]
+            isOneToOne: false
+            referencedRelation: "immobili"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prefattibilita_responsabile_id_fkey"
+            columns: ["responsabile_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prefattibilita_preventivo_fk"
+            columns: ["preventivo_id"]
+            isOneToOne: false
+            referencedRelation: "preventivi"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prefattibilita_commessa_id_fkey"
             columns: ["commessa_id"]
             isOneToOne: false
@@ -713,8 +777,16 @@ export type Database = {
       }
       preventivi: {
         Row: {
+          titolo: string | null
+          cliente_id: string | null
+          immobile_id: string | null
+          committenza: string
+          tipologia_intervento: string | null
+          prefattibilita_id: string | null
+          responsabile_id: string | null
+          data_conversione: string | null
           cassa_pct: number
-          commessa_id: string
+          commessa_id: string | null
           condizioni_pagamento: string | null
           created_at: string
           created_by: string | null
@@ -742,8 +814,16 @@ export type Database = {
           versione: number
         }
         Insert: {
+          titolo?: string | null
+          cliente_id?: string | null
+          immobile_id?: string | null
+          committenza?: string
+          tipologia_intervento?: string | null
+          prefattibilita_id?: string | null
+          responsabile_id?: string | null
+          data_conversione?: string | null
           cassa_pct?: number
-          commessa_id: string
+          commessa_id?: string | null
           condizioni_pagamento?: string | null
           created_at?: string
           created_by?: string | null
@@ -771,6 +851,14 @@ export type Database = {
           versione?: number
         }
         Update: {
+          titolo?: string | null
+          cliente_id?: string | null
+          immobile_id?: string | null
+          committenza?: string
+          tipologia_intervento?: string | null
+          prefattibilita_id?: string | null
+          responsabile_id?: string | null
+          data_conversione?: string | null
           cassa_pct?: number
           commessa_id?: string
           condizioni_pagamento?: string | null
@@ -800,6 +888,34 @@ export type Database = {
           versione?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "preventivi_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clienti"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preventivi_immobile_id_fkey"
+            columns: ["immobile_id"]
+            isOneToOne: false
+            referencedRelation: "immobili"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preventivi_prefattibilita_id_fkey"
+            columns: ["prefattibilita_id"]
+            isOneToOne: false
+            referencedRelation: "prefattibilita"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preventivi_responsabile_id_fkey"
+            columns: ["responsabile_id"]
+            isOneToOne: false
+            referencedRelation: "profili"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "preventivi_commessa_id_fkey"
             columns: ["commessa_id"]
@@ -960,6 +1076,28 @@ export type Database = {
       }
     }
     Views: {
+      v_pratiche: {
+        Row: {
+          tipo: string | null
+          id: string | null
+          numero: string | null
+          titolo: string | null
+          stato: string | null
+          committenza: string | null
+          tipologia_intervento: string | null
+          data: string | null
+          importo: number | null
+          imponibile: number | null
+          cliente: string | null
+          comune: string | null
+          commessa_id: string | null
+          commessa_codice: string | null
+          preventivo_id: string | null
+          prefattibilita_id: string | null
+          created_at: string | null
+        }
+        Relationships: []
+      }
       v_commesse_sintesi: {
         Row: {
           avanzamento_medio: number | null
@@ -985,6 +1123,9 @@ export type Database = {
     }
     Functions: {
       crea_commessa: { Args: { dati: Json }; Returns: string }
+      crea_preventivo: { Args: { dati: Json }; Returns: string }
+      crea_prefattibilita: { Args: { dati: Json }; Returns: string }
+      converti_in_commessa: { Args: { p_origine: string; p_id: string; p_fasi?: Json }; Returns: string }
       ha_ruolo: { Args: { ruoli: string[] }; Returns: boolean }
       is_membro_studio: { Args: never; Returns: boolean }
       ruolo_corrente: { Args: never; Returns: string }

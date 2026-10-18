@@ -5,7 +5,13 @@ export function cn(...classi: ClassValue[]) {
   return twMerge(clsx(classi));
 }
 
-const euro = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+// useGrouping "always": separa le migliaia anche nei numeri a quattro cifre (3.000 €)
+const euro = new Intl.NumberFormat("it-IT", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 0,
+  useGrouping: "always",
+} as Intl.NumberFormatOptions);
 export function formattaEuro(valore: number | null | undefined) {
   return valore == null ? "—" : euro.format(valore);
 }

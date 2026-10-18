@@ -60,3 +60,43 @@ export const TIPI_CLIENTE: Record<string, string> = {
   azienda: "Azienda",
   ente_pubblico: "Ente pubblico",
 };
+
+export const VINCOLI = [
+  "Paesaggistico",
+  "Storico-architettonico",
+  "Archeologico",
+  "Idrogeologico",
+  "PAI (rischio idraulico/frana)",
+  "Sismico",
+  "Fascia di rispetto",
+  "Demanio marittimo",
+  "Area protetta / Natura 2000",
+];
+
+export const PARERI_ENTI = [
+  "Soprintendenza BB.CC.AA.",
+  "Genio Civile",
+  "ASP",
+  "Vigili del Fuoco",
+  "Capitaneria / Demanio",
+  "Ente parco / riserva",
+  "Commissione edilizia",
+];
+
+export const TITOLI_EDILIZI: Record<string, string> = {
+  edilizia_libera: "Edilizia libera",
+  CILA: "CILA",
+  CILAS: "CILA Superbonus (CILAS)",
+  SCIA: "SCIA",
+  SCIA_alternativa_PdC: "SCIA alternativa al PdC",
+  PdC: "Permesso di Costruire",
+  autorizzazione_paesaggistica: "Autorizzazione paesaggistica",
+  altro: "Altro",
+};
+
+export const ESITI_PREFATTIBILITA: Record<string, string> = {
+  fattibile: "Fattibile",
+  fattibile_con_condizioni: "Fattibile con condizioni",
+  da_approfondire: "Da approfondire",
+  non_fattibile: "Non fattibile",
+};

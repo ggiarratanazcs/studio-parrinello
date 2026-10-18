@@ -8,4 +8,7 @@ Migrazioni applicate al progetto `commesse`, in ordine:
 3. `funzione_crea_commessa` — funzione `crea_commessa(dati jsonb)` che crea committente, immobile,
    commessa e fasi in un'unica transazione (gira con i permessi dell'utente, quindi valgono le RLS)
 
+4. `preventivi_prefattibilita_autonomi` — preventivi (P-anno-NNN) e pre-fattibilità (F-anno-NNN) autonomi,
+   funzioni `crea_preventivo`, `crea_prefattibilita`, `converti_in_commessa`, vista `v_pratiche` per i tassi di conversione
+
 Dopo ogni migrazione rigenerare i tipi in `src/lib/database.types.ts`.
