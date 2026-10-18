@@ -9,7 +9,8 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
 import { FasiCommessa } from "./fasi-commessa";
-import { SezioniScheda } from "./sezioni-scheda";
+import { AlberoAllegati } from "./albero-allegati";
+import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
 
 /** Intestazione di una sezione: titolo, descrizione breve ed eventuale elemento a destra. */
@@ -140,18 +141,31 @@ export async function SchedaCommessa({ id }: { id: string }) {
             sottotitolo: `${completate}/${fasi.length} completate · ${plurale(documenti.length, "allegato", "allegati")}`,
             contenuto: (
               <Pannello>
-                <TitoloSezione
-                  titolo="Fasi e allegati"
-                  descrizione="Clicca una fase per modificarla e caricare i suoi file."
+                <Cartelle
                   destra={<AvanzamentoFasi completate={completate} totali={fasi.length} colore={statoCommessa(c.stato).colore} />}
-                />
-                <FasiCommessa
-                  commessaId={c.id}
-                  fasi={fasi}
-                  profili={c.profiliStudio}
-                  catalogo={c.catalogoFasi}
-                  committenza={c.committenza}
-                  documenti={documenti}
+                  cartelle={[
+                    {
+                      id: "fasi",
+                      nome: "Fasi",
+                      conteggio: fasi.length,
+                      contenuto: (
+                        <FasiCommessa
+                          commessaId={c.id}
+                          fasi={fasi}
+                          profili={c.profiliStudio}
+                          catalogo={c.catalogoFasi}
+                          committenza={c.committenza}
+                          documenti={documenti}
+                        />
+                      ),
+                    },
+                    {
+                      id: "allegati",
+                      nome: "Allegati",
+                      conteggio: documenti.length,
+                      contenuto: <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />,
+                    },
+                  ]}
                 />
               </Pannello>
             ),

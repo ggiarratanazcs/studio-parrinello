@@ -28,7 +28,23 @@ export const CATEGORIE_DOCUMENTO: Record<string, string> = {
 
 const MAX_BYTE = 100 * 1024 * 1024;
 
-function dimensione(b: number | null) {
+/** Apre un file del bucket privato con un collegamento temporaneo (10 minuti) in una nuova scheda. */
+export function apriDocumento(percorso: string, onErrore: () => void) {
+  // Finestra aperta subito (dentro il clic) per non essere bloccata dal browser
+  const finestra = window.open("", "_blank");
+  createClient()
+    .storage.from("documenti")
+    .createSignedUrl(percorso, 60 * 10)
+    .then(({ data, error }) => {
+      if (error || !data) {
+        finestra?.close();
+        onErrore();
+      } else if (finestra) finestra.location.href = data.signedUrl;
+      else window.location.href = data.signedUrl;
+    });
+}
+
+export function dimensione(b: number | null) {
   if (!b) return "";
   if (b < 1024 * 1024) return `${Math.max(1, Math.round(b / 1024))} KB`;
   return `${(b / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
@@ -106,18 +122,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
 
   function apri(d: Documento) {
     setErrore(null);
-    // Finestra aperta subito (dentro il clic) per non essere bloccata dal browser
-    const finestra = window.open("", "_blank");
-    createClient()
-      .storage.from("documenti")
-      .createSignedUrl(d.storage_path, 60 * 10)
-      .then(({ data, error }) => {
-        if (error || !data) {
-          finestra?.close();
-          setErrore("Non è stato possibile aprire il file.");
-        } else if (finestra) finestra.location.href = data.signedUrl;
-        else window.location.href = data.signedUrl;
-      });
+    apriDocumento(d.storage_path, () => setErrore("Non è stato possibile aprire il file."));
   }
 
   function elimina(d: Documento) {

@@ -162,19 +162,27 @@ const dataOra = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short
 export function DiarioCommessa({ commessaId, diario }: { commessaId: string; diario: Nota[] }) {
   const router = useRouter();
   const [inCorso, avvia] = useTransition();
-  const [tipo, setTipo] = useState("nota");
+  // null = consultazione; un tipo = modulo di registrazione aperto per quel tipo
+  const [tipo, setTipo] = useState<string | null>(null);
   const [testo, setTesto] = useState("");
   const [giorno, setGiorno] = useState("");
   const [errore, setErrore] = useState<string | null>(null);
   const [daEliminare, setDaEliminare] = useState<string | null>(null);
 
+  function chiudi() {
+    setTipo(null);
+    setTesto("");
+    setGiorno("");
+    setErrore(null);
+  }
+
   function salva() {
+    if (!tipo) return;
     setErrore(null);
     avvia(async () => {
       const esito = await aggiungiNota(commessaId, { tipo, testo, data: giorno });
       if (esito.ok) {
-        setTesto("");
-        setGiorno("");
+        chiudi();
         router.refresh();
       } else setErrore(esito.errore);
     });
@@ -191,58 +199,79 @@ export function DiarioCommessa({ commessaId, diario }: { commessaId: string; dia
     });
   }
 
+  const scelto = tipo ? TIPI[tipo] : null;
+
   return (
     <div>
-      {/* Scrittura */}
-      <form
-        className="grid gap-3 border-b border-linea px-5 py-4 md:px-6"
-        onSubmit={(e) => {
-          e.preventDefault();
-          salva();
-        }}
-      >
-        <div role="radiogroup" aria-label="Tipo di nota" className="flex flex-wrap gap-2">
-          {Object.entries(TIPI).map(([k, t]) => {
-            const I = t.icona;
-            const scelto = tipo === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                role="radio"
-                aria-checked={scelto}
-                onClick={() => setTipo(k)}
-                className={cn(
-                  "inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm transition-colors",
-                  scelto ? "border-transparent text-white shadow-[0_6px_14px_-8px_rgba(43,42,40,0.6)]" : "border-linea bg-superficie text-inchiostro-2 hover:bg-superficie-2",
-                )}
-                style={scelto ? { background: t.colore } : undefined}
-              >
-                <I className="size-4" strokeWidth={1.8} />
-                {t.etichetta}
-              </button>
-            );
-          })}
-        </div>
-        <AreaTesto
-          etichetta="Cosa è successo"
-          id={`diario-${commessaId}`}
-          value={testo}
-          onChange={(e) => setTesto(e.target.value)}
-          placeholder="es. Sopralluogo con l'impresa: confermata la demolizione del tramezzo al piano terra."
-          className="min-h-20"
-        />
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="w-44">
-            <Campo etichetta="Data" id={`diario-data-${commessaId}`} type="date" value={giorno} onChange={(e) => setGiorno(e.target.value)} aiuto="Vuota = oggi" />
+      {/* Registra: solo le icone; il modulo si apre scegliendone una */}
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-linea px-5 py-3.5 md:px-6">
+        <span className="mr-1 text-sm text-tenue">Registra</span>
+        {Object.entries(TIPI).map(([k, t]) => {
+          const I = t.icona;
+          const attivo = tipo === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => (attivo ? chiudi() : (setTipo(k), setErrore(null)))}
+              aria-label={`Registra: ${t.etichetta}`}
+              aria-pressed={attivo}
+              data-suggerimento={t.etichetta}
+              className={cn(
+                "pallino grid size-10 place-items-center rounded-full text-white transition-[transform,box-shadow,opacity] duration-200 hover:-translate-y-0.5",
+                tipo && !attivo && "opacity-45",
+                attivo && "ring-2 ring-offset-2 ring-offset-superficie",
+              )}
+              style={{
+                background: `linear-gradient(145deg, color-mix(in srgb, ${t.colore} 72%, #ffffff) 0%, ${t.colore} 100%)`,
+                ["--ombra" as string]: "43,42,40",
+                ["--tw-ring-color" as string]: t.colore,
+              }}
+            >
+              <I className="size-[17px]" strokeWidth={1.9} />
+            </button>
+          );
+        })}
+      </div>
+
+      {scelto ? (
+        <form
+          className="grid gap-3 border-b border-linea bg-superficie-2/60 px-5 py-4 md:px-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            salva();
+          }}
+        >
+          <AreaTesto
+            etichetta={`Nuova voce · ${scelto.etichetta}`}
+            id={`diario-${commessaId}`}
+            value={testo}
+            onChange={(e) => setTesto(e.target.value)}
+            placeholder="Cosa è successo?"
+            className="min-h-20"
+            autoFocus
+          />
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="w-44">
+              <Campo etichetta="Data" id={`diario-data-${commessaId}`} type="date" value={giorno} onChange={(e) => setGiorno(e.target.value)} aiuto="Vuota = oggi" />
+            </div>
+            <div className="flex gap-2">
+              <Pulsante type="button" variante="discreto" onClick={chiudi} disabled={inCorso}>
+                Annulla
+              </Pulsante>
+              <Pulsante type="submit" disabled={inCorso || !testo.trim()}>
+                {inCorso ? <Loader2 className="size-4 animate-spin" /> : <CalendarCheck2 className="size-4" strokeWidth={1.8} />}
+                Registra
+              </Pulsante>
+            </div>
           </div>
-          <Pulsante type="submit" disabled={inCorso || !testo.trim()}>
-            {inCorso ? <Loader2 className="size-4 animate-spin" /> : <CalendarCheck2 className="size-4" strokeWidth={1.8} />}
-            Registra
-          </Pulsante>
+        </form>
+      ) : null}
+      {errore ? (
+        <div className="px-5 pt-4 md:px-6">
+          <Messaggio tipo="errore">{errore}</Messaggio>
         </div>
-        {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
-      </form>
+      ) : null}
 
       {/* Linea del tempo */}
       {diario.length === 0 ? (

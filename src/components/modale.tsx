@@ -55,7 +55,7 @@ export function Modale({
         aria-modal="true"
         aria-label={etichetta}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-[1400px] flex-col overflow-hidden bg-sfondo outline-none md:h-auto md:max-h-full md:rounded-l md:shadow-[0_30px_80px_-24px_rgba(43,42,40,0.55)]"
+        className="relative flex h-full w-full max-w-[1400px] flex-col overflow-hidden bg-sfondo outline-none md:h-full md:rounded-l md:shadow-[0_30px_80px_-24px_rgba(43,42,40,0.55)]"
       >
         <TestataModale etichetta={etichetta} tipo={tipo}>
           <a
@@ -78,7 +78,7 @@ export function Modale({
             <span className="sr-only">Chiudi</span>
           </button>
         </TestataModale>
-        <div className="overflow-y-auto px-4 pb-10 pt-6 md:px-8">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-10 pt-6 md:px-8">{children}</div>
       </div>
     </div>
   );
