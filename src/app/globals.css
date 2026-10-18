@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* =====================================================================
+   SISTEMA DI TEMI
+   Ogni tema ridefinisce le stesse variabili sotto [data-theme="..."].
+   Per aggiungere un tema: copiare il blocco "caldo", cambiare nome e valori,
+   poi registrarlo in src/lib/temi.ts.
+   ===================================================================== */
+
+/* Tema "Caldo" — calce, pietra di Siracusa e bronzo */
+:root,
+[data-theme="caldo"] {
+  --sfondo: #ede8df;          /* calce */
+  --superficie: #f7f5f0;      /* carta */
+  --superficie-2: #e6ddcd;    /* pietra chiara */
+  --pietra: #dccdb2;          /* calcarenite */
+  --inchiostro: #2b2a28;      /* antracite del monogramma */
+  --inchiostro-2: #4a4741;
+  --tenue: #6e685e;           /* grafite */
+  --linea: #d6ccbc;
+  --linea-forte: #b9ab94;
+  --accento: #8a5a2b;         /* bronzo */
+  --accento-hover: #734a22;
+  --accento-tenue: #efe3d3;
+  --su-accento: #fbf8f3;
+
+  /* Stati commessa */
+  --stato-contatto: #6e685e;
+  --stato-prefattibilita: #4f5d6b;
+  --stato-preventivo: #a0731f;
+  --stato-attiva: #5b6b4a;
+  --stato-sospesa: #9c4a3a;
+  --stato-conclusa: #2b2a28;
+
+  --raggio-s: 4px;
+  --raggio-m: 8px;
+  --raggio-l: 14px;
+
+  color-scheme: light;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-sfondo: var(--sfondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-pietra: var(--pietra);
+  --color-inchiostro: var(--inchiostro);
+  --color-inchiostro-2: var(--inchiostro-2);
+  --color-tenue: var(--tenue);
+  --color-linea: var(--linea);
+  --color-linea-forte: var(--linea-forte);
+  --color-accento: var(--accento);
+  --color-accento-hover: var(--accento-hover);
+  --color-accento-tenue: var(--accento-tenue);
+  --color-su-accento: var(--su-accento);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-s: var(--raggio-s);
+  --radius-m: var(--raggio-m);
+  --radius-l: var(--raggio-l);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* =====================================================================
+   BASE
+   ===================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--sfondo);
+  color: var(--inchiostro);
+  font-family: var(--font-sans);
+  font-variation-settings: "wdth" 100;
+  font-feature-settings: "tnum" 0;
+  line-height: 1.5;
+}
+
+::selection {
+  background: var(--pietra);
+  color: var(--inchiostro);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 2px;
+  border-radius: var(--raggio-s);
+}
+
+/* Tipografia: una sola famiglia, usata su larghezze diverse */
+.titolo-display {
+  font-variation-settings: "wdth" 112;
+  font-weight: 520;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.etichetta {
+  font-variation-settings: "wdth" 86;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.005em;
+  color: var(--tenue);
+}
+
+.numeri {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* Spazi di sicurezza per notch e barra home su iPhone */
+.pb-sicuro {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-sicuro {
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Studio Parrinello — Gestione commesse
 
-## Getting Started
+Applicazione web per la gestione delle commesse dello Studio Parrinello (architettura e design, Siracusa).
+Funziona da browser su computer e da telefono, dove si può installare come app dalla schermata Home.
 
-First, run the development server:
+## Tecnologie
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 16** (App Router, Cache Components) con TypeScript
+- **Tailwind CSS 4**, sistema di temi a variabili CSS (`src/app/globals.css`, `src/lib/temi.ts`)
+- **Supabase**: autenticazione, database Postgres con RLS, archivio file (bucket privato `documenti`)
+- Carattere **Archivo** (variabile, incluso nel progetto) e icone **Lucide**
+
+## Struttura
+
+```
+src/
+  app/
+    (accesso)/            accesso e impostazione password (invito / recupero)
+    (studio)/             area riservata: panoramica, commesse, clienti, immobili, documenti, impostazioni
+    auth/conferma         verifica dei link inviati per email
+    auth/esci             uscita
+    manifest.ts           manifest PWA
+  components/             navigazione, cartiglio (intestazione di pagina), elementi di interfaccia
+  lib/
+    supabase/             client browser, server e proxy di sessione
+    database.types.ts     tipi generati dallo schema Supabase
+    dati.ts               letture dal database (solo lato server)
+    dominio.ts            etichette di stati, tipologie, ruoli
+  proxy.ts                protegge le pagine: chi non è autenticato va su /accesso
+supabase/
+  schema_v1.sql           schema del database applicato (documentazione)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Avvio in locale
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local   # e inserire URL e chiave pubblica del progetto Supabase
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Configurazione Supabase
 
-## Learn More
+1. **Authentication → Sign In / Providers**: disattivare "Allow new users to sign up" (si entra solo su invito).
+2. **Authentication → URL Configuration**: impostare *Site URL* all'indirizzo pubblico dell'app e aggiungere
+   `https://<indirizzo>/auth/conferma` tra i *Redirect URLs*.
+3. **Authentication → Email Templates**: nei modelli *Invite user* e *Reset password* usare come link
+   `{{ .SiteURL }}/auth/conferma?token_hash={{ .TokenHash }}&type=invite&next=/imposta-password`
+   (per il recupero password: `type=recovery`).
+4. I titolari si promuovono via SQL: `update profili set ruolo = 'titolare', qualifica = 'Architetto' where email = '...';`
 
-To learn more about Next.js, take a look at the following resources:
+## Pubblicazione
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Il progetto è pensato per Vercel: importare il repository, impostare le variabili
+`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, poi Deploy.
