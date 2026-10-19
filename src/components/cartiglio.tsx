@@ -52,7 +52,7 @@ export function Cartiglio({
         />
         {/* Su telefono il disegno passa sotto il testo: velatura più piena */}
         <div aria-hidden className="absolute inset-0 md:hidden" style={{ background: `rgba(${f.rgb},0.55)` }} />
-        <div className="relative flex min-h-44 flex-col justify-end px-6 pb-7 pt-8 md:min-h-56 md:px-10 md:pb-10">
+        <div className="relative flex min-h-44 flex-col justify-start px-6 pb-7 pt-10 md:min-h-56 md:px-10 md:pb-10 md:pt-14">
           <p className="flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#f3ece0]/60">
             <Monogramma titolo="" className="h-4 text-[#f3ece0]/70" />
             {sopratitolo}
