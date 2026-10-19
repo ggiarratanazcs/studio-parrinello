@@ -98,12 +98,15 @@
    BARRA LATERALE RICHIUDIBILE
    Aperta: 272px con etichette. Chiusa: solo icone (data-barra="chiusa" su <html>).
    ===================================================================== */
-.barra-laterale {
-  width: 272px;
-  transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+:root {
+  --larghezza-barra: 272px;
 }
-[data-barra="chiusa"] .barra-laterale {
-  width: 88px;
+[data-barra="chiusa"] {
+  --larghezza-barra: 88px;
+}
+.barra-laterale {
+  width: var(--larghezza-barra);
+  transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 [data-barra="chiusa"] .barra-laterale .solo-barra-aperta {
   display: none;
@@ -358,4 +361,24 @@ body {
 }
 .mappa-studio .leaflet-control-zoom a {
   color: var(--inchiostro);
+}
+
+/* Testata di pagina a tutto schermo (impaginazione laterale, schermi grandi):
+   fascia squadrata dal bordo alto ai lati, anche dietro la barra laterale che vi galleggia sopra.
+   Si annullano i margini dell'area di lavoro (2.5rem) e la larghezza della barra. */
+@media (min-width: 1024px) {
+  [data-impaginazione="laterale"] .testata-pagina {
+    border-radius: 0;
+    margin-top: -2.5rem;
+    margin-left: calc(-1 * (var(--larghezza-barra) + 2.5rem));
+    margin-right: -2.5rem;
+    box-shadow: 0 18px 40px -30px rgba(43, 42, 40, 0.6);
+    transition: margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  [data-impaginazione="laterale"] .testata-pagina .testata-contenuto {
+    padding-left: calc(var(--larghezza-barra) + 5rem);
+    padding-top: calc(3.5rem + 2.5rem);
+    min-height: calc(14rem + 2.5rem);
+    transition: padding-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
 }
