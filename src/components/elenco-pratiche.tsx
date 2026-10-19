@@ -50,7 +50,6 @@ export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefa
     <>
       <Cartiglio tipo={tipo}
         titolo={t.titolo}
-        sottotitolo={t.sottotitolo}
         celle={[
           { etichetta: "Totale", valore: pratiche.length, icona: Layers },
           { etichetta: "In commessa", valore: convertite, icona: ArrowRightLeft },

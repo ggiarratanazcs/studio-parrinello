@@ -14,7 +14,6 @@ export default function PaginaNuovoPreventivo({ searchParams }: PageProps<"/nuov
     <>
       <Cartiglio tipo="preventivo"
         titolo="Nuovo preventivo"
-        sottotitolo="Riceve un numero P-anno-progressivo. Quando il committente accetta, lo trasformi in commessa."
       />
       <Suspense fallback={<CaricamentoProcedura />}>
         <Procedura searchParams={searchParams} />

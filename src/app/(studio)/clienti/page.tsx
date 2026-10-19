@@ -37,7 +37,6 @@ async function ElencoClienti() {
     <>
       <Cartiglio
         titolo="Clienti"
-        sottotitolo="Committenti privati, aziende ed enti pubblici, con i loro referenti."
         celle={[
           { etichetta: "Privati", valore: conta("persona_fisica"), icona: User },
           { etichetta: "Aziende", valore: conta("azienda"), icona: Building2 },

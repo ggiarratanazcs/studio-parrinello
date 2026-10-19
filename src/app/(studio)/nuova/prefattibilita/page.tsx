@@ -12,7 +12,6 @@ export default function PaginaNuovaPrefattibilita() {
     <>
       <Cartiglio tipo="prefattibilita"
         titolo="Nuova pre-fattibilità"
-        sottotitolo="Analisi urbanistica, conformità, titolo edilizio e stima dei costi. Riceve un numero F-anno-progressivo."
       />
       <Suspense fallback={<CaricamentoProcedura />}>
         <Procedura />

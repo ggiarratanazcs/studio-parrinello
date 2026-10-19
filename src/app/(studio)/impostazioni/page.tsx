@@ -13,7 +13,7 @@ export const metadata = { title: "Impostazioni" };
 export default function PaginaImpostazioni() {
   return (
     <>
-      <Cartiglio titolo="Impostazioni" sottotitolo="Il tuo profilo e l'aspetto dell'applicazione. Impaginazione e tema valgono su questo dispositivo." />
+      <Cartiglio titolo="Impostazioni" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Pannello>

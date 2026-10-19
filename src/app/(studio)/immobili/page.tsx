@@ -32,7 +32,6 @@ async function ElencoImmobili() {
     <>
       <Cartiglio
         titolo="Immobili"
-        sottotitolo="Gli edifici e i terreni su cui lavora o ha lavorato lo studio, sulla mappa e in elenco."
         celle={[
           { etichetta: "Immobili", valore: immobili.length, icona: Building },
           { etichetta: "Comuni", valore: comuni, icona: MapPin },

@@ -32,7 +32,6 @@ async function Documenti() {
     <>
       <Cartiglio
         titolo="Documenti"
-        sottotitolo="Allegati e foto di tutte le commesse, in un archivio privato dello studio."
         celle={[{ etichetta: "File archiviati", valore: totale, icona: Files }]}
       />
       <Pannello>
