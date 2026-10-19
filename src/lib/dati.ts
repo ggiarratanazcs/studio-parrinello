@@ -87,8 +87,8 @@ export async function leggiCommessa(id: string) {
          team:commesse_team(profilo_id, ruolo_commessa, profilo:profili(id, nome, cognome, iniziali, qualifica)),
          diario:commesse_diario(id, tipo, testo, data_evento, autore:profili(nome, cognome, iniziali)),
          documenti(id, fase_id, categoria, titolo, nome_file, mime_type, dimensione_byte, storage_path, created_at),
-         preventivi(id, numero),
-         prefattibilita(id, numero)`,
+         preventivi(id, numero, titolo, stato, data_emissione, imponibile, integrativo, prefattibilita_id),
+         prefattibilita(id, numero, titolo, stato, esito, onorario, data_redazione)`,
       )
       .eq("id", id)
       .maybeSingle(),

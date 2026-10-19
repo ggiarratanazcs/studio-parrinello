@@ -9,6 +9,7 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
 import { FasiCommessa } from "./fasi-commessa";
+import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
@@ -45,7 +46,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
   const cliente = c.cliente;
   const immobile = c.immobile;
   const responsabile = c.responsabile ? `${c.responsabile.nome} ${c.responsabile.cognome}`.trim() : null;
-  const daPreventivo = c.preventivi?.[0];
+  const daPreventivo = c.preventivi?.find((p) => !p.integrativo);
   const daPrefattibilita = c.prefattibilita?.[0];
 
   const datiGenerali = (
@@ -134,6 +135,16 @@ export async function SchedaCommessa({ id }: { id: string }) {
             titolo: "Dati generali",
             sottotitolo: TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""] ?? (c.committenza === "pubblica" ? "Committenza pubblica" : "Committenza privata"),
             contenuto: datiGenerali,
+          },
+          {
+            id: "pratiche",
+            titolo: "Pratiche",
+            sottotitolo: (() => {
+              const integrativi = (c.preventivi ?? []).filter((p) => p.integrativo).length;
+              const origine = [c.prefattibilita?.length ? "pre-fattibilità" : null, (c.preventivi ?? []).some((p) => !p.integrativo) ? "preventivo" : null].filter(Boolean).join(" + ");
+              return [origine || "Creata direttamente", integrativi ? plurale(integrativi, "integrativo", "integrativi") : null].filter(Boolean).join(" · ");
+            })(),
+            contenuto: <PraticheCommessa c={c} />,
           },
           {
             id: "fasi",

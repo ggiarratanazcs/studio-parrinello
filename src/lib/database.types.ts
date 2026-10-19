@@ -802,6 +802,7 @@ export type Database = {
           data_invio: string | null
           id: string
           imponibile: number | null
+          integrativo: boolean
           importo_lavori: number | null
           iva_pct: number
           metodo_calcolo: string
@@ -839,6 +840,7 @@ export type Database = {
           data_invio?: string | null
           id?: string
           imponibile?: number | null
+          integrativo?: boolean
           importo_lavori?: number | null
           iva_pct?: number
           metodo_calcolo?: string
@@ -876,6 +878,7 @@ export type Database = {
           data_invio?: string | null
           id?: string
           imponibile?: number | null
+          integrativo?: boolean
           importo_lavori?: number | null
           iva_pct?: number
           metodo_calcolo?: string
