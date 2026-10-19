@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/database.types";
 import { propostaFasi } from "@/lib/fasi";
 import { geocodifica } from "@/lib/geocodifica";
+import { datiProcedura } from "@/lib/dati";
+import { origineNuovoPreventivo } from "@/lib/origine-preventivo";
+import { oggiIso } from "@/lib/utils";
 
 export type Esito = { ok: true; id: string } | { ok: false; errore: string };
 
@@ -142,8 +145,6 @@ const STATI_COMMESSA_AMMESSI = ["attiva", "sospesa", "conclusa", "annullata"];
 const STATI_FASE_AMMESSI = ["da_avviare", "in_corso", "in_revisione", "completata", "sospesa", "annullata"];
 const TIPI_NOTA = ["nota", "telefonata", "riunione", "sopralluogo", "email", "decisione"];
 const DATA = /^\d{4}-\d{2}-\d{2}$/;
-/** Data di oggi a Siracusa (AAAA-MM-GG), indipendente dal fuso del server. */
-const oggiIso = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date());
 
 function numeroO(v: unknown): number | null {
   if (v === null || v === undefined || v === "") return null;
@@ -405,4 +406,16 @@ export async function accettaIntegrativo(id: string): Promise<Esito> {
   }
   aggiornaElenchi();
   return { ok: true, id: data };
+}
+
+/** Dati per aprire il nuovo preventivo in finestra, precompilato da pre-fattibilità o commessa. */
+export async function preparaNuovoPreventivo(fonte: { da?: string | null; commessa?: string | null }) {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false as const, errore: SESSIONE_SCADUTA };
+  try {
+    const [dati, origine] = await Promise.all([datiProcedura(), origineNuovoPreventivo(fonte)]);
+    return { ok: true as const, dati, origine, oggi: oggiIso() };
+  } catch {
+    return { ok: false as const, errore: "Non è stato possibile preparare il preventivo. Riprova." };
+  }
 }

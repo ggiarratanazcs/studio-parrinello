@@ -11,23 +11,13 @@ import { TIPOLOGIE_INTERVENTO } from "@/lib/dominio";
 import { propostaFasi } from "@/lib/fasi";
 import { CONDIZIONI_PREDEFINITE, METODI_CALCOLO, calcolaTotali, numero } from "@/lib/preventivo";
 import type { DatiProcedura } from "@/lib/dati";
+import type { OrigineNuovoPreventivo } from "@/lib/origine-preventivo";
 import { formattaEuro } from "@/lib/utils";
 
 type Committenza = "privata" | "pubblica";
 type Voce = { chiave: string; fase_catalogo_id: string; descrizione: string; prezzo: string; ore: string; opzionale: boolean };
 
-export type OrigineNuovoPreventivo = {
-  /** Pre-fattibilità da cui nasce, oppure commessa di cui è un integrativo */
-  tipo: "prefattibilita" | "commessa";
-  id: string;
-  numero: string | null;
-  cliente_id: string | null;
-  immobile_id: string | null;
-  titolo: string | null;
-  committenza: string;
-  tipologia_intervento: string | null;
-  importo_lavori: number | null;
-} | null;
+export type { OrigineNuovoPreventivo };
 
 const PASSI = ["Committente", "Immobile", "Offerta", "Condizioni"] as const;
 const TITOLI = ["A chi è rivolto il preventivo?", "Su quale immobile?", "L'offerta", "Condizioni e totale"];
@@ -39,27 +29,31 @@ export function ProceduraNuovoPreventivo({
   dati,
   oggi,
   origine,
+  onCreato,
 }: {
   dati: DatiProcedura;
   oggi: string;
   origine: OrigineNuovoPreventivo;
+  /** Dopo la creazione (es. chiudere la finestra); di base apre la scheda del nuovo preventivo */
+  onCreato?: (id: string) => void;
 }) {
   const router = useRouter();
   const ctl = useCommittenteImmobile(dati, {
     clienteId: origine?.cliente_id ?? undefined,
     immobileId: origine?.immobile_id ?? undefined,
   });
-  const [passo, setPasso] = useState(0);
+  // Con committente già noto (da pre-fattibilità o commessa) si parte direttamente dall'offerta
+  const [passo, setPasso] = useState(origine?.cliente_id ? 2 : 0);
   const [errori, setErrori] = useState<Record<string, string>>({});
   const [erroreInvio, setErroreInvio] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
 
   const [offerta, setOfferta] = useState({
-    titolo: origine ? (origine.tipo === "commessa" ? `Integrativo – ${origine.titolo ?? ""}` : (origine.titolo ?? "")) : "",
-    oggetto: "",
+    titolo: origine?.titolo ?? "",
+    oggetto: origine?.oggetto ?? "",
     committenza: (origine?.committenza ?? "privata") as Committenza,
     tipologia_intervento: origine?.tipologia_intervento ?? "",
-    responsabile_id: "",
+    responsabile_id: origine?.responsabile_id ?? "",
     data_emissione: oggi,
     validita_giorni: "30",
     metodo_calcolo: "a_corpo",
@@ -67,7 +61,11 @@ export function ProceduraNuovoPreventivo({
     percentuale_onorario: "",
   });
   const [committenzaToccata, setCommittenzaToccata] = useState(Boolean(origine));
-  const [voci, setVoci] = useState<Voce[] | null>(null); // null = non ancora generate
+  const [voci, setVoci] = useState<Voce[] | null>(() =>
+    origine?.voci
+      ? origine.voci.map((v) => ({ chiave: nuovaChiave(), fase_catalogo_id: "", descrizione: v.descrizione, prezzo: v.prezzo ?? "", ore: "", opzionale: false }))
+      : null,
+  ); // null = proposte dalle fasi tipiche
   const [condizioni, setCondizioni] = useState({
     sconto: "0",
     spese: "0",
@@ -159,7 +157,10 @@ export function ProceduraNuovoPreventivo({
     setErroreInvio(null);
     avvia(async () => {
       const esito = await creaPreventivo(payload);
-      if (esito.ok) router.push(`/preventivi/${esito.id}`);
+      if (esito.ok) {
+        if (onCreato) onCreato(esito.id);
+        else router.push(`/preventivi/${esito.id}`);
+      }
       else setErroreInvio(esito.errore);
     });
   }

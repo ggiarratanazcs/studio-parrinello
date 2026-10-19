@@ -20,3 +20,8 @@ const data = new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "short", 
 export function formattaData(valore: string | null | undefined) {
   return valore ? data.format(new Date(valore)) : "—";
 }
+
+/** Data di oggi a Siracusa (AAAA-MM-GG), indipendente dal fuso del server. */
+export function oggiIso() {
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date());
+}

@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { Messaggio } from "@/components/campo";
-import { Pallino, PallinoLink, type Icona, type Tinta } from "@/components/pallino";
+import { Pallino, type Icona, type Tinta } from "@/components/pallino";
+import { ModaleNuovoPreventivo } from "@/components/procedura/modale-nuovo-preventivo";
 import { accettaIntegrativo, aggiornaStatoPrefattibilita, aggiornaStatoPreventivo, convertiInCommessa } from "@/lib/azioni";
 
 type Azione = { stato: string; etichetta: string; icona: Icona; tinta: Tinta };
@@ -64,6 +65,7 @@ export function AzioniPratica({
   const [chi, setChi] = useState<string | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
   const [conferma, setConferma] = useState(false);
+  const [nuovoPreventivo, setNuovoPreventivo] = useState(false);
 
   const azioni = (tipo === "preventivo" ? AZIONI_PREVENTIVO : AZIONI_PREFATTIBILITA)[stato] ?? [];
 
@@ -127,7 +129,7 @@ export function AzioniPratica({
             />
           ) : (
             // La pre-fattibilità diventa commessa solo passando dal preventivo
-            <PallinoLink href={`/nuova/preventivo?da=${id}`} etichetta="Crea il preventivo" icona={FilePlus2} tinta="bronzo" />
+            <Pallino etichetta="Crea il preventivo" icona={FilePlus2} tinta="bronzo" onClick={() => setNuovoPreventivo(true)} disabled={inCorso} />
           )}
           {azioni.length ? <span aria-hidden className="mx-1 mt-2.5 h-6 w-px bg-linea-forte" /> : null}
           {azioni.map((a) => (
@@ -144,6 +146,7 @@ export function AzioniPratica({
         </div>
       )}
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
+      {nuovoPreventivo ? <ModaleNuovoPreventivo fonte={{ da: id }} onChiudi={() => setNuovoPreventivo(false)} /> : null}
     </div>
   );
 }

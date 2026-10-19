@@ -8,7 +8,7 @@ import { AMBITI, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib
 import { formattaData, formattaEuro } from "@/lib/utils";
 import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
-import { PulsanteNuovo } from "@/components/tessere";
+import { PulsanteNuovoPreventivo } from "@/components/procedura/modale-nuovo-preventivo";
 import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
@@ -149,9 +149,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
               <PraticheCommessa
                 c={c}
                 azioneNuovo={
-                  <PulsanteNuovo href={`/nuova/preventivo?commessa=${c.id}`} tipo="preventivo">
-                    Preventivo integrativo
-                  </PulsanteNuovo>
+                  <PulsanteNuovoPreventivo fonte={{ commessa: c.id }}>Preventivo integrativo</PulsanteNuovoPreventivo>
                 }
               />
             ),

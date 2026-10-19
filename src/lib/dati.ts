@@ -165,7 +165,7 @@ export async function commessaPerIntegrativo(id: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("commesse")
-    .select("id, codice, titolo, cliente_id, immobile_id, committenza, tipologia_intervento")
+    .select("id, codice, titolo, cliente_id, immobile_id, committenza, tipologia_intervento, responsabile_id, importo_lavori_stimato, descrizione")
     .eq("id", id)
     .maybeSingle();
   return data;

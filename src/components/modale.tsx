@@ -88,7 +88,7 @@ export function Modale({
  * Testata: fondo colorato per tipo di scheda con il prospetto di una villa disegnato a linee chiare,
  * velatura in bronzo verso sinistra per la leggibilità, monogramma grande in trasparenza.
  */
-function TestataModale({ etichetta, tipo, children }: { etichetta: string; tipo: TipoScheda; children: ReactNode }) {
+export function TestataModale({ etichetta, tipo, children }: { etichetta: string; tipo: TipoScheda; children: ReactNode }) {
   const f = FONDI[tipo];
   return (
     <div className="pt-sicuro relative shrink-0 overflow-hidden text-[#f3ece0]" style={{ background: f.base }}>
