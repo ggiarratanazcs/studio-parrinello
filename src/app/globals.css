@@ -36,7 +36,7 @@
   --raggio-m: 8px;
   --raggio-l: 14px;
 
-  --font-corpo: var(--font-archivo);
+  --font-corpo: var(--font-manrope);
 
   color-scheme: light;
 }
@@ -52,7 +52,7 @@
   --sfondo: #e9e1d3;
   --superficie: #f5f0e7;
   --raggio-l: 18px;
-  --font-corpo: var(--font-epilogue);
+  --font-corpo: var(--font-manrope);
 }
 
 [data-impaginazione="materia"] .solo-laterale,
@@ -85,6 +85,7 @@
 
 /* Titoli: in Materia più compatti e senza larghezza variabile */
 [data-impaginazione="materia"] .titolo-display {
+  font-family: var(--font-archivo), system-ui, sans-serif;
   font-variation-settings: normal;
   font-weight: 500;
   letter-spacing: -0.035em;
@@ -171,6 +172,7 @@ body {
 
 /* Tipografia: una sola famiglia, usata su larghezze diverse */
 .titolo-display {
+  font-family: var(--font-archivo), system-ui, sans-serif;
   font-variation-settings: "wdth" 112;
   font-weight: 520;
   letter-spacing: -0.025em;

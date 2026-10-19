@@ -25,6 +25,16 @@ const epilogue = localFont({
   display: "swap",
 });
 
+const manrope = localFont({
+  src: [
+    { path: "../fonts/manrope-latin-wght-normal.woff2", style: "normal" },
+    { path: "../fonts/manrope-latin-ext-wght-normal.woff2", style: "normal" },
+  ],
+  weight: "200 800",
+  variable: "--font-manrope",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Studio Parrinello",
@@ -54,7 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="it"
       data-theme={TEMA_PREDEFINITO}
       data-impaginazione={IMPAGINAZIONE_PREDEFINITA}
-      className={`${archivo.variable} ${epilogue.variable} h-full antialiased`}
+      className={`${archivo.variable} ${epilogue.variable} ${manrope.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
