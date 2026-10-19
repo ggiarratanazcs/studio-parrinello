@@ -26,4 +26,4 @@ export const CHIAVE_BARRA = "sp-barra";
 export const CHIAVE_BENVENUTO = "sp-benvenuto";
 
 /** Script eseguito prima del rendering: applica impaginazione e stato della barra senza sfarfallio. */
-export const SCRIPT_IMPAGINAZIONE = `try{var d=document.documentElement,v=localStorage.getItem("${CHIAVE_IMPAGINAZIONE}");if(v==="materia"||v==="laterale")d.dataset.impaginazione=v;if(localStorage.getItem("${CHIAVE_BARRA}")==="chiusa")d.dataset.barra="chiusa";if(sessionStorage.getItem("${CHIAVE_BENVENUTO}"))d.dataset.benvenuto="visto"}catch(e){}`;
+export const SCRIPT_IMPAGINAZIONE = `try{var d=document.documentElement,v=localStorage.getItem("${CHIAVE_IMPAGINAZIONE}");if(v==="materia"||v==="laterale")d.dataset.impaginazione=v;if(localStorage.getItem("${CHIAVE_BARRA}")==="chiusa")d.dataset.barra="chiusa";var t=localStorage.getItem("sp-tema");if(t==="caldo"||t==="navy")d.dataset.theme=t;if(sessionStorage.getItem("${CHIAVE_BENVENUTO}"))d.dataset.benvenuto="visto"}catch(e){}`;

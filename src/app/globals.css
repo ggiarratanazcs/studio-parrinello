@@ -38,6 +38,12 @@
 
   --font-corpo: var(--font-manrope);
 
+  /* Testate e pulsanti "nuovo" per sezione: base, stesso colore in rgb, riflesso chiaro, tono per i gradienti */
+  --fondo-commessa-base: #2f3a2b;       --fondo-commessa-rgb: 47,58,43;       --fondo-commessa-riflesso: 120,140,96;  --fondo-commessa-chiaro: #55684a;
+  --fondo-preventivo-base: #4a321c;     --fondo-preventivo-rgb: 74,50,28;     --fondo-preventivo-riflesso: 176,124,64; --fondo-preventivo-chiaro: #7a5530;
+  --fondo-prefattibilita-base: #2b3540; --fondo-prefattibilita-rgb: 43,53,64; --fondo-prefattibilita-riflesso: 110,130,150; --fondo-prefattibilita-chiaro: #4f6274;
+  --fondo-studio-base: #2e2b27;         --fondo-studio-rgb: 46,43,39;         --fondo-studio-riflesso: 150,120,88;    --fondo-studio-chiaro: #57504a;
+
   color-scheme: light;
 }
 
@@ -412,4 +418,92 @@ html[data-navigazione] * { cursor: var(--cursore-compasso, progress) !important;
 /* Tabelle a registro: intestazione delle colonne su fondo appena velato, righe a filo */
 .elenco-intestazione {
   background: color-mix(in srgb, var(--superficie-2) 38%, transparent);
+}
+
+/* =====================================================================
+   TEMA "NAVY" — bianco perla, blu navy e barre in vetro
+   (html[...] per prevalere anche sui toni dell'impaginazione Materia)
+   ===================================================================== */
+html[data-theme="navy"] {
+  --sfondo: #eef2f7;
+  --superficie: #ffffff;
+  --superficie-2: #edf2f8;
+  --pietra: #dbe3ee;
+  --inchiostro: #13213a;
+  --inchiostro-2: #2c3b55;
+  --tenue: #6b7c96;
+  --linea: #e1e8f2;
+  --linea-forte: #c3cfdf;
+  --accento: #1d3d6c;
+  --accento-hover: #13284a;
+  --accento-tenue: #e3ebf6;
+  --su-accento: #ffffff;
+
+  --stato-contatto: #6b7c96;
+  --stato-prefattibilita: #4a6a96;
+  --stato-preventivo: #a2761f;
+  --stato-attiva: #2f7a55;
+  --stato-sospesa: #b0473a;
+  --stato-conclusa: #13213a;
+
+  /* Quattro blu per le sezioni, stessi disegni */
+  --fondo-commessa-base: #132a4d;       --fondo-commessa-rgb: 19,42,77;       --fondo-commessa-riflesso: 80,130,200;  --fondo-commessa-chiaro: #2d5893;
+  --fondo-preventivo-base: #1c2b57;     --fondo-preventivo-rgb: 28,43,87;     --fondo-preventivo-riflesso: 120,135,215; --fondo-preventivo-chiaro: #3d5aa3;
+  --fondo-prefattibilita-base: #10313f; --fondo-prefattibilita-rgb: 16,49,63; --fondo-prefattibilita-riflesso: 90,160,190; --fondo-prefattibilita-chiaro: #2c6479;
+  --fondo-studio-base: #13213a;         --fondo-studio-rgb: 19,33,58;         --fondo-studio-riflesso: 100,140,200;   --fondo-studio-chiaro: #2c4366;
+}
+
+html[data-theme="navy"] body {
+  background:
+    radial-gradient(70rem 40rem at 95% -10%, #dce7f6 0%, transparent 60%),
+    radial-gradient(50rem 35rem at -10% 110%, #dfe8f4 0%, transparent 60%),
+    #eef2f7;
+  background-attachment: fixed;
+}
+
+/* Vetro scuro: barra laterale e capsula in alto di Materia. Dentro, i colori si capovolgono. */
+html[data-theme="navy"] .barra-laterale > div,
+html[data-theme="navy"] .barra-materia > div {
+  --inchiostro: #eef3fa;
+  --inchiostro-2: #d5deeb;
+  --tenue: #9fb0c8;
+  --linea: rgba(255, 255, 255, 0.14);
+  --linea-forte: rgba(255, 255, 255, 0.26);
+  --superficie: rgba(255, 255, 255, 0.06);
+  --superficie-2: rgba(255, 255, 255, 0.12);
+  --accento: #a9cbf7;
+  --accento-hover: #c6ddfb;
+  --accento-tenue: rgba(169, 203, 247, 0.16);
+  color: var(--inchiostro);
+  background: rgba(16, 33, 62, 0.84) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 24px 48px -22px rgba(16, 33, 62, 0.6),
+    0 8px 16px -12px rgba(16, 33, 62, 0.3) !important;
+}
+
+/* Vetro chiaro: tessere, pallini e barra Stampa/PDF delle modali */
+html[data-theme="navy"] .tessera {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow:
+    0 12px 28px -16px rgba(16, 33, 62, 0.45),
+    inset 0 1px 0 #ffffff;
+}
+html[data-theme="navy"] .pallino-tessera:not(.colorato) {
+  background: var(--inchiostro);
+  color: #ffffff;
+}
+html[data-theme="navy"] .piede-scheda {
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+html[data-theme="navy"] .pannello {
+  box-shadow: 0 1px 2px rgba(16, 33, 62, 0.04), 0 12px 32px -24px rgba(16, 33, 62, 0.25);
 }

@@ -1,12 +1,11 @@
 import { Suspense } from "react";
-import { Check } from "lucide-react";
 import { FotoProfilo } from "@/components/foto-profilo";
 import { Cartiglio } from "@/components/cartiglio";
 import { LinkPulsante, Pannello, Scheletro } from "@/components/ui";
 import { getProfilo } from "@/lib/auth";
 import { RUOLI } from "@/lib/dominio";
-import { TEMI, TEMA_PREDEFINITO } from "@/lib/temi";
 import { SceltaImpaginazione } from "@/components/scelta-impaginazione";
+import { SceltaTema } from "@/components/scelta-tema";
 
 export const metadata = { title: "Impostazioni" };
 
@@ -37,26 +36,7 @@ export default function PaginaImpostazioni() {
 
         <Pannello>
           <h2 className="border-b border-linea px-5 py-4 text-base font-medium md:px-6">Tema</h2>
-          <ul className="divide-y divide-linea">
-            {TEMI.map((t) => {
-              const attivo = t.id === TEMA_PREDEFINITO;
-              return (
-                <li key={t.id} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
-                  <span>
-                    <span className={`block font-medium ${t.disponibile ? "" : "text-tenue"}`}>{t.nome}</span>
-                    <span className="block text-sm text-tenue">{t.descrizione}</span>
-                  </span>
-                  {attivo ? (
-                    <span className="inline-flex items-center gap-1.5 text-sm text-accento">
-                      <Check className="size-4" strokeWidth={2} /> In uso
-                    </span>
-                  ) : (
-                    <span className="etichetta">In arrivo</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <SceltaTema />
         </Pannello>
       </div>
     </>
