@@ -39,15 +39,17 @@ export function useRegistro<T, K extends string>({
   valore,
   filtro,
   iniziale,
+  filtroIniziale = "tutti",
 }: {
   righe: T[];
   testo: (r: T) => unknown[];
   valore: (r: T, chiave: K) => unknown;
   filtro?: (r: T, scelto: string) => boolean;
   iniziale: Ordine<K>;
+  filtroIniziale?: string;
 }) {
   const [cerca, setCerca] = useState("");
-  const [scelto, setScelto] = useState("tutti");
+  const [scelto, setScelto] = useState(filtroIniziale);
   const [ordine, setOrdine] = useState<Ordine<K>>(iniziale);
 
   const visibili = useMemo(() => {
@@ -83,6 +85,7 @@ export function BarraRegistro({
   filtri,
   scelto,
   onScegli,
+  children,
 }: {
   cerca: string;
   onCerca: (v: string) => void;
@@ -90,9 +93,11 @@ export function BarraRegistro({
   filtri?: { id: string; etichetta: string; conteggio: number }[];
   scelto?: string;
   onScegli?: (id: string) => void;
+  /** Filtri su misura (es. schede e stati delle commesse) al posto delle pillole */
+  children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-linea px-4 py-4 md:px-5 lg:flex-row lg:items-center">
+    <div className="flex flex-col gap-3 border-b border-linea px-4 py-4 md:px-5 lg:flex-row lg:flex-wrap lg:items-center">
       <label className="relative flex min-w-0 flex-1 items-center lg:max-w-md">
         <Search aria-hidden className="pointer-events-none absolute left-4 size-4 text-tenue" strokeWidth={1.8} />
         <span className="sr-only">Cerca</span>
@@ -139,6 +144,7 @@ export function BarraRegistro({
           })}
         </div>
       ) : null}
+      {children}
     </div>
   );
 }
