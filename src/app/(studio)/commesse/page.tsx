@@ -11,7 +11,7 @@ import { formattaData, formattaEuro } from "@/lib/utils";
 export const metadata = { title: "Commesse" };
 
 const nuovaCommessa = (
-  <PulsanteNuovo href="/nuova/commessa" tipo="commessa">Nuova commessa</PulsanteNuovo>
+  <PulsanteNuovo href="/nuova/commessa" tipo="commessa">Nuova</PulsanteNuovo>
 );
 
 /** Colonne della tabella su schermi grandi (impaginazione laterale). */

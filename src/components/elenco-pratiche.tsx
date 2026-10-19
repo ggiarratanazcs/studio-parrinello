@@ -13,7 +13,7 @@ const TESTI = {
   preventivo: {
     titolo: "Preventivi",
     sottotitolo: "Le offerte allo studio dei committenti. Un preventivo accettato si trasforma in commessa.",
-    nuovo: "Nuovo preventivo",
+    nuovo: "Nuovo",
     href: "/nuova/preventivo",
     base: "/preventivi",
     vuotoTitolo: "Ancora nessun preventivo",
@@ -23,7 +23,7 @@ const TESTI = {
   prefattibilita: {
     titolo: "Pre-fattibilità",
     sottotitolo: "Analisi urbanistiche e di conformità prima dell'incarico. Diventano un preventivo e, se accettato, una commessa.",
-    nuovo: "Nuova pre-fattibilità",
+    nuovo: "Nuova",
     href: "/nuova/prefattibilita",
     base: "/prefattibilita",
     vuotoTitolo: "Ancora nessuna pre-fattibilità",
