@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { Cartiglio } from "@/components/cartiglio";
 import { CaricamentoProcedura } from "@/components/procedura/caricamento";
-import { datiProcedura, leggiPrefattibilita } from "@/lib/dati";
+import { commessaPerIntegrativo, datiProcedura, leggiPrefattibilita } from "@/lib/dati";
 import { ProceduraNuovoPreventivo, type OrigineNuovoPreventivo } from "./procedura";
 
 export const metadata = { title: "Nuovo preventivo" };
@@ -24,12 +24,30 @@ export default function PaginaNuovoPreventivo({ searchParams }: PageProps<"/nuov
 async function Procedura({ searchParams }: { searchParams: PageProps<"/nuova/preventivo">["searchParams"] }) {
   const parametri = await searchParams;
   const da = typeof parametri.da === "string" ? parametri.da : null;
-  const [dati, pref] = await Promise.all([datiProcedura(), da ? leggiPrefattibilita(da) : Promise.resolve(null)]);
+  const idCommessa = typeof parametri.commessa === "string" ? parametri.commessa : null;
+  const [dati, pref, commessa] = await Promise.all([
+    datiProcedura(),
+    da ? leggiPrefattibilita(da) : Promise.resolve(null),
+    idCommessa ? commessaPerIntegrativo(idCommessa) : Promise.resolve(null),
+  ]);
   await connection();
 
-  const origine: OrigineNuovoPreventivo = pref
+  const origine: OrigineNuovoPreventivo = commessa
     ? {
-        prefattibilita_id: pref.id,
+        tipo: "commessa",
+        id: commessa.id,
+        numero: commessa.codice,
+        cliente_id: commessa.cliente_id,
+        immobile_id: commessa.immobile_id,
+        titolo: commessa.titolo,
+        committenza: commessa.committenza,
+        tipologia_intervento: commessa.tipologia_intervento,
+        importo_lavori: null,
+      }
+    : pref
+    ? {
+        tipo: "prefattibilita",
+        id: pref.id,
         numero: pref.numero,
         cliente_id: pref.cliente_id,
         immobile_id: pref.immobile_id,

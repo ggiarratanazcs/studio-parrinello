@@ -8,6 +8,7 @@ import { AMBITI, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib
 import { formattaData, formattaEuro } from "@/lib/utils";
 import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
+import { PulsanteNuovo } from "@/components/tessere";
 import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
@@ -144,7 +145,16 @@ export async function SchedaCommessa({ id }: { id: string }) {
               const origine = [c.prefattibilita?.length ? "pre-fattibilità" : null, (c.preventivi ?? []).some((p) => !p.integrativo) ? "preventivo" : null].filter(Boolean).join(" + ");
               return [origine || "Creata direttamente", integrativi ? plurale(integrativi, "integrativo", "integrativi") : null].filter(Boolean).join(" · ");
             })(),
-            contenuto: <PraticheCommessa c={c} />,
+            contenuto: (
+              <PraticheCommessa
+                c={c}
+                azioneNuovo={
+                  <PulsanteNuovo href={`/nuova/preventivo?commessa=${c.id}`} tipo="preventivo">
+                    Preventivo integrativo
+                  </PulsanteNuovo>
+                }
+              />
+            ),
           },
           {
             id: "fasi",

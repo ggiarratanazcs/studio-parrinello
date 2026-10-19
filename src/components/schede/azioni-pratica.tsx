@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Pallino, PallinoLink, type Icona, type Tinta } from "@/components/pallino";
-import { aggiornaStatoPrefattibilita, aggiornaStatoPreventivo, convertiInCommessa } from "@/lib/azioni";
+import { accettaIntegrativo, aggiornaStatoPrefattibilita, aggiornaStatoPreventivo, convertiInCommessa } from "@/lib/azioni";
 
 type Azione = { stato: string; etichetta: string; icona: Icona; tinta: Tinta };
 
@@ -50,11 +50,14 @@ export function AzioniPratica({
   id,
   stato,
   convertita,
+  integrativo = false,
 }: {
   tipo: "preventivo" | "prefattibilita";
   id: string;
   stato: string;
   convertita: boolean;
+  /** Preventivo integrativo di una commessa: l'accettazione aggiorna la commessa esistente */
+  integrativo?: boolean;
 }) {
   const router = useRouter();
   const [inCorso, avvia] = useTransition();
@@ -78,7 +81,7 @@ export function AzioniPratica({
     setErrore(null);
     setChi("commessa");
     avvia(async () => {
-      const esito = await convertiInCommessa(tipo, id);
+      const esito = integrativo ? await accettaIntegrativo(id) : await convertiInCommessa(tipo, id);
       if (esito.ok) router.push(`/commesse/${esito.id}`);
       else {
         setErrore(esito.errore);
@@ -94,13 +97,15 @@ export function AzioniPratica({
       {conferma ? (
         <div className="flex w-fit max-w-full flex-wrap items-center gap-3 rounded-[22px] border border-linea bg-superficie py-2 pl-5 pr-2 shadow-[0_12px_28px_-16px_rgba(43,42,40,0.45)]">
           <span className="text-[0.9375rem]">
-            {tipo === "preventivo"
+            {integrativo
+              ? "Il preventivo risulterà accettato: l'onorario della commessa aumenta e le voci diventano nuove fasi."
+              : tipo === "preventivo"
               ? "Il preventivo risulterà accettato e nascerà la commessa con le fasi delle voci."
               : "Nascerà la commessa con le fasi tipiche dell'intervento."}
           </span>
           <div className="flex items-center gap-2">
             <Pallino
-              etichetta="Conferma e crea commessa"
+              etichetta={integrativo ? "Conferma e aggiorna la commessa" : "Conferma e crea commessa"}
               icona={Check}
               tinta="bronzo"
               onClick={trasforma}
@@ -113,9 +118,9 @@ export function AzioniPratica({
       ) : (
         <div className="flex flex-wrap items-start gap-3">
           <Pallino
-            etichetta="Trasforma in commessa"
-            icona={ArrowRightLeft}
-            tinta="bronzo"
+            etichetta={integrativo ? "Accetta e aggiorna la commessa" : "Trasforma in commessa"}
+            icona={integrativo ? Check : ArrowRightLeft}
+            tinta={integrativo ? "salvia" : "bronzo"}
             onClick={() => setConferma(true)}
             disabled={inCorso}
           />

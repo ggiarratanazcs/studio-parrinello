@@ -158,3 +158,15 @@ export async function leggiPrefattibilita(id: string) {
   if (error) throw new Error(`Impossibile leggere la pre-fattibilità: ${error.message}`);
   return data;
 }
+
+/** Dati minimi di una commessa per precompilare un preventivo integrativo. */
+export async function commessaPerIntegrativo(id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("commesse")
+    .select("id, codice, titolo, cliente_id, immobile_id, committenza, tipologia_intervento")
+    .eq("id", id)
+    .maybeSingle();
+  return data;
+}

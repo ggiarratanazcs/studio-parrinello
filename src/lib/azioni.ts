@@ -394,3 +394,15 @@ export async function posizionaImmobiliMancanti(): Promise<{ ok: true; trovati: 
   aggiornaElenchi();
   return { ok: true, trovati, restanti: count ?? 0 };
 }
+
+/** Accetta un preventivo integrativo: aumenta l'onorario della commessa e ne aggiunge le voci come fasi. */
+export async function accettaIntegrativo(id: string): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data, error } = await supabase.rpc("accetta_integrativo", { p_id: id });
+  if (error || !data) {
+    return { ok: false, errore: error?.message.includes("già accettato") ? "Il preventivo è già stato accettato." : "Non è stato possibile accettare il preventivo." };
+  }
+  aggiornaElenchi();
+  return { ok: true, id: data };
+}

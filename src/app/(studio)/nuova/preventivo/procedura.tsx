@@ -17,7 +17,9 @@ type Committenza = "privata" | "pubblica";
 type Voce = { chiave: string; fase_catalogo_id: string; descrizione: string; prezzo: string; ore: string; opzionale: boolean };
 
 export type OrigineNuovoPreventivo = {
-  prefattibilita_id: string;
+  /** Pre-fattibilità da cui nasce, oppure commessa di cui è un integrativo */
+  tipo: "prefattibilita" | "commessa";
+  id: string;
   numero: string | null;
   cliente_id: string | null;
   immobile_id: string | null;
@@ -53,7 +55,7 @@ export function ProceduraNuovoPreventivo({
   const [inCorso, avvia] = useTransition();
 
   const [offerta, setOfferta] = useState({
-    titolo: origine?.titolo ?? "",
+    titolo: origine ? (origine.tipo === "commessa" ? `Integrativo – ${origine.titolo ?? ""}` : (origine.titolo ?? "")) : "",
     oggetto: "",
     committenza: (origine?.committenza ?? "privata") as Committenza,
     tipologia_intervento: origine?.tipologia_intervento ?? "",
@@ -130,7 +132,8 @@ export function ProceduraNuovoPreventivo({
       preventivo: {
         ...offerta,
         committenza,
-        prefattibilita_id: origine?.prefattibilita_id ?? null,
+        prefattibilita_id: origine?.tipo === "prefattibilita" ? origine.id : null,
+        commessa_id: origine?.tipo === "commessa" ? origine.id : null,
         sconto_pct: condizioni.sconto,
         spese_pct: condizioni.spese,
         cassa_pct: condizioni.cassa,
@@ -171,10 +174,10 @@ export function ProceduraNuovoPreventivo({
       onVai={nav.vaiA}
       onAvanti={nav.avanti}
       onSalva={salva}
-      etichettaSalva="Crea preventivo"
+      etichettaSalva={origine?.tipo === "commessa" ? "Crea preventivo integrativo" : "Crea preventivo"}
       inCorso={inCorso}
       riepilogo={[
-        ...(origine ? [{ etichetta: "Da pre-fattibilità", valore: origine.numero }] : []),
+        ...(origine ? [{ etichetta: origine.tipo === "commessa" ? "Integrativo della commessa" : "Da pre-fattibilità", valore: origine.numero }] : []),
         { etichetta: "Committente", valore: ctl.nomeCommittente },
         { etichetta: "Immobile", valore: ctl.descrizioneImmobile },
         { etichetta: "Titolo", valore: offerta.titolo },

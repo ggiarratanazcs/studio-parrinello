@@ -35,9 +35,11 @@ const TESTI = {
 export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefattibilita"; pratiche: Pratica[] }) {
   const t = TESTI[tipo];
   const stati = tipo === "preventivo" ? STATI_PREVENTIVO : STATI_PREFATTIBILITA;
-  const convertite = pratiche.filter((p) => p.commessa_id).length;
-  const proseguite = tipo === "prefattibilita" ? pratiche.filter((p) => p.commessa_id || p.preventivo_id).length : convertite;
-  const chiuse = pratiche.filter((p) => p.stato !== "bozza" && p.stato !== "in_corso").length;
+  // Gli integrativi nascono già dentro una commessa: non contano nel tasso di conversione
+  const base = pratiche.filter((p) => !p.integrativo);
+  const convertite = base.filter((p) => p.commessa_id).length;
+  const proseguite = tipo === "prefattibilita" ? base.filter((p) => p.commessa_id || p.preventivo_id).length : convertite;
+  const chiuse = base.filter((p) => p.stato !== "bozza" && p.stato !== "in_corso").length;
   const tasso = chiuse ? Math.round((proseguite / chiuse) * 100) : null;
 
   const nuovo = (

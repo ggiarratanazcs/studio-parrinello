@@ -36,16 +36,25 @@ export async function SchedaPreventivo({ id }: { id: string }) {
           { etichetta: "Emesso il", valore: formattaData(p.data_emissione), icona: CalendarDays },
           { etichetta: "Totale", valore: formattaEuro(t.totale), icona: Euro },
         ]}
-        azioni={<AzioniPratica tipo="preventivo" id={p.id} stato={p.stato} convertita={Boolean(p.commessa)} />}
+        azioni={
+          <AzioniPratica
+            tipo="preventivo"
+            id={p.id}
+            stato={p.stato}
+            integrativo={p.integrativo}
+            convertita={p.integrativo ? p.stato === "accettato" : Boolean(p.commessa)}
+          />
+        }
       />
 
       {p.commessa ? (
         <p className="mb-6 rounded-m bg-accento-tenue px-4 py-3 text-[0.9375rem]">
-          Trasformato in commessa{" "}
+          {p.integrativo ? "Preventivo integrativo della commessa" : "Trasformato in commessa"}{" "}
           <Link href={`/commesse/${p.commessa.id}`} className="font-medium text-accento hover:underline">
             {p.commessa.codice}
           </Link>
-          {p.data_conversione ? ` il ${formattaData(p.data_conversione)}` : ""}.
+          {!p.integrativo && p.data_conversione ? ` il ${formattaData(p.data_conversione)}` : ""}
+          {p.integrativo ? (p.stato === "accettato" ? ", accettato e aggiunto alla commessa." : ": accettandolo aggiorni onorario e fasi della commessa.") : "."}
         </p>
       ) : null}
 

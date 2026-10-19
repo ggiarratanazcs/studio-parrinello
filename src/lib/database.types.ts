@@ -1104,6 +1104,7 @@ export type Database = {
           commessa_codice: string | null
           preventivo_id: string | null
           prefattibilita_id: string | null
+          integrativo: boolean | null
           created_at: string | null
         }
         Relationships: []
@@ -1135,6 +1136,10 @@ export type Database = {
       crea_commessa: { Args: { dati: Json }; Returns: string }
       crea_preventivo: { Args: { dati: Json }; Returns: string }
       crea_prefattibilita: { Args: { dati: Json }; Returns: string }
+      accetta_integrativo: {
+        Args: { p_id: string }
+        Returns: string
+      }
       converti_in_commessa: { Args: { p_origine: string; p_id: string; p_fasi?: Json }; Returns: string }
       ha_ruolo: { Args: { ruoli: string[] }; Returns: boolean }
       is_membro_studio: { Args: never; Returns: boolean }
