@@ -228,6 +228,7 @@ export function FiltroGruppi({
   scelto,
   onScegli,
   nome = "Gruppo",
+  senzaSchede = false,
 }: {
   gruppi: GruppoFiltro[];
   /** Ordine in cui mostrare gli stati */
@@ -238,6 +239,8 @@ export function FiltroGruppi({
   scelto: string;
   onScegli: (v: string) => void;
   nome?: string;
+  /** Solo i pallini degli stati, senza le schede (le schede le gestisce chi lo usa) */
+  senzaSchede?: boolean;
 }) {
   const [gruppo, stato] = scelto.split("|");
   const corrente = gruppi.find((g) => g.id === gruppo);
@@ -248,7 +251,7 @@ export function FiltroGruppi({
     .filter((s) => s.conteggio > 0);
   return (
     <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-4">
-      <div role="tablist" aria-label={nome} className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
+      {senzaSchede ? null : <div role="tablist" aria-label={nome} className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
         {gruppi.map((g) => {
           const attivo = g.id === gruppo;
           const n = g.stati ? stati.filter((x) => g.stati!.includes(x)).length : stati.length;
@@ -271,7 +274,7 @@ export function FiltroGruppi({
             </button>
           );
         })}
-      </div>
+      </div>}
       {visibili.length > 1 ? (
         <div role="group" aria-label="Stato" className="flex flex-wrap items-center gap-1">
           {visibili.map((s) => {

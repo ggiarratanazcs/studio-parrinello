@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Crosshair, Loader2, MapPin, MapPinOff, Wand2 } from "lucide-react";
 import { Messaggio } from "@/components/campo";
@@ -8,7 +8,39 @@ import { Pannello, Pulsante, Vuoto } from "@/components/ui";
 import { posizionaImmobile, posizionaImmobiliMancanti } from "@/lib/azioni";
 import type { ImmobileElenco } from "@/lib/dati";
 import { cn } from "@/lib/utils";
+import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, useRegistro, type GruppoFiltro } from "@/components/registro";
 import { MappaImmobili, SceltaPosizione, STATI_IMMOBILE, statoImmobile } from "./mappa";
+
+const COLONNE = "md:grid-cols-[minmax(0,1fr)_10rem_6rem_5.5rem]";
+type Chiave = "immobile" | "comune" | "zona";
+const ORDINE_STATI = Object.keys(STATI_IMMOBILE);
+const infoStato = (s: string) => STATI_IMMOBILE[s as keyof typeof STATI_IMMOBILE] ?? STATI_IMMOBILE.nessuno;
+const GRUPPI: GruppoFiltro[] = [
+  { id: "tutti", etichetta: "Tutti" },
+  { id: "mappa", etichetta: "Sulla mappa", stati: [] },
+  { id: "senza", etichetta: "Da posizionare", stati: [] },
+];
+const sullaMappa = (i: ImmobileElenco) => i.latitudine != null && i.longitudine != null;
+const testo = (i: ImmobileElenco) => [
+  i.denominazione,
+  i.indirizzo,
+  i.comune,
+  i.provincia,
+  i.cap,
+  i.zona_urbanistica,
+  ...(i.commesse ?? []).flatMap((c) => [c.codice, c.titolo]),
+  ...(i.preventivi ?? []).map((p) => p.numero),
+  ...(i.prefattibilita ?? []).map((p) => p.numero),
+];
+const valore = (i: ImmobileElenco, k: Chiave): unknown => (k === "immobile" ? i.denominazione ?? i.indirizzo : k === "comune" ? i.comune : i.zona_urbanistica);
+// Il filtro è "scheda|stato": la scheda guarda la posizione sulla mappa, il pallino lo stato dell'immobile
+const filtro = (i: ImmobileElenco, scelto: string) => {
+  const [g] = scelto.split("|");
+  if (g === "mappa" && !sullaMappa(i)) return false;
+  if (g === "senza" && sullaMappa(i)) return false;
+  const stato = scelto.split("|")[1];
+  return !stato || statoImmobile(i) === stato;
+};
 
 /** Mappa degli immobili in alto e, sotto, l'elenco con il posizionamento sulla mappa. */
 export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
@@ -67,8 +99,8 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
             testo="Gli immobili si aggiungono creando preventivi, pre-fattibilità o commesse. Poi qui li posizioni sulla mappa."
           />
         ) : (
-          <ul className="divide-y divide-linea">
-            {immobili.map((i) => (
+          <ElencoImmobili immobili={immobili}>
+            {(i) => (
               <RigaImmobile
                 key={i.id}
                 immobile={i}
@@ -81,11 +113,77 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
               />
-            ))}
-          </ul>
+            )}
+          </ElencoImmobili>
         )}
       </Pannello>
     </div>
+  );
+}
+
+/** Registro degli immobili: ricerca, schede (tutti, sulla mappa, da posizionare), pallini per stato, ordinamento. */
+function ElencoImmobili({ immobili, children }: { immobili: ImmobileElenco[]; children: (i: ImmobileElenco) => ReactNode }) {
+  const r = useRegistro<ImmobileElenco, Chiave>({ righe: immobili, testo, valore, filtro, iniziale: { chiave: "comune", verso: "asc" }, filtroIniziale: "tutti|" });
+  // Conteggi delle schede calcolati sulla posizione, non sullo stato
+  const gruppi = GRUPPI;
+  const statiRighe = immobili.map((i) => statoImmobile(i) as string);
+  const intestazione = (chiave: Chiave, nome: string) => (
+    <Intestazione chiave={chiave} ordine={r.ordine} onOrdina={r.ordina}>
+      {nome}
+    </Intestazione>
+  );
+  const nMappa = immobili.filter(sullaMappa).length;
+  return (
+    <>
+      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca nome, indirizzo, comune, commessa…">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-4">
+          <div role="tablist" aria-label="Posizione" className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
+            {gruppi.map((g) => {
+              const attivo = r.scelto.split("|")[0] === g.id;
+              const n = g.id === "tutti" ? immobili.length : g.id === "mappa" ? nMappa : immobili.length - nMappa;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={attivo}
+                  onClick={() => r.setScelto(`${g.id}|${r.scelto.split("|")[1] ?? ""}`)}
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-[0.8125rem] transition-all duration-200",
+                    attivo ? "bg-superficie font-medium text-inchiostro shadow-[0_4px_14px_-6px_rgba(43,42,40,0.35)]" : "text-tenue hover:text-inchiostro",
+                  )}
+                >
+                  {g.etichetta}
+                  <span className="numeri text-xs text-tenue">{n}</span>
+                </button>
+              );
+            })}
+          </div>
+          <FiltroGruppi
+            senzaSchede
+            gruppi={[]}
+            ordine={ORDINE_STATI}
+            info={infoStato}
+            stati={statiRighe}
+            scelto={r.scelto}
+            onScegli={r.setScelto}
+          />
+        </div>
+      </BarraRegistro>
+      <div role="table" aria-label="Immobili">
+        <div role="row" className={`elenco-intestazione etichetta hidden border-b border-linea py-3 pl-12 pr-6 md:grid ${COLONNE} md:gap-x-4`}>
+          {intestazione("immobile", "Immobile")}
+          {intestazione("comune", "Comune")}
+          {intestazione("zona", "Zona")}
+          <span role="columnheader" className="sr-only">Mappa</span>
+        </div>
+        <ul role="rowgroup" className="divide-y divide-linea">
+          {r.visibili.map(children)}
+          {r.visibili.length === 0 ? <li className="px-6 py-10 text-center text-[0.9375rem] text-tenue">Nessun immobile corrisponde alla ricerca o al filtro.</li> : null}
+        </ul>
+      </div>
+      <PiedeRegistro visibili={r.visibili.length} totali={immobili.length} nome={["immobile", "immobili"]} />
+    </>
   );
 }
 
@@ -123,15 +221,20 @@ function RigaImmobile({
 
   return (
     <li className={cn(aperta && "bg-superficie-2/60")}>
-      <div className="flex items-center gap-4 px-5 py-4 md:px-6">
-        <span className="size-2.5 shrink-0 rounded-full" style={{ background: stato.colore }} data-suggerimento={stato.etichetta} />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{i.denominazione ?? i.indirizzo}</span>
-          <span className="block truncate text-sm text-tenue">
-            {[[i.indirizzo, i.comune].filter(Boolean).join(", "), pratiche.join(" · ")].filter(Boolean).join("  —  ")}
+      <div role="row" className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-4 md:px-6 ${COLONNE}`}>
+        <span role="cell" className="flex min-w-0 items-center gap-4">
+          <span className="size-2.5 shrink-0 rounded-full" style={{ background: stato.colore }} data-suggerimento={stato.etichetta} />
+          <span className="min-w-0">
+            <span className="block truncate font-medium">{i.denominazione ?? i.indirizzo}</span>
+            <span className="block truncate text-sm text-tenue">
+              {[i.indirizzo, pratiche.join(" · ")].filter(Boolean).join("  —  ")}
+              <span className="md:hidden">{i.comune ? ` · ${i.comune}` : ""}</span>
+            </span>
           </span>
         </span>
-        <span className="etichetta hidden shrink-0 md:inline">{i.zona_urbanistica ? `Zona ${i.zona_urbanistica}` : ""}</span>
+        <span role="cell" className="hidden truncate text-sm text-inchiostro-2 md:block">{i.comune ?? "—"}</span>
+        <span role="cell" className="numeri hidden text-sm text-inchiostro-2 md:block">{i.zona_urbanistica ?? "—"}</span>
+        <span role="cell" className="flex items-center justify-end gap-1">
         {posizione ? (
           <button
             type="button"
@@ -155,6 +258,7 @@ function RigaImmobile({
         >
           {posizione ? <Crosshair className="size-[18px]" strokeWidth={1.8} /> : <MapPinOff className="size-[18px]" strokeWidth={1.8} />}
         </button>
+        </span>
       </div>
 
       {aperta ? (
