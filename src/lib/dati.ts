@@ -16,6 +16,19 @@ export async function elencoCommesse(): Promise<CommessaSintesi[]> {
   return data ?? [];
 }
 
+/** Fasi di tutte le commesse con le date, per il Gantt generale. */
+export async function fasiPerGantt() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("commesse_fasi")
+    .select("id, commessa_id, nome, stato, ordine, avanzamento_pct, data_inizio_prev, data_fine_prev, data_inizio_eff, data_fine_eff")
+    .order("ordine");
+  if (error) throw new Error(`Impossibile leggere le fasi: ${error.message}`);
+  return data ?? [];
+}
+
+export type FaseGantt = Awaited<ReturnType<typeof fasiPerGantt>>[number];
+
 export async function elencoClienti() {
   const supabase = await createClient();
   const { data, error } = await supabase

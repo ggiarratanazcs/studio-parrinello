@@ -4,20 +4,9 @@ import { CalendarRange } from "lucide-react";
 import type { Commessa } from "@/lib/dati";
 import { STATI_FASE } from "@/lib/dominio";
 import { COLORI_FASE } from "./fasi-commessa";
+import { breve, daGiorno, giorno, GIORNO, MESI } from "@/lib/calendario";
 
 type Fase = NonNullable<Commessa["fasi"]>[number];
-
-const GIORNO = 86_400_000;
-const MESI = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-
-/** "AAAA-MM-GG" → giorno progressivo (UTC), per fare i conti senza fusi orari */
-const giorno = (iso: string) => Math.floor(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / GIORNO);
-const daGiorno = (g: number) => new Date(g * GIORNO);
-const breve = (iso: string | null) => {
-  if (!iso) return "—";
-  const d = daGiorno(giorno(iso));
-  return `${d.getUTCDate()} ${MESI[d.getUTCMonth()].toLowerCase()}`;
-};
 
 /**
  * Cronoprogramma (Gantt) della commessa: una riga per fase, barra delle date previste

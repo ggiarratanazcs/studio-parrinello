@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, X } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Maximize2, Minimize2, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -77,6 +77,42 @@ export function useRegistro<T, K extends string>({
   return { visibili, cerca, setCerca, scelto, setScelto, ordine, ordina };
 }
 
+/** Espansione a tutto schermo: chi la fornisce (Espandibile) e la barra che mostra il pulsante. */
+const ContestoEspansione = createContext<{ espanso: boolean; cambia: () => void } | null>(null);
+
+/**
+ * Contenitore che si può espandere a tutto schermo (pulsante nella barra di ricerca, Esc per uscire).
+ * Il contenuto resta lo stesso: ricerca, filtri e ordinamento non si perdono.
+ */
+export function Espandibile({ children, className }: { children: ReactNode; className?: string }) {
+  const [espanso, setEspanso] = useState(false);
+  useEffect(() => {
+    if (!espanso) return;
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setEspanso(false);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("keydown", esc);
+      document.body.style.overflow = overflow;
+    };
+  }, [espanso]);
+  return (
+    <ContestoEspansione.Provider value={{ espanso, cambia: () => setEspanso((v) => !v) }}>
+      <div
+        className={cn(
+          espanso && "fixed inset-0 z-[70] overflow-auto bg-sfondo p-3 md:p-6",
+          className,
+        )}
+      >
+        <div className={cn(espanso && "pannello min-h-full overflow-hidden rounded-l border border-linea bg-superficie shadow-[0_24px_60px_-30px_rgba(43,42,40,0.5)]")}>
+          {children}
+        </div>
+      </div>
+    </ContestoEspansione.Provider>
+  );
+}
+
 /** Barra sopra la tabella: campo di ricerca e, se servono, i filtri a pillola con il conteggio. */
 export function BarraRegistro({
   cerca,
@@ -145,7 +181,26 @@ export function BarraRegistro({
         </div>
       ) : null}
       {children}
+      <PulsanteEspandi />
     </div>
+  );
+}
+
+function PulsanteEspandi() {
+  const e = useContext(ContestoEspansione);
+  if (!e) return null;
+  const Icona = e.espanso ? Minimize2 : Maximize2;
+  return (
+    <button
+      type="button"
+      onClick={e.cambia}
+      className="ml-auto hidden size-10 shrink-0 place-items-center rounded-full border border-linea text-tenue transition-colors hover:border-linea-forte hover:text-inchiostro md:grid"
+      data-suggerimento={e.espanso ? "Riduci (Esc)" : "A tutto schermo"}
+      data-suggerimento-lato="sotto"
+    >
+      <Icona className="size-4" strokeWidth={1.8} />
+      <span className="sr-only">{e.espanso ? "Riduci" : "A tutto schermo"}</span>
+    </button>
   );
 }
 

@@ -4,7 +4,12 @@ import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, Vuoto } from "@/components/ui";
 import { TabellaCommesse } from "@/components/tabella-commesse";
-import { elencoCommesse } from "@/lib/dati";
+import { elencoCommesse, fasiPerGantt } from "@/lib/dati";
+import Link from "next/link";
+import { GanttChart, Table2 } from "lucide-react";
+import { GanttCommesse } from "@/components/gantt-commesse";
+import { Espandibile } from "@/components/registro";
+import { oggiIso } from "@/lib/utils";
 
 export const metadata = { title: "Commesse" };
 
@@ -12,7 +17,24 @@ const nuovaCommessa = (
   <PulsanteNuovo href="/nuova/commessa" tipo="commessa">Nuova</PulsanteNuovo>
 );
 
-export default function PaginaCommesse() {
+/** Pulsante accanto a "Nuova": passa dalla tabella al Gantt generale e viceversa. */
+function PulsanteVista({ gantt }: { gantt: boolean }) {
+  const Icona = gantt ? Table2 : GanttChart;
+  return (
+    <Link
+      href={gantt ? "/commesse" : "/commesse?vista=gantt"}
+      scroll={false}
+      className="inline-flex h-11 items-center gap-2.5 rounded-full border border-linea-forte bg-superficie py-1 pl-1.5 pr-5 text-[0.9375rem] font-medium text-inchiostro shadow-[0_8px_20px_-14px_rgba(43,42,40,0.5)] transition-colors hover:bg-superficie-2"
+    >
+      <span aria-hidden className="grid size-8 place-items-center rounded-full bg-superficie-2">
+        <Icona className="size-4" strokeWidth={1.8} />
+      </span>
+      {gantt ? "Tabella" : "Gantt"}
+    </Link>
+  );
+}
+
+export default function PaginaCommesse({ searchParams }: PageProps<"/commesse">) {
   return (
     <Suspense
       fallback={
@@ -26,13 +48,14 @@ export default function PaginaCommesse() {
         </>
       }
     >
-      <ElencoCommesse />
+      <ElencoCommesse searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function ElencoCommesse() {
-  const commesse = await elencoCommesse();
+async function ElencoCommesse({ searchParams }: { searchParams: PageProps<"/commesse">["searchParams"] }) {
+  const gantt = (await searchParams).vista === "gantt";
+  const [commesse, fasi] = await Promise.all([elencoCommesse(), gantt ? fasiPerGantt() : Promise.resolve([])]);
   const pubbliche = commesse.filter((c) => c.committenza === "pubblica").length;
 
   return (
@@ -45,7 +68,12 @@ async function ElencoCommesse() {
           { etichetta: "Private", valore: commesse.length - pubbliche, icona: User },
           { etichetta: "Pubbliche", valore: pubbliche, icona: Landmark },
         ]}
-        azioni={nuovaCommessa}
+        azioni={
+          <>
+            {nuovaCommessa}
+            <PulsanteVista gantt={gantt} />
+          </>
+        }
       />
 
       <Pannello>
@@ -61,7 +89,9 @@ async function ElencoCommesse() {
             }
           />
         ) : (
-          <TabellaCommesse commesse={commesse} />
+          <Espandibile>
+            {gantt ? <GanttCommesse commesse={commesse} fasi={fasi} oggi={oggiIso()} /> : <TabellaCommesse commesse={commesse} />}
+          </Espandibile>
         )}
       </Pannello>
     </>
