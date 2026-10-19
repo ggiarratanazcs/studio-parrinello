@@ -73,7 +73,7 @@ export function TabellaPratiche({ tipo, pratiche }: { tipo: "preventivo" | "pref
         />
       </BarraRegistro>
       <div role="table" aria-label={c.nome[1]}>
-        <div role="row" className={`elenco-intestazione solo-laterale etichetta hidden border-b border-linea px-6 py-3 md:grid ${COLONNE} md:gap-x-4`}>
+        <div role="row" className={`elenco-intestazione etichetta hidden border-b border-linea px-6 py-3 md:grid ${COLONNE} md:gap-x-4`}>
           {intestazione("numero", "Numero")}
           {intestazione("titolo", "Titolo")}
           {intestazione("data", "Data")}

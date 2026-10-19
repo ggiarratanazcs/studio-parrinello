@@ -65,23 +65,7 @@
   border-color: transparent;
 }
 
-/* Elenchi: in Materia ogni riga è un piano separato */
-[data-impaginazione="materia"] .pannello:has(.elenco) {
-  background: transparent;
-}
-[data-impaginazione="materia"] .elenco {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-[data-impaginazione="materia"] .elenco > * {
-  background: var(--superficie);
-  border: 0;
-  border-radius: var(--raggio-l);
-}
-[data-impaginazione="materia"] .elenco-intestazione {
-  display: none !important;
-}
+/* Elenchi: in entrambe le impaginazioni sono tabelle con intestazioni di colonna (vedi .elenco-intestazione) */
 
 /* Titoli: in Materia più compatti e senza larghezza variabile */
 [data-impaginazione="materia"] .titolo-display {
@@ -424,3 +408,8 @@ body {
 /* Passaggio tra schermate: il puntatore diventa il compasso che traccia il cerchio */
 html[data-navigazione],
 html[data-navigazione] * { cursor: var(--cursore-compasso, progress) !important; }
+
+/* Tabelle a registro: intestazione delle colonne su fondo appena velato, righe a filo */
+.elenco-intestazione {
+  background: color-mix(in srgb, var(--superficie-2) 38%, transparent);
+}

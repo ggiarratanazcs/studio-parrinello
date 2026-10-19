@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { AvanzamentoFasi, StatoBadge } from "@/components/ui";
+import { StatoBadge } from "@/components/ui";
 import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, filtroGruppi, useRegistro, type GruppoFiltro } from "@/components/registro";
 import type { CommessaSintesi } from "@/lib/dati";
 import { STATI_COMMESSA, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro } from "@/lib/utils";
 
 /** Colonne della tabella su schermi grandi (impaginazione laterale). */
-const COLONNE = "md:grid-cols-[6.5rem_minmax(0,1fr)_11rem_7rem_7rem_8rem]";
+const COLONNE = "md:grid-cols-[6rem_minmax(0,1fr)_9.5rem_8.5rem_7rem_6.5rem_7.5rem]";
 
-type Chiave = "codice" | "titolo" | "intervento" | "onorario" | "apertura" | "stato";
+type Chiave = "codice" | "titolo" | "intervento" | "avanzamento" | "onorario" | "apertura" | "stato";
 
 const ORDINE_STATI = Object.keys(STATI_COMMESSA);
 
@@ -34,6 +34,8 @@ const valore = (c: CommessaSintesi, k: Chiave): unknown => {
       return c.titolo;
     case "intervento":
       return TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""];
+    case "avanzamento":
+      return c.fasi_totali ? (c.fasi_completate ?? 0) / c.fasi_totali : null;
     case "onorario":
       return c.onorario_concordato;
     case "apertura":
@@ -90,11 +92,12 @@ export function TabellaCommesse({ commesse }: { commesse: CommessaSintesi[] }) {
       <div role="table" aria-label="Elenco commesse">
         <div
           role="row"
-          className={`elenco-intestazione solo-laterale etichetta hidden border-b border-linea px-6 py-3 md:grid ${COLONNE} md:gap-x-4`}
+          className={`elenco-intestazione etichetta hidden border-b border-linea px-6 py-3 md:grid ${COLONNE} md:gap-x-4`}
         >
           {intestazione("codice", "Codice")}
           {intestazione("titolo", "Commessa")}
           {intestazione("intervento", "Intervento")}
+          {intestazione("avanzamento", "Fasi")}
           {intestazione("onorario", "Onorario", true)}
           {intestazione("apertura", "Apertura")}
           {intestazione("stato", "Stato")}
@@ -116,20 +119,18 @@ export function TabellaCommesse({ commesse }: { commesse: CommessaSintesi[] }) {
                 <span className="block truncate text-sm text-tenue">{[c.cliente, c.comune].filter(Boolean).join(", ")}</span>
               </span>
 
-              {/* Colonne tabellari: solo impaginazione laterale */}
-              <span role="cell" className="solo-laterale hidden text-sm text-inchiostro-2 md:block">
+              <span role="cell" className="hidden truncate text-sm text-inchiostro-2 md:block">
                 {TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""] ?? "—"}
               </span>
-              <span role="cell" className="solo-laterale numeri hidden text-right text-sm md:block">
+              <span role="cell" className="col-span-2 row-start-3 mt-2 flex items-center gap-2.5 md:col-span-1 md:row-auto md:mt-0" data-suggerimento={c.fasi_totali ? `${c.fasi_completate ?? 0} di ${c.fasi_totali} fasi completate` : "Fasi da definire"}>
+                <BarraFasi completate={c.fasi_completate ?? 0} totali={c.fasi_totali ?? 0} colore={statoCommessa(c.stato).colore} />
+                <span className="numeri shrink-0 text-xs text-tenue">{c.fasi_totali ? `${c.fasi_completate ?? 0}/${c.fasi_totali}` : "—"}</span>
+              </span>
+              <span role="cell" className="numeri hidden text-right text-sm md:block">
                 {formattaEuro(c.onorario_concordato)}
               </span>
-              <span role="cell" className="solo-laterale numeri hidden text-sm text-inchiostro-2 md:block">
+              <span role="cell" className="numeri hidden text-sm text-inchiostro-2 md:block">
                 {formattaData(c.data_apertura)}
-              </span>
-
-              {/* Avanzamento delle fasi: solo impaginazione Materia */}
-              <span role="cell" className="solo-materia col-span-2 row-start-3 mt-2 md:col-span-3 md:row-auto md:mt-0">
-                <AvanzamentoFasi completate={c.fasi_completate ?? 0} totali={c.fasi_totali ?? 0} colore={statoCommessa(c.stato).colore} />
               </span>
 
               <span role="cell" className="col-start-2 row-start-1 justify-self-end md:col-auto md:row-auto md:justify-self-start">
@@ -144,5 +145,16 @@ export function TabellaCommesse({ commesse }: { commesse: CommessaSintesi[] }) {
       </div>
       <PiedeRegistro visibili={r.visibili.length} totali={commesse.length} nome={["commessa", "commesse"]} />
     </>
+  );
+}
+
+/** Avanzamento compatto per la tabella: un segmento per fase, pieno se completata. */
+function BarraFasi({ completate, totali, colore }: { completate: number; totali: number; colore: string }) {
+  return (
+    <span aria-hidden className="flex w-full max-w-28 gap-[2px]">
+      {Array.from({ length: Math.max(totali, 1) }, (_, i) => (
+        <span key={i} className="h-1 flex-1 rounded-full" style={{ background: i < completate ? colore : "var(--linea)" }} />
+      ))}
+    </span>
   );
 }
