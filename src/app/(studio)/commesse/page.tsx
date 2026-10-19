@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { Landmark, Layers, User } from "lucide-react";
 import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Scheletro, Vuoto } from "@/components/ui";
+import { CaricamentoPannello } from "@/components/compasso";
+import { Pannello, Vuoto } from "@/components/ui";
 import { TabellaCommesse } from "@/components/tabella-commesse";
 import { elencoCommesse } from "@/lib/dati";
 
@@ -18,11 +19,7 @@ export default function PaginaCommesse() {
       fallback={
         <>
           <Cartiglio tipo="commessa" titolo="Commesse" azioni={nuovaCommessa} />
-          <Pannello className="p-6">
-            <Scheletro className="h-4 w-full" />
-            <Scheletro className="mt-4 h-4 w-5/6" />
-            <Scheletro className="mt-4 h-4 w-4/6" />
-          </Pannello>
+          <CaricamentoPannello />
         </>
       }
     >

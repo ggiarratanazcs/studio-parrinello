@@ -414,3 +414,9 @@ body {
   text-transform: uppercase;
   color: rgba(246, 239, 227, 0.78);
 }
+
+/* Schermata d'ingresso col compasso: nascosta se già vista in questa sessione */
+[data-benvenuto="visto"] .benvenuto { display: none; }
+.respiro { animation: respiro 1.8s ease-in-out infinite; }
+@keyframes respiro { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .respiro { animation: none; } }

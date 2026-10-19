@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Activity, Euro, FolderOpen } from "lucide-react";
 import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
+import { CaricamentoPannello } from "@/components/compasso";
+import { Pannello, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
 import { formattaEuro } from "@/lib/utils";
 
@@ -151,10 +152,7 @@ function PanoramicaSegnaposto() {
   return (
     <>
       <Cartiglio titolo="Architettura e Design" discreto azioni={azioni} />
-      <Pannello className="px-6 py-6">
-        <Scheletro className="h-4 w-48" />
-        <Scheletro className="mt-6 h-20 w-full" />
-      </Pannello>
+      <CaricamentoPannello />
     </>
   );
 }

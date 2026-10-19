@@ -1,7 +1,8 @@
 import { Building2, Landmark, User } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
-import { Pannello, Scheletro, Vuoto } from "@/components/ui";
+import { CaricamentoPannello } from "@/components/compasso";
+import { Pannello, Vuoto } from "@/components/ui";
 import { elencoClienti } from "@/lib/dati";
 import { TabellaClienti } from "@/components/tabella-clienti";
 
@@ -13,9 +14,7 @@ export default function PaginaClienti() {
       fallback={
         <>
           <Cartiglio titolo="Clienti" />
-          <Pannello className="p-6">
-            <Scheletro className="h-4 w-2/3" />
-          </Pannello>
+          <CaricamentoPannello />
         </>
       }
     >

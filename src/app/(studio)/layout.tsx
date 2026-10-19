@@ -4,6 +4,7 @@ import { Monogramma } from "@/components/monogramma";
 import { NavLaterale, NavMobile, NavSuperiore } from "@/components/navigazione";
 import { SalutoUtente, UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/utente";
 import { PulsanteBarra } from "@/components/pulsante-barra";
+import { Benvenuto } from "@/components/benvenuto";
 
 /**
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
@@ -12,6 +13,7 @@ import { PulsanteBarra } from "@/components/pulsante-barra";
 export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
   return (
     <div className="relative min-h-dvh lg:flex">
+      <Benvenuto />
       {/* ── Impaginazione "laterale": barra fluttuante a sinistra, richiudibile ── */}
       <aside className="barra-laterale solo-laterale sticky top-0 z-40 hidden h-dvh shrink-0 p-3 lg:block">
         <div className="relative flex h-full flex-col rounded-[22px] border border-linea/70 bg-superficie px-3 py-5 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.35),0_8px_16px_-12px_rgba(43,42,40,0.2)]">
