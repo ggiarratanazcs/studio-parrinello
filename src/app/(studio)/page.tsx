@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Activity, Euro, FolderOpen, House } from "lucide-react";
+import { Activity, Euro, FolderOpen } from "lucide-react";
 import { PulsanteNuovo } from "@/components/tessere";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
@@ -13,9 +13,11 @@ const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sos
 
 const azioni = (
   <>
-    <PulsanteNuovo href="/nuova/preventivo" tipo="preventivo">Preventivo</PulsanteNuovo>
     <PulsanteNuovo href="/nuova/prefattibilita" tipo="prefattibilita">
       Pre-fattibilità
+    </PulsanteNuovo>
+    <PulsanteNuovo href="/nuova/preventivo" tipo="preventivo">
+      Preventivo
     </PulsanteNuovo>
     <PulsanteNuovo href="/nuova/commessa" tipo="commessa">
       Commessa
@@ -68,8 +70,7 @@ async function PanoramicaContenuto() {
   return (
     <>
       <Cartiglio
-        titolo="Home" icona={House}
-        sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione."
+        titolo="Architettura e Design"
         celle={[
           { etichetta: "Commesse aperte", valore: aperte.length, icona: FolderOpen },
           { etichetta: "In corso", valore: inCorso.length, icona: Activity },
@@ -149,7 +150,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio titolo="Home" icona={House} sottotitolo="Lo stato dello studio: offerte in attesa, commesse in corso e cosa richiede attenzione." azioni={azioni} />
+      <Cartiglio titolo="Architettura e Design" azioni={azioni} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />

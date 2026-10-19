@@ -29,8 +29,8 @@ export type Voce = {
 
 export const VOCI: Voce[] = [
   { href: "/", etichetta: "Home", icona: House, soloIcona: true, mobile: true, superiore: true, laterale: true },
-  { href: "/preventivi", etichetta: "Preventivi", icona: ReceiptText, mobile: true, superiore: true, laterale: true },
   { href: "/prefattibilita", etichetta: "Pre-fattibilità", breve: "Fattibilità", icona: LandPlot, mobile: true, superiore: true, laterale: true },
+  { href: "/preventivi", etichetta: "Preventivi", icona: ReceiptText, mobile: true, superiore: true, laterale: true },
   { href: "/commesse", etichetta: "Commesse", icona: DraftingCompass, mobile: true, superiore: true, laterale: true },
   { href: "/clienti", etichetta: "Clienti", icona: Users, mobile: false, superiore: true, laterale: true },
   { href: "/immobili", etichetta: "Immobili", icona: Building2, mobile: false, superiore: true, laterale: true },
