@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { getProfilo } from "@/lib/auth";
 import { RUOLI } from "@/lib/dominio";
 
@@ -49,6 +49,39 @@ export async function UtenteMobile() {
     <Link href="/impostazioni" aria-label="Il tuo profilo e le impostazioni">
       <Avatar iniziali={p.iniziali} className="size-8 text-xs" />
     </Link>
+  );
+}
+
+/** In alto a destra nell'impaginazione Materia: saluto, impostazioni (rotellina) ed esci. */
+export async function SalutoUtente() {
+  const p = await getProfilo();
+  const nome = p.nome || p.email.split("@")[0];
+  return (
+    <div className="flex items-center gap-1">
+      <span className="mr-2 whitespace-nowrap text-[0.9375rem] text-inchiostro-2">
+        Ciao <span className="font-medium text-inchiostro">{nome}</span>
+      </span>
+      <Link
+        href="/impostazioni"
+        aria-label="Impostazioni"
+        data-suggerimento="Impostazioni"
+        data-suggerimento-lato="sotto"
+        className="grid size-9 place-items-center rounded-full text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro"
+      >
+        <Settings className="size-[18px]" strokeWidth={1.7} />
+      </Link>
+      <form action="/auth/esci" method="post">
+        <button
+          type="submit"
+          aria-label="Esci"
+          data-suggerimento="Esci"
+          data-suggerimento-lato="sotto"
+          className="grid size-9 place-items-center rounded-full text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro"
+        >
+          <LogOut className="size-[18px]" strokeWidth={1.6} />
+        </button>
+      </form>
+    </div>
   );
 }
 

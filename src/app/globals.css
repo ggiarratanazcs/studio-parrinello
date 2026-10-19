@@ -382,3 +382,23 @@ body {
     transition: padding-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
+
+/* Impaginazione Materia su schermi grandi: la barra in alto galleggia sopra la testata;
+   l'area di lavoro lascia spazio alla barra, la testata risale fino al bordo alto */
+@media (min-width: 1024px) {
+  [data-impaginazione="materia"] .area-lavoro {
+    padding-top: 6.5rem;
+  }
+  [data-impaginazione="materia"] .testata-pagina {
+    border-radius: 0;
+    margin-top: -6.5rem;
+    margin-left: -2.5rem;
+    margin-right: -2.5rem;
+    box-shadow: 0 18px 40px -30px rgba(43, 42, 40, 0.6);
+  }
+  [data-impaginazione="materia"] .testata-pagina .testata-contenuto {
+    padding-left: 5rem;
+    padding-top: calc(3.5rem + 6.5rem);
+    min-height: calc(14rem + 6.5rem);
+  }
+}

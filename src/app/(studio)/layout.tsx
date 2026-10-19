@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Monogramma } from "@/components/monogramma";
 import { NavLaterale, NavMobile, NavSuperiore } from "@/components/navigazione";
-import { UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/utente";
+import { SalutoUtente, UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/utente";
 import { PulsanteBarra } from "@/components/pulsante-barra";
 
 /**
@@ -58,28 +58,22 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
           </div>
         </header>
 
-        {/* Barra in alto — schermi grandi, impaginazione "materia" */}
-        <header className="solo-materia hidden items-center justify-between gap-6 px-12 pt-8 lg:flex">
-          <div className="flex items-center gap-8">
-            <Link href="/" aria-label="Home">
-              <Monogramma className="h-9" />
-            </Link>
-            <NavSuperiore />
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/impostazioni"
-              className="rounded-full px-4 py-1.5 text-[0.9375rem] text-tenue hover:bg-superficie/70 hover:text-inchiostro"
-            >
-              Impostazioni
-            </Link>
+        {/* Barra in alto — schermi grandi, impaginazione "materia": capsula fluttuante sopra la testata */}
+        <header className="barra-materia solo-materia absolute inset-x-0 top-0 z-40 hidden px-6 pt-5 lg:block">
+          <div className="flex items-center justify-between gap-6 rounded-[22px] border border-linea/70 bg-superficie/95 py-2 pl-5 pr-3 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.45),0_8px_16px_-12px_rgba(43,42,40,0.25)] backdrop-blur-md">
+            <div className="flex items-center gap-6">
+              <Link href="/" aria-label="Home">
+                <Monogramma className="h-8" />
+              </Link>
+              <NavSuperiore />
+            </div>
             <Suspense fallback={<UtenteSegnaposto compatto />}>
-              <UtenteMobile />
+              <SalutoUtente />
             </Suspense>
           </div>
         </header>
 
-        <main className="px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-10 lg:pb-16">
+        <main className="area-lavoro px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-10 lg:pb-16">
           <div className="w-full">{children}</div>
         </main>
       </div>
