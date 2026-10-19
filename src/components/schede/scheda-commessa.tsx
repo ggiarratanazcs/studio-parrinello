@@ -5,13 +5,14 @@ import { AvanzamentoFasi, Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
 import { FONDI } from "@/lib/fondi";
 import { AMBITI, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
-import { formattaData, formattaEuro } from "@/lib/utils";
+import { formattaData, formattaEuro, oggiIso } from "@/lib/utils";
 import { AzioniCommessa } from "./azioni-commessa";
 import { Blocco, Dato, TestataScheda, UUID } from "./comuni";
 import { PulsanteNuovoPreventivo } from "@/components/procedura/modale-nuovo-preventivo";
 import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
+import { Cronoprogramma } from "./cronoprogramma";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
 
@@ -177,6 +178,11 @@ export async function SchedaCommessa({ id }: { id: string }) {
                           documenti={documenti}
                         />
                       ),
+                    },
+                    {
+                      id: "cronoprogramma",
+                      nome: "Cronoprogramma",
+                      contenuto: <Cronoprogramma fasi={fasi} apertura={c.data_apertura} finePrevista={c.data_fine_prevista} oggi={oggiIso()} />,
                     },
                     {
                       id: "allegati",

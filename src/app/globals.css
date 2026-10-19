@@ -507,3 +507,9 @@ html[data-theme="navy"] .piede-scheda {
 html[data-theme="navy"] .pannello {
   box-shadow: 0 1px 2px rgba(16, 33, 62, 0.04), 0 12px 32px -24px rgba(16, 33, 62, 0.25);
 }
+
+/* Voce attiva nelle barre di vetro: pillola chiara con testo navy (leggibile) */
+html[data-theme="navy"] .barra-laterale > div .bg-inchiostro,
+html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
+  color: #13213a;
+}
