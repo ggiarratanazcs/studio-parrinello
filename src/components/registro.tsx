@@ -202,3 +202,110 @@ export function PiedeRegistro({ visibili, totali, nome }: { visibili: number; to
     </p>
   );
 }
+
+/** Una scheda del filtro: nome e stati che raccoglie (vuoto = tutti). */
+export type GruppoFiltro = { id: string; etichetta: string; stati?: string[] };
+
+/** Il filtro scelto è "gruppo|stato" (stato vuoto = tutta la scheda). */
+export function filtroGruppi(gruppi: GruppoFiltro[]) {
+  return (stato: string, scelto: string) => {
+    const [g, s] = scelto.split("|");
+    if (s) return stato === s;
+    const gruppo = gruppi.find((x) => x.id === g);
+    return !gruppo?.stati || gruppo.stati.includes(stato);
+  };
+}
+
+/**
+ * Filtro a schede (es. In lavorazione · Archivio · Tutte) con, sotto, i pallini colorati
+ * dei singoli stati presenti nella scheda scelta: un clic filtra quello stato, un secondo clic torna alla scheda.
+ */
+export function FiltroGruppi({
+  gruppi,
+  ordine,
+  info,
+  stati,
+  scelto,
+  onScegli,
+  nome = "Gruppo",
+}: {
+  gruppi: GruppoFiltro[];
+  /** Ordine in cui mostrare gli stati */
+  ordine: string[];
+  info: (stato: string) => { etichetta: string; colore: string };
+  /** Lo stato di ogni riga */
+  stati: string[];
+  scelto: string;
+  onScegli: (v: string) => void;
+  nome?: string;
+}) {
+  const [gruppo, stato] = scelto.split("|");
+  const corrente = gruppi.find((g) => g.id === gruppo);
+  const conta = (s: string) => stati.filter((x) => x === s).length;
+  const visibili = ordine
+    .filter((s) => !corrente?.stati || corrente.stati.includes(s))
+    .map((s) => ({ id: s, ...info(s), conteggio: conta(s) }))
+    .filter((s) => s.conteggio > 0);
+  return (
+    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-4">
+      <div role="tablist" aria-label={nome} className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
+        {gruppi.map((g) => {
+          const attivo = g.id === gruppo;
+          const n = g.stati ? stati.filter((x) => g.stati!.includes(x)).length : stati.length;
+          return (
+            <button
+              key={g.id}
+              type="button"
+              role="tab"
+              aria-selected={attivo}
+              onClick={() => onScegli(`${g.id}|`)}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-[0.8125rem] transition-all duration-200",
+                attivo
+                  ? "bg-superficie font-medium text-inchiostro shadow-[0_4px_14px_-6px_rgba(43,42,40,0.35)]"
+                  : "text-tenue hover:text-inchiostro",
+              )}
+            >
+              {g.etichetta}
+              <span className={cn("numeri text-xs", attivo ? "text-tenue" : "text-tenue/70")}>{n}</span>
+            </button>
+          );
+        })}
+      </div>
+      {visibili.length > 1 ? (
+        <div role="group" aria-label="Stato" className="flex flex-wrap items-center gap-1">
+          {visibili.map((s) => {
+            const attivo = s.id === stato;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                aria-pressed={attivo}
+                onClick={() => onScegli(`${gruppo}|${attivo ? "" : s.id}`)}
+                data-suggerimento={attivo ? "Mostra di nuovo tutti" : `Solo: ${s.etichetta.toLowerCase()}`}
+                className={cn(
+                  "inline-flex h-8 items-center gap-2 rounded-full border px-3 text-[0.8125rem] transition-all duration-200",
+                  attivo ? "font-medium" : "border-transparent text-inchiostro-2 hover:bg-superficie-2",
+                  stato && !attivo && "opacity-55 hover:opacity-100",
+                )}
+                style={
+                  attivo
+                    ? { color: s.colore, borderColor: `color-mix(in srgb, ${s.colore} 45%, transparent)`, background: `color-mix(in srgb, ${s.colore} 10%, transparent)` }
+                    : undefined
+                }
+              >
+                <span
+                  aria-hidden
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ background: s.colore, boxShadow: `0 0 0 3px color-mix(in srgb, ${s.colore} 18%, transparent)` }}
+                />
+                {s.etichetta}
+                <span className="numeri text-xs text-tenue">{s.conteggio}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
