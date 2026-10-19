@@ -404,3 +404,13 @@ body {
     min-height: calc(14rem + 6.5rem);
   }
 }
+
+/* Sottotitolo delicato della home, sotto "Studio Parrinello" */
+.titolo-discreto {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(246, 239, 227, 0.78);
+}

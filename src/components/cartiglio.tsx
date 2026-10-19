@@ -19,6 +19,7 @@ export function Cartiglio({
   tipo = "studio",
   sopratitolo = "Studio Parrinello",
   icona: IconaTitolo,
+  discreto = false,
 }: {
   titolo: string;
   sottotitolo?: string;
@@ -28,6 +29,8 @@ export function Cartiglio({
   sopratitolo?: string;
   /** Al posto del titolo scritto (es. la casa per la home): il titolo resta per gli screen reader. */
   icona?: ComponentType<LucideProps>;
+  /** Titolo piccolo e delicato sotto "Studio Parrinello" (home), invece del titolo grande */
+  discreto?: boolean;
 }) {
   const f = FONDI[tipo];
   return (
@@ -62,6 +65,8 @@ export function Cartiglio({
               <IconaTitolo aria-hidden className="size-12 text-[#f6efe3] md:size-14" strokeWidth={1} />
               <span className="sr-only">{titolo}</span>
             </h1>
+          ) : discreto ? (
+            <h1 className="titolo-discreto mt-2.5">{titolo}</h1>
           ) : (
             <h1 className="titolo-pagina mt-3">{titolo}</h1>
           )}

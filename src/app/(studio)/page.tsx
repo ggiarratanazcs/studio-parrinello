@@ -70,7 +70,7 @@ async function PanoramicaContenuto() {
   return (
     <>
       <Cartiglio
-        titolo="Architettura e Design"
+        titolo="Architettura e Design" discreto
         celle={[
           { etichetta: "Commesse aperte", valore: aperte.length, icona: FolderOpen },
           { etichetta: "In corso", valore: inCorso.length, icona: Activity },
@@ -150,7 +150,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" azioni={azioni} />
+      <Cartiglio titolo="Architettura e Design" discreto azioni={azioni} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />
