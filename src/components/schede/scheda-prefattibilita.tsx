@@ -34,7 +34,7 @@ export async function SchedaPrefattibilita({ id }: { id: string }) {
           { etichetta: "Esito", valore: ESITI_PREFATTIBILITA[f.esito ?? ""] ?? "—", icona: ClipboardCheck },
           { etichetta: "Costo opere", valore: formattaEuro(f.costo_opere_stimato), icona: Calculator },
         ]}
-        azioni={<AzioniPratica tipo="prefattibilita" id={f.id} stato={f.stato} convertita={Boolean(f.commessa)} />}
+        azioni={<AzioniPratica tipo="prefattibilita" id={f.id} stato={f.stato} convertita={Boolean(f.commessa || f.preventivo) || f.stato === "convertita"} />}
       />
 
       {f.commessa || f.preventivo ? (

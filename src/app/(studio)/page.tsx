@@ -112,7 +112,7 @@ async function PanoramicaContenuto() {
         {aperte.length === 0 ? (
           <Vuoto
             titolo="Nessuna commessa aperta"
-            testo="Le commesse nascono da un preventivo accettato o da una pre-fattibilità, oppure direttamente se l'incarico è già affidato."
+            testo="Le commesse nascono da un preventivo accettato (anche quando parte da una pre-fattibilità), oppure direttamente se l'incarico è già affidato."
           />
         ) : (
           <ul className="elenco divide-y divide-linea">

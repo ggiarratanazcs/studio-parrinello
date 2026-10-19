@@ -22,7 +22,7 @@ const TESTI = {
   },
   prefattibilita: {
     titolo: "Pre-fattibilità",
-    sottotitolo: "Analisi urbanistiche e di conformità prima dell'incarico. Possono diventare un preventivo o direttamente una commessa.",
+    sottotitolo: "Analisi urbanistiche e di conformità prima dell'incarico. Diventano un preventivo e, se accettato, una commessa.",
     nuovo: "Nuova pre-fattibilità",
     href: "/nuova/prefattibilita",
     base: "/prefattibilita",

@@ -117,16 +117,18 @@ export function AzioniPratica({
         </div>
       ) : (
         <div className="flex flex-wrap items-start gap-3">
-          <Pallino
-            etichetta={integrativo ? "Accetta e aggiorna la commessa" : "Trasforma in commessa"}
-            icona={integrativo ? Check : ArrowRightLeft}
-            tinta={integrativo ? "salvia" : "bronzo"}
-            onClick={() => setConferma(true)}
-            disabled={inCorso}
-          />
-          {tipo === "prefattibilita" ? (
-            <PallinoLink href={`/nuova/preventivo?da=${id}`} etichetta="Crea preventivo" icona={FilePlus2} tinta="ardesia" />
-          ) : null}
+          {tipo === "preventivo" ? (
+            <Pallino
+              etichetta={integrativo ? "Accetta e aggiorna la commessa" : "Trasforma in commessa"}
+              icona={integrativo ? Check : ArrowRightLeft}
+              tinta={integrativo ? "salvia" : "bronzo"}
+              onClick={() => setConferma(true)}
+              disabled={inCorso}
+            />
+          ) : (
+            // La pre-fattibilità diventa commessa solo passando dal preventivo
+            <PallinoLink href={`/nuova/preventivo?da=${id}`} etichetta="Crea il preventivo" icona={FilePlus2} tinta="bronzo" />
+          )}
           {azioni.length ? <span aria-hidden className="mx-1 mt-2.5 h-6 w-px bg-linea-forte" /> : null}
           {azioni.map((a) => (
             <Pallino
