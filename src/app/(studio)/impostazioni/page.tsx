@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Check } from "lucide-react";
+import { FotoProfilo } from "@/components/foto-profilo";
 import { Cartiglio } from "@/components/cartiglio";
 import { LinkPulsante, Pannello, Scheletro } from "@/components/ui";
 import { getProfilo } from "@/lib/auth";
@@ -72,6 +73,9 @@ async function Profilo() {
   ];
   return (
     <div className="px-5 py-5 md:px-6">
+      <div className="mb-6">
+        <FotoProfilo id={p.id} iniziali={p.iniziali} foto={p.foto} />
+      </div>
       <dl className="grid grid-cols-[7rem_1fr] gap-y-3 text-[0.9375rem]">
         {righe.map((r) => (
           <div key={r.etichetta} className="contents">

@@ -1026,6 +1026,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          foto_path: string | null
           iniziali: string | null
           nome: string
           qualifica: string | null
@@ -1040,6 +1041,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          foto_path?: string | null
           iniziali?: string | null
           nome: string
           qualifica?: string | null
@@ -1054,6 +1056,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          foto_path?: string | null
           iniziali?: string | null
           nome?: string
           qualifica?: string | null

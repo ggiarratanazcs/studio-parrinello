@@ -3,14 +3,20 @@ import { LogOut, Settings } from "lucide-react";
 import { getProfilo } from "@/lib/auth";
 import { RUOLI } from "@/lib/dominio";
 
-function Avatar({ iniziali, className = "" }: { iniziali: string; className?: string }) {
+/** Pallino del profilo: foto se caricata, altrimenti le iniziali. */
+export function Avatar({ iniziali, foto, className = "" }: { iniziali: string; foto?: string | null; className?: string }) {
   return (
     <span
       aria-hidden
-      className={`grid size-9 shrink-0 place-items-center rounded-full bg-inchiostro text-[0.8125rem] font-medium text-superficie ${className}`}
+      className={`relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-inchiostro text-[0.8125rem] font-medium text-superficie shadow-[0_6px_14px_-8px_rgba(43,42,40,0.7),inset_0_1px_0_rgba(255,255,255,0.15)] ${className}`}
       style={{ fontVariationSettings: '"wdth" 110' }}
     >
-      {iniziali}
+      {foto ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={foto} alt="" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        iniziali
+      )}
     </span>
   );
 }
@@ -22,7 +28,7 @@ export async function UtenteLaterale() {
   return (
     <div className="blocco-utente flex items-center gap-2">
       <Link href="/impostazioni" data-suggerimento={`${nome} · Impostazioni`} data-suggerimento-lato="destra" data-suggerimento-se-barra-chiusa className="flex min-w-0 flex-1 items-center gap-3 rounded-[12px] p-1 hover:bg-superficie-2">
-        <Avatar iniziali={p.iniziali} />
+        <Avatar iniziali={p.iniziali} foto={p.foto} />
         <span className="solo-barra-aperta min-w-0">
           <span className="block truncate text-sm font-medium">{nome}</span>
           <span className="etichetta block truncate">{RUOLI[p.ruolo] ?? p.ruolo}</span>
@@ -47,7 +53,7 @@ export async function UtenteMobile() {
   const p = await getProfilo();
   return (
     <Link href="/impostazioni" aria-label="Il tuo profilo e le impostazioni">
-      <Avatar iniziali={p.iniziali} className="size-8 text-xs" />
+      <Avatar iniziali={p.iniziali} foto={p.foto} className="size-8 text-xs" />
     </Link>
   );
 }
@@ -58,9 +64,12 @@ export async function SalutoUtente() {
   const nome = p.nome || p.email.split("@")[0];
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-2 whitespace-nowrap text-[0.9375rem] text-inchiostro-2">
-        Ciao <span className="font-medium text-inchiostro">{nome}</span>
-      </span>
+      <Link href="/impostazioni" className="mr-2 flex items-center gap-2.5 rounded-full py-0.5 pl-0.5 pr-1" aria-label="Il tuo profilo">
+        <Avatar iniziali={p.iniziali} foto={p.foto} className="size-8 text-xs" />
+        <span className="saluto whitespace-nowrap text-[0.9375rem] text-inchiostro-2">
+          Ciao <span className="text-inchiostro">{nome}</span>
+        </span>
+      </Link>
       <Link
         href="/impostazioni"
         aria-label="Impostazioni"

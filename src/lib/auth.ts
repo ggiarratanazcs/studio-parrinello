@@ -11,6 +11,8 @@ export type ProfiloCorrente = {
   ruolo: string;
   qualifica: string | null;
   iniziali: string;
+  /** Collegamento temporaneo alla foto del profilo, se caricata */
+  foto: string | null;
 };
 
 /**
@@ -25,7 +27,7 @@ export const getProfilo = cache(async (): Promise<ProfiloCorrente> => {
 
   const { data: profilo } = await supabase
     .from("profili")
-    .select("id, nome, cognome, email, ruolo, qualifica, iniziali")
+    .select("id, nome, cognome, email, ruolo, qualifica, iniziali, foto_path")
     .eq("id", userId)
     .single();
 
@@ -36,5 +38,20 @@ export const getProfilo = cache(async (): Promise<ProfiloCorrente> => {
     `${profilo.nome.charAt(0)}${profilo.cognome.charAt(0)}`.toUpperCase() ||
     profilo.email.charAt(0).toUpperCase();
 
-  return { ...profilo, iniziali };
+  let foto: string | null = null;
+  if (profilo.foto_path) {
+    const { data } = await supabase.storage.from("documenti").createSignedUrl(profilo.foto_path, 60 * 60 * 24);
+    foto = data?.signedUrl ?? null;
+  }
+
+  return {
+    id: profilo.id,
+    nome: profilo.nome,
+    cognome: profilo.cognome,
+    email: profilo.email,
+    ruolo: profilo.ruolo,
+    qualifica: profilo.qualifica,
+    iniziali,
+    foto,
+  };
 });
