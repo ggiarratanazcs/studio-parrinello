@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { Tessere, type Cella } from "@/components/tessere";
 import Link from "next/link";
-import { Pannello } from "@/components/ui";
-import { Compasso } from "@/components/compasso";
+import { Pannello, Scheletro } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 /** Intestazione di una scheda: numero/codice, titolo, sottotitolo, riquadri informativi e azioni. */
@@ -64,8 +63,15 @@ export function Dato({ etichetta, valore, href }: { etichetta: string; valore?: 
 
 export function SchedaSegnaposto() {
   return (
-    <div className="grid min-h-[50dvh] place-items-center">
-      <Compasso className="w-36" />
+    <div>
+      <Scheletro className="h-4 w-24" />
+      <Scheletro className="mt-3 h-9 w-2/3" />
+      <Scheletro className="mt-3 h-4 w-1/3" />
+      <Pannello className="mt-8 space-y-4 p-6">
+        <Scheletro className="h-4 w-full" />
+        <Scheletro className="h-4 w-5/6" />
+        <Scheletro className="h-4 w-4/6" />
+      </Pannello>
     </div>
   );
 }

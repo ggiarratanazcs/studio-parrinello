@@ -7,6 +7,7 @@ import { Messaggio } from "@/components/campo";
 import { Pulsante } from "@/components/ui";
 import type { Commessa } from "@/lib/dati";
 import { createClient } from "@/lib/supabase/client";
+import { Compasso } from "@/components/compasso";
 import { cn, formattaData } from "@/lib/utils";
 
 type Documento = NonNullable<Commessa["documenti"]>[number];
@@ -216,6 +217,14 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
           {caricamento ? `Caricamento ${caricamento.fatti}/${caricamento.totali}…` : "Carica file"}
         </label>
       </div>
+      {caricamento ? (
+        <div className="flex items-center gap-4 rounded-m bg-superficie-2/60 px-4 py-2">
+          <Compasso className="w-16 shrink-0" didascalia={null} />
+          <span className="text-[0.9375rem] text-inchiostro-2">
+            Carico {caricamento.totali === 1 ? "il file" : `${Math.min(caricamento.fatti + 1, caricamento.totali)} di ${caricamento.totali} file`}…
+          </span>
+        </div>
+      ) : null}
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
     </div>
   );

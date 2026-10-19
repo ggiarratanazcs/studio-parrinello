@@ -8,6 +8,7 @@ import { Pannello, Pulsante, Vuoto } from "@/components/ui";
 import { posizionaImmobile, posizionaImmobiliMancanti } from "@/lib/azioni";
 import type { ImmobileElenco } from "@/lib/dati";
 import { cn } from "@/lib/utils";
+import { Compasso } from "@/components/compasso";
 import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, useRegistro, type GruppoFiltro } from "@/components/registro";
 import { MappaImmobili, SceltaPosizione, STATI_IMMOBILE, statoImmobile } from "./mappa";
 
@@ -70,8 +71,14 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Pannello className="overflow-hidden">
+      <Pannello className="relative overflow-hidden">
         <MappaImmobili immobili={immobili} evidenzia={evidenzia} />
+        {inCorso ? (
+          // Posizionamento automatico: qualche secondo per indirizzo, il compasso lavora sulla mappa
+          <div className="absolute inset-x-0 top-0 z-[500] grid h-[300px] w-full place-items-center md:h-[380px] bg-sfondo/80 backdrop-blur-[2px]">
+            <Compasso className="w-36" didascalia="Cerco gli indirizzi" />
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-linea px-5 py-3 text-sm md:px-6">
           {Object.entries(STATI_IMMOBILE).map(([k, s]) => (
             <span key={k} className="inline-flex items-center gap-2 text-inchiostro-2">

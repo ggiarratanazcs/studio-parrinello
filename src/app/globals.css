@@ -420,3 +420,7 @@ body {
 .respiro { animation: respiro 1.8s ease-in-out infinite; }
 @keyframes respiro { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .respiro { animation: none; } }
+
+/* Passaggio tra schermate: il puntatore diventa il compasso che traccia il cerchio */
+html[data-navigazione],
+html[data-navigazione] * { cursor: var(--cursore-compasso, progress) !important; }
