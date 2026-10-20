@@ -1139,6 +1139,8 @@ export type Database = {
       crea_commessa: { Args: { dati: Json }; Returns: string }
       crea_preventivo: { Args: { dati: Json }; Returns: string }
       crea_prefattibilita: { Args: { dati: Json }; Returns: string }
+      aggiorna_preventivo: { Args: { p_id: string; dati: Json }; Returns: string }
+      aggiorna_prefattibilita: { Args: { p_id: string; dati: Json }; Returns: string }
       accetta_integrativo: {
         Args: { p_id: string }
         Returns: string

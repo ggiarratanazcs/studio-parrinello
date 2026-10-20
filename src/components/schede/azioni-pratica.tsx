@@ -8,6 +8,7 @@ import {
   Check,
   FilePlus2,
   PackageCheck,
+  Pencil,
   RotateCcw,
   Send,
   Undo2,
@@ -16,6 +17,7 @@ import {
 import { Messaggio } from "@/components/campo";
 import { Pallino, type Icona, type Tinta } from "@/components/pallino";
 import { ModaleNuovoPreventivo } from "@/components/procedura/modale-nuovo-preventivo";
+import { ModaleModifica } from "@/components/procedura/modale-modifica";
 import { accettaIntegrativo, aggiornaStatoPrefattibilita, aggiornaStatoPreventivo, convertiInCommessa } from "@/lib/azioni";
 
 type Azione = { stato: string; etichetta: string; icona: Icona; tinta: Tinta };
@@ -66,6 +68,9 @@ export function AzioniPratica({
   const [errore, setErrore] = useState<string | null>(null);
   const [conferma, setConferma] = useState(false);
   const [nuovoPreventivo, setNuovoPreventivo] = useState(false);
+  const [modifica, setModifica] = useState(false);
+  // Un preventivo accettato o superato non si modifica più (la commessa ne ha preso onorario e fasi)
+  const modificabile = tipo === "prefattibilita" || ["bozza", "inviato", "rifiutato"].includes(stato);
 
   const azioni = (tipo === "preventivo" ? AZIONI_PREVENTIVO : AZIONI_PREFATTIBILITA)[stato] ?? [];
 
@@ -92,7 +97,20 @@ export function AzioniPratica({
     });
   }
 
-  if (convertita) return null;
+  const pallinoModifica = (
+    <Pallino etichetta="Modifica" icona={Pencil} tinta="ardesia" onClick={() => setModifica(true)} disabled={inCorso} />
+  );
+  const finestraModifica = modifica ? <ModaleModifica tipo={tipo} id={id} onChiudi={() => setModifica(false)} /> : null;
+
+  if (convertita) {
+    if (!modificabile) return null;
+    return (
+      <div className="flex flex-wrap items-start gap-3">
+        {pallinoModifica}
+        {finestraModifica}
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-3">
@@ -119,6 +137,7 @@ export function AzioniPratica({
         </div>
       ) : (
         <div className="flex flex-wrap items-start gap-3">
+          {modificabile ? pallinoModifica : null}
           {tipo === "preventivo" ? (
             <Pallino
               etichetta={integrativo ? "Accetta e aggiorna la commessa" : "Trasforma in commessa"}
@@ -147,6 +166,7 @@ export function AzioniPratica({
       )}
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
       {nuovoPreventivo ? <ModaleNuovoPreventivo fonte={{ da: id }} onChiudi={() => setNuovoPreventivo(false)} /> : null}
+      {finestraModifica}
     </div>
   );
 }

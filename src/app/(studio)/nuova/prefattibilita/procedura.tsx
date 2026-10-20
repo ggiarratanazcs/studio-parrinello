@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { AreaTesto, Campo, Messaggio, Segmenti, Selezione } from "@/components/campo";
 import { PassoCommittente, PassoImmobile, useCommittenteImmobile } from "@/components/procedura/committente-immobile";
 import { CorniceProcedura, navigazionePassi } from "@/components/procedura/struttura";
-import { creaPrefattibilita } from "@/lib/azioni";
+import { aggiornaPrefattibilita, creaPrefattibilita } from "@/lib/azioni";
 import { ESITI_PREFATTIBILITA, PARERI_ENTI, TIPOLOGIE_INTERVENTO, TITOLI_EDILIZI, VINCOLI } from "@/lib/dominio";
 import { numero } from "@/lib/preventivo";
-import type { DatiProcedura } from "@/lib/dati";
+import type { DatiProcedura, PrefattibilitaDaModificare } from "@/lib/dati";
 import { cn, formattaEuro } from "@/lib/utils";
 
 type Committenza = "privata" | "pubblica";
@@ -16,16 +16,58 @@ type Committenza = "privata" | "pubblica";
 const PASSI = ["Committente", "Immobile", "Analisi", "Stima ed esito"] as const;
 const TITOLI = ["Per chi è la pre-fattibilità?", "Quale immobile o area?", "Analisi urbanistica e conformità", "Stima ed esito"];
 
-export function ProceduraNuovaPrefattibilita({ dati, oggi }: { dati: DatiProcedura; oggi: string }) {
+export function ProceduraNuovaPrefattibilita({
+  dati,
+  oggi,
+  esistente,
+  onSalvata,
+}: {
+  dati: DatiProcedura;
+  oggi: string;
+  /** In modifica: la pre-fattibilità da aggiornare, con i campi già compilati */
+  esistente?: PrefattibilitaDaModificare;
+  /** Dopo il salvataggio (es. chiudere la finestra); di base apre la scheda */
+  onSalvata?: (id: string) => void;
+}) {
   const router = useRouter();
-  const ctl = useCommittenteImmobile(dati);
-  const [passo, setPasso] = useState(0);
+  const ctl = useCommittenteImmobile(
+    dati,
+    esistente
+      ? { clienteId: esistente.cliente_id ?? undefined, immobileId: esistente.immobile_id ?? undefined, immobileNessuno: !esistente.immobile_id }
+      : {},
+  );
+  const [passo, setPasso] = useState(esistente ? 2 : 0);
   const [errori, setErrori] = useState<Record<string, string>>({});
   const [erroreInvio, setErroreInvio] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
-  const [committenzaToccata, setCommittenzaToccata] = useState(false);
+  const [committenzaToccata, setCommittenzaToccata] = useState(Boolean(esistente));
 
-  const [a, setA] = useState({
+  const testo = (v: number | string | null | undefined) => (v === null || v === undefined ? "" : String(v));
+  const [a, setA] = useState(() => esistente ? {
+    titolo: esistente.titolo ?? "",
+    committenza: (esistente.committenza ?? "privata") as Committenza,
+    tipologia_intervento: esistente.tipologia_intervento ?? "",
+    responsabile_id: esistente.responsabile_id ?? "",
+    strumento_urbanistico: esistente.strumento_urbanistico ?? "",
+    zona_urbanistica: esistente.zona_urbanistica ?? "",
+    indici_parametri: esistente.indici_parametri ?? "",
+    vincoli: (esistente.vincoli ?? []) as string[],
+    vincoli_note: esistente.vincoli_note ?? "",
+    accesso_atti_richiesto: Boolean(esistente.accesso_atti_richiesto),
+    stato_legittimo_verificato: Boolean(esistente.stato_legittimo_verificato),
+    difformita_rilevate: Boolean(esistente.difformita_rilevate),
+    difformita_descrizione: esistente.difformita_descrizione ?? "",
+    sanatoria_necessaria: Boolean(esistente.sanatoria_necessaria),
+    titolo_edilizio: esistente.titolo_edilizio ?? "",
+    pareri_enti: (esistente.pareri_enti ?? []) as string[],
+    superficie_intervento_mq: testo(esistente.superficie_intervento_mq),
+    costo_parametrico_mq: testo(esistente.costo_parametrico_mq),
+    durata_stimata_mesi: testo(esistente.durata_stimata_mesi),
+    onorario: testo(esistente.onorario),
+    esito: esistente.esito ?? "",
+    sintesi: esistente.sintesi ?? "",
+    data_redazione: esistente.data_redazione ?? oggi,
+  } : {
     titolo: "",
     committenza: "privata" as Committenza,
     tipologia_intervento: "",
@@ -73,8 +115,12 @@ export function ProceduraNuovaPrefattibilita({ dati, oggi }: { dati: DatiProcedu
     if (!nav.validaTutto()) return;
     setErroreInvio(null);
     avvia(async () => {
-      const esito = await creaPrefattibilita({ ...ctl.payload, analisi: { ...a, committenza } });
-      if (esito.ok) router.push(`/prefattibilita/${esito.id}`);
+      const payload = { ...ctl.payload, analisi: { ...a, committenza } };
+      const esito = esistente ? await aggiornaPrefattibilita(esistente.id, payload) : await creaPrefattibilita(payload);
+      if (esito.ok) {
+        if (onSalvata) onSalvata(esito.id);
+        else router.push(`/prefattibilita/${esito.id}`);
+      }
       else setErroreInvio(esito.errore);
     });
   }
@@ -89,9 +135,10 @@ export function ProceduraNuovaPrefattibilita({ dati, oggi }: { dati: DatiProcedu
       onVai={nav.vaiA}
       onAvanti={nav.avanti}
       onSalva={salva}
-      etichettaSalva="Crea pre-fattibilità"
+      etichettaSalva={esistente ? "Salva modifiche" : "Crea pre-fattibilità"}
       inCorso={inCorso}
       riepilogo={[
+        ...(esistente ? [{ etichetta: "In modifica", valore: esistente.numero }] : []),
         { etichetta: "Committente", valore: ctl.nomeCommittente },
         { etichetta: "Immobile", valore: ctl.descrizioneImmobile },
         { etichetta: "Titolo", valore: a.titolo },

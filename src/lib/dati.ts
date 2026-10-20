@@ -85,6 +85,43 @@ export async function datiProcedura() {
 
 export type DatiProcedura = Awaited<ReturnType<typeof datiProcedura>>;
 
+/** Preventivo da modificare: tutti i campi della procedura e le voci in ordine. */
+export async function preventivoDaModificare(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("preventivi")
+    .select(
+      `id, numero, stato, titolo, oggetto, cliente_id, immobile_id, committenza, tipologia_intervento, responsabile_id,
+       data_emissione, validita_giorni, metodo_calcolo, importo_lavori, percentuale_onorario,
+       sconto_pct, spese_pct, cassa_pct, iva_pct, ritenuta_pct, condizioni_pagamento, note, integrativo,
+       voci:preventivi_voci(fase_catalogo_id, ordine, descrizione, prezzo_unitario, ore_stimate, opzionale)`,
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`Impossibile leggere il preventivo: ${error.message}`);
+  if (data?.voci) data.voci.sort((a, b) => a.ordine - b.ordine);
+  return data;
+}
+export type PreventivoDaModificare = NonNullable<Awaited<ReturnType<typeof preventivoDaModificare>>>;
+
+/** Pre-fattibilità da modificare: tutti i campi della procedura. */
+export async function prefattibilitaDaModificare(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("prefattibilita")
+    .select(
+      `id, numero, stato, titolo, cliente_id, immobile_id, committenza, tipologia_intervento, responsabile_id,
+       strumento_urbanistico, zona_urbanistica, indici_parametri, vincoli, vincoli_note, accesso_atti_richiesto,
+       stato_legittimo_verificato, difformita_rilevate, difformita_descrizione, sanatoria_necessaria, titolo_edilizio,
+       pareri_enti, superficie_intervento_mq, costo_parametrico_mq, durata_stimata_mesi, onorario, esito, sintesi, data_redazione`,
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`Impossibile leggere la pre-fattibilità: ${error.message}`);
+  return data;
+}
+export type PrefattibilitaDaModificare = NonNullable<Awaited<ReturnType<typeof prefattibilitaDaModificare>>>;
+
 /** Scheda completa di una commessa. Restituisce null se non esiste o non è visibile. */
 export async function leggiCommessa(id: string) {
   const supabase = await createClient();

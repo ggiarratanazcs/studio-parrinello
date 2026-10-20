@@ -6,11 +6,11 @@ import { Plus, X } from "lucide-react";
 import { AreaTesto, Campo, Messaggio, Segmenti, Selezione } from "@/components/campo";
 import { PassoCommittente, PassoImmobile, useCommittenteImmobile } from "@/components/procedura/committente-immobile";
 import { CorniceProcedura, navigazionePassi } from "@/components/procedura/struttura";
-import { creaPreventivo } from "@/lib/azioni";
+import { aggiornaPreventivo, creaPreventivo } from "@/lib/azioni";
 import { TIPOLOGIE_INTERVENTO } from "@/lib/dominio";
 import { propostaFasi } from "@/lib/fasi";
 import { CONDIZIONI_PREDEFINITE, METODI_CALCOLO, calcolaTotali, numero } from "@/lib/preventivo";
-import type { DatiProcedura } from "@/lib/dati";
+import type { DatiProcedura, PreventivoDaModificare } from "@/lib/dati";
 import type { OrigineNuovoPreventivo } from "@/lib/origine-preventivo";
 import { formattaEuro } from "@/lib/utils";
 
@@ -29,26 +29,46 @@ export function ProceduraNuovoPreventivo({
   dati,
   oggi,
   origine,
+  esistente,
   onCreato,
 }: {
   dati: DatiProcedura;
   oggi: string;
   origine: OrigineNuovoPreventivo;
+  /** In modifica: il preventivo da aggiornare, con i campi già compilati */
+  esistente?: PreventivoDaModificare;
   /** Dopo la creazione (es. chiudere la finestra); di base apre la scheda del nuovo preventivo */
   onCreato?: (id: string) => void;
 }) {
   const router = useRouter();
-  const ctl = useCommittenteImmobile(dati, {
-    clienteId: origine?.cliente_id ?? undefined,
-    immobileId: origine?.immobile_id ?? undefined,
-  });
-  // Con committente già noto (da pre-fattibilità o commessa) si parte direttamente dall'offerta
-  const [passo, setPasso] = useState(origine?.cliente_id ? 2 : 0);
+  const ctl = useCommittenteImmobile(
+    dati,
+    esistente
+      ? { clienteId: esistente.cliente_id ?? undefined, immobileId: esistente.immobile_id ?? undefined, immobileNessuno: !esistente.immobile_id }
+      : { clienteId: origine?.cliente_id ?? undefined, immobileId: origine?.immobile_id ?? undefined },
+  );
+  // Con committente già noto (in modifica, da pre-fattibilità o commessa) si parte direttamente dall'offerta
+  const [passo, setPasso] = useState(esistente || origine?.cliente_id ? 2 : 0);
   const [errori, setErrori] = useState<Record<string, string>>({});
   const [erroreInvio, setErroreInvio] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
 
-  const [offerta, setOfferta] = useState({
+  const testo = (v: number | string | null | undefined, predefinito = "") => (v === null || v === undefined ? predefinito : String(v));
+  const [offerta, setOfferta] = useState(() =>
+    esistente
+      ? {
+          titolo: esistente.titolo ?? "",
+          oggetto: esistente.oggetto ?? "",
+          committenza: (esistente.committenza ?? "privata") as Committenza,
+          tipologia_intervento: esistente.tipologia_intervento ?? "",
+          responsabile_id: esistente.responsabile_id ?? "",
+          data_emissione: esistente.data_emissione ?? oggi,
+          validita_giorni: testo(esistente.validita_giorni, "30"),
+          metodo_calcolo: esistente.metodo_calcolo ?? "a_corpo",
+          importo_lavori: testo(esistente.importo_lavori),
+          percentuale_onorario: testo(esistente.percentuale_onorario),
+        }
+      : {
     titolo: origine?.titolo ?? "",
     oggetto: origine?.oggetto ?? "",
     committenza: (origine?.committenza ?? "privata") as Committenza,
@@ -59,22 +79,32 @@ export function ProceduraNuovoPreventivo({
     metodo_calcolo: "a_corpo",
     importo_lavori: origine?.importo_lavori ? String(origine.importo_lavori) : "",
     percentuale_onorario: "",
-  });
-  const [committenzaToccata, setCommittenzaToccata] = useState(Boolean(origine));
+        },
+  );
+  const [committenzaToccata, setCommittenzaToccata] = useState(Boolean(origine || esistente));
   const [voci, setVoci] = useState<Voce[] | null>(() =>
-    origine?.voci
+    esistente
+      ? esistente.voci.map((v) => ({
+          chiave: nuovaChiave(),
+          fase_catalogo_id: v.fase_catalogo_id ?? "",
+          descrizione: v.descrizione,
+          prezzo: testo(v.prezzo_unitario),
+          ore: testo(v.ore_stimate),
+          opzionale: v.opzionale,
+        }))
+      : origine?.voci
       ? origine.voci.map((v) => ({ chiave: nuovaChiave(), fase_catalogo_id: "", descrizione: v.descrizione, prezzo: v.prezzo ?? "", ore: "", opzionale: false }))
       : null,
   ); // null = proposte dalle fasi tipiche
-  const [condizioni, setCondizioni] = useState({
-    sconto: "0",
-    spese: "0",
-    cassa: "4",
-    iva: "22",
-    ritenuta: "0",
-    condizioni_pagamento: CONDIZIONI_PREDEFINITE,
-    note: "",
-  });
+  const [condizioni, setCondizioni] = useState(() => ({
+    sconto: testo(esistente?.sconto_pct, "0"),
+    spese: testo(esistente?.spese_pct, "0"),
+    cassa: testo(esistente?.cassa_pct, "4"),
+    iva: testo(esistente?.iva_pct, "22"),
+    ritenuta: testo(esistente?.ritenuta_pct, "0"),
+    condizioni_pagamento: esistente ? (esistente.condizioni_pagamento ?? "") : CONDIZIONI_PREDEFINITE,
+    note: esistente?.note ?? "",
+  }));
 
   const committenza: Committenza = committenzaToccata
     ? offerta.committenza
@@ -156,7 +186,7 @@ export function ProceduraNuovoPreventivo({
     };
     setErroreInvio(null);
     avvia(async () => {
-      const esito = await creaPreventivo(payload);
+      const esito = esistente ? await aggiornaPreventivo(esistente.id, payload) : await creaPreventivo(payload);
       if (esito.ok) {
         if (onCreato) onCreato(esito.id);
         else router.push(`/preventivi/${esito.id}`);
@@ -175,9 +205,10 @@ export function ProceduraNuovoPreventivo({
       onVai={nav.vaiA}
       onAvanti={nav.avanti}
       onSalva={salva}
-      etichettaSalva={origine?.tipo === "commessa" ? "Crea preventivo integrativo" : "Crea preventivo"}
+      etichettaSalva={esistente ? "Salva modifiche" : origine?.tipo === "commessa" ? "Crea preventivo integrativo" : "Crea preventivo"}
       inCorso={inCorso}
       riepilogo={[
+        ...(esistente ? [{ etichetta: "In modifica", valore: esistente.numero }] : []),
         ...(origine ? [{ etichetta: origine.tipo === "commessa" ? "Integrativo della commessa" : "Da pre-fattibilità", valore: origine.numero }] : []),
         { etichetta: "Committente", valore: ctl.nomeCommittente },
         { etichetta: "Immobile", valore: ctl.descrizioneImmobile },

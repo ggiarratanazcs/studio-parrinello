@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/database.types";
 import { propostaFasi } from "@/lib/fasi";
 import { geocodifica } from "@/lib/geocodifica";
-import { datiProcedura } from "@/lib/dati";
+import { datiProcedura, prefattibilitaDaModificare, preventivoDaModificare } from "@/lib/dati";
 import { origineNuovoPreventivo } from "@/lib/origine-preventivo";
 import { oggiIso } from "@/lib/utils";
 
@@ -76,6 +76,52 @@ export async function creaPrefattibilita(dati: Json): Promise<Esito> {
   await posizionaImmobileDi(supabase, "prefattibilita", data);
   aggiornaElenchi();
   return { ok: true, id: data };
+}
+
+/* ── Modifica ──────────────────────────────────────────────────────────── */
+
+export async function aggiornaPreventivo(id: string, dati: Json): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { error } = await supabase.rpc("aggiorna_preventivo", { p_id: id, dati });
+  if (error) {
+    return {
+      ok: false,
+      errore: error.message.includes("non si modifica")
+        ? "Il preventivo è già accettato o superato: non si può più modificare."
+        : "Non è stato possibile salvare le modifiche. Controlla i dati obbligatori e riprova.",
+    };
+  }
+  await posizionaImmobileDi(supabase, "preventivi", id);
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+export async function aggiornaPrefattibilita(id: string, dati: Json): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { error } = await supabase.rpc("aggiorna_prefattibilita", { p_id: id, dati });
+  if (error) return { ok: false, errore: "Non è stato possibile salvare le modifiche. Controlla i dati obbligatori e riprova." };
+  await posizionaImmobileDi(supabase, "prefattibilita", id);
+  aggiornaElenchi();
+  return { ok: true, id };
+}
+
+/** Dati per aprire in modifica un preventivo o una pre-fattibilità (nella finestra sopra la scheda). */
+export async function preparaModifica(tipo: "preventivo" | "prefattibilita", id: string) {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false as const, errore: SESSIONE_SCADUTA };
+  try {
+    const [dati, preventivo, prefattibilita] = await Promise.all([
+      datiProcedura(),
+      tipo === "preventivo" ? preventivoDaModificare(id) : Promise.resolve(null),
+      tipo === "prefattibilita" ? prefattibilitaDaModificare(id) : Promise.resolve(null),
+    ]);
+    if (!preventivo && !prefattibilita) return { ok: false as const, errore: "Pratica non trovata." };
+    return { ok: true as const, dati, preventivo, prefattibilita, oggi: oggiIso() };
+  } catch {
+    return { ok: false as const, errore: "Non è stato possibile aprire la pratica in modifica. Riprova." };
+  }
 }
 
 /* ── Stato ─────────────────────────────────────────────────────────────── */
