@@ -42,7 +42,7 @@ export const immobileVuoto = {
   catasto: { catasto: "fabbricati", foglio: "", particella: "", subalterno: "", categoria: "" },
 };
 
-export type Iniziali = { clienteId?: string; immobileId?: string };
+export type Iniziali = { clienteId?: string; immobileId?: string; /** in modifica: la pratica non ha ancora un immobile */ immobileNessuno?: boolean };
 
 export function useCommittenteImmobile(dati: DatiProcedura, iniziali: Iniziali = {}) {
   const [modoCliente, setModoCliente] = useState<"esistente" | "nuovo">(
@@ -53,7 +53,7 @@ export function useCommittenteImmobile(dati: DatiProcedura, iniziali: Iniziali =
   const [cliente, setCliente] = useState(clienteVuoto);
 
   const [modoImmobile, setModoImmobile] = useState<"esistente" | "nuovo" | "nessuno">(
-    iniziali.immobileId || dati.immobili.length ? "esistente" : "nuovo",
+    iniziali.immobileNessuno ? "nessuno" : iniziali.immobileId || dati.immobili.length ? "esistente" : "nuovo",
   );
   const [immobileId, setImmobileId] = useState(iniziali.immobileId ?? "");
   const [cercaImmobile, setCercaImmobile] = useState("");
