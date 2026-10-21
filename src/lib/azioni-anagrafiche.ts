@@ -118,7 +118,8 @@ export async function salvaCliente(
     if (error || !data) return { ok: false, errore: "Non è stato possibile creare il cliente. Riprova." };
     id = data.id;
   }
-  revalidatePath("/", "layout");
+  revalidatePath("/clienti");
+  revalidatePath("/");
   return { ok: true, id };
 }
 
@@ -183,7 +184,8 @@ export async function salvaReferente(clienteId: string, id: string | null, dati:
     if (error || !data) return { ok: false, errore: "Non è stato possibile aggiungere il referente. Riprova." };
     id = data.id;
   }
-  revalidatePath("/", "layout");
+  revalidatePath("/clienti");
+  revalidatePath("/");
   return { ok: true, id };
 }
 
@@ -193,6 +195,7 @@ export async function eliminaReferente(id: string): Promise<Esito> {
   const { data, error } = await s.supabase.from("clienti_referenti").delete().eq("id", id).select("id");
   if (error) return { ok: false, errore: "Non è stato possibile eliminare il referente. Riprova." };
   if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare un referente." };
-  revalidatePath("/", "layout");
+  revalidatePath("/clienti");
+  revalidatePath("/");
   return { ok: true, id };
 }

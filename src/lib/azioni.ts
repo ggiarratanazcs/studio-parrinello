@@ -19,8 +19,14 @@ async function clientAutenticato() {
   return data?.claims ? supabase : null;
 }
 
-function aggiornaElenchi() {
-  revalidatePath("/", "layout");
+/**
+ * Dopo un salvataggio: segna come da ricaricare solo gli elenchi toccati (e la home, che li riassume).
+ * La pagina su cui si trova l'utente si aggiorna da sola (router.refresh o navigazione alla nuova scheda):
+ * così il salvataggio non ricalcola tutta l'app, che rallentava ogni modifica.
+ */
+type Elenco = "/" | "/commesse" | "/preventivi" | "/prefattibilita" | "/clienti" | "/immobili" | "/documenti";
+function aggiornaElenchi(...elenchi: Elenco[]) {
+  for (const percorso of new Set<Elenco>(["/", ...elenchi])) revalidatePath(percorso);
 }
 
 type ClienteSupabase = NonNullable<Awaited<ReturnType<typeof clientAutenticato>>>;
@@ -54,7 +60,7 @@ export async function creaCommessa(dati: Json): Promise<Esito> {
   const { data, error } = await supabase.rpc("crea_commessa", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare la commessa. Controlla i dati obbligatori e riprova." };
   await posizionaImmobileDi(supabase, "commesse", data);
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse", "/clienti", "/immobili");
   return { ok: true, id: data };
 }
 
@@ -64,7 +70,7 @@ export async function creaPreventivo(dati: Json): Promise<Esito> {
   const { data, error } = await supabase.rpc("crea_preventivo", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare il preventivo. Controlla i dati obbligatori e riprova." };
   await posizionaImmobileDi(supabase, "preventivi", data);
-  aggiornaElenchi();
+  aggiornaElenchi("/preventivi", "/commesse", "/clienti", "/immobili");
   return { ok: true, id: data };
 }
 
@@ -74,7 +80,7 @@ export async function creaPrefattibilita(dati: Json): Promise<Esito> {
   const { data, error } = await supabase.rpc("crea_prefattibilita", { dati });
   if (error || !data) return { ok: false, errore: "Non è stato possibile creare la pre-fattibilità. Controlla i dati obbligatori e riprova." };
   await posizionaImmobileDi(supabase, "prefattibilita", data);
-  aggiornaElenchi();
+  aggiornaElenchi("/prefattibilita", "/clienti", "/immobili");
   return { ok: true, id: data };
 }
 
@@ -93,7 +99,7 @@ export async function aggiornaPreventivo(id: string, dati: Json): Promise<Esito>
     };
   }
   await posizionaImmobileDi(supabase, "preventivi", id);
-  aggiornaElenchi();
+  aggiornaElenchi("/preventivi", "/clienti", "/immobili");
   return { ok: true, id };
 }
 
@@ -103,7 +109,7 @@ export async function aggiornaPrefattibilita(id: string, dati: Json): Promise<Es
   const { error } = await supabase.rpc("aggiorna_prefattibilita", { p_id: id, dati });
   if (error) return { ok: false, errore: "Non è stato possibile salvare le modifiche. Controlla i dati obbligatori e riprova." };
   await posizionaImmobileDi(supabase, "prefattibilita", id);
-  aggiornaElenchi();
+  aggiornaElenchi("/prefattibilita", "/clienti", "/immobili");
   return { ok: true, id };
 }
 
@@ -137,7 +143,7 @@ export async function aggiornaStatoPreventivo(id: string, stato: string): Promis
   const extra = stato === "inviato" ? { data_invio: oggi } : stato === "accettato" || stato === "rifiutato" ? { data_esito: oggi } : {};
   const { error } = await supabase.from("preventivi").update({ stato, ...extra }).eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile aggiornare lo stato." };
-  aggiornaElenchi();
+  aggiornaElenchi("/preventivi");
   return { ok: true, id };
 }
 
@@ -147,7 +153,7 @@ export async function aggiornaStatoPrefattibilita(id: string, stato: string): Pr
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
   const { error } = await supabase.from("prefattibilita").update({ stato }).eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile aggiornare lo stato." };
-  aggiornaElenchi();
+  aggiornaElenchi("/prefattibilita");
   return { ok: true, id };
 }
 
@@ -181,7 +187,7 @@ export async function convertiInCommessa(origine: "preventivo" | "prefattibilita
         : "Non è stato possibile creare la commessa. Riprova.",
     };
   }
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse", "/preventivi", "/prefattibilita");
   return { ok: true, id: data };
 }
 
@@ -212,7 +218,7 @@ export async function aggiornaStatoCommessa(id: string, stato: string): Promise<
     .update({ stato, data_chiusura: chiusa ? oggiIso() : null })
     .eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile aggiornare lo stato della commessa." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id };
 }
 
@@ -266,7 +272,7 @@ export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
     })
     .eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile salvare la fase." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id };
 }
 
@@ -300,7 +306,7 @@ export async function aggiungiFase(commessaId: string, scelta: { catalogoId?: st
     .select("id")
     .single();
   if (error || !data) return { ok: false, errore: "Non è stato possibile aggiungere la fase." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id: data.id };
 }
 
@@ -310,7 +316,7 @@ export async function eliminaFase(id: string): Promise<Esito> {
   const { data, error } = await supabase.from("commesse_fasi").delete().eq("id", id).select("id");
   if (error) return { ok: false, errore: "Non è stato possibile eliminare la fase." };
   if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare le fasi." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id };
 }
 
@@ -332,7 +338,7 @@ export async function spostaFase(id: string, verso: "su" | "giu"): Promise<Esito
     const { error } = await supabase.from("commesse_fasi").update({ ordine: f.ordine }).eq("id", f.id);
     if (error) return { ok: false, errore: "Non è stato possibile riordinare le fasi." };
   }
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id };
 }
 
@@ -346,7 +352,7 @@ export async function aggiungiMembro(commessaId: string, profiloId: string, ruol
     .from("commesse_team")
     .upsert({ commessa_id: commessaId, profilo_id: profiloId, ruolo_commessa: ruolo.trim() || null });
   if (error) return { ok: false, errore: "Non è stato possibile aggiungere la persona al team." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id: profiloId };
 }
 
@@ -361,7 +367,7 @@ export async function rimuoviMembro(commessaId: string, profiloId: string): Prom
     .select("profilo_id");
   if (error) return { ok: false, errore: "Non è stato possibile togliere la persona dal team." };
   if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono modificare il team." };
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse");
   return { ok: true, id: profiloId };
 }
 
@@ -382,7 +388,7 @@ export async function aggiungiNota(commessaId: string, dati: { tipo: string; tes
     .select("id")
     .single();
   if (error || !data) return { ok: false, errore: "Non è stato possibile salvare la nota." };
-  aggiornaElenchi();
+  aggiornaElenchi("/");
   return { ok: true, id: data.id };
 }
 
@@ -392,7 +398,7 @@ export async function eliminaNota(id: string): Promise<Esito> {
   const { data, error } = await supabase.from("commesse_diario").delete().eq("id", id).select("id");
   if (error) return { ok: false, errore: "Non è stato possibile eliminare la nota." };
   if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare le note." };
-  aggiornaElenchi();
+  aggiornaElenchi("/");
   return { ok: true, id };
 }
 
@@ -411,7 +417,7 @@ export async function posizionaImmobile(id: string, posizione: { lat: number; ln
     })
     .eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile salvare la posizione." };
-  aggiornaElenchi();
+  aggiornaElenchi("/immobili");
   return { ok: true, id };
 }
 
@@ -438,7 +444,7 @@ export async function posizionaImmobiliMancanti(): Promise<{ ok: true; trovati: 
     await new Promise((r) => setTimeout(r, 1100));
   }
   const { count } = await supabase.from("immobili").select("id", { count: "exact", head: true }).is("latitudine", null);
-  aggiornaElenchi();
+  aggiornaElenchi("/immobili");
   return { ok: true, trovati, restanti: count ?? 0 };
 }
 
@@ -450,7 +456,7 @@ export async function accettaIntegrativo(id: string): Promise<Esito> {
   if (error || !data) {
     return { ok: false, errore: error?.message.includes("già accettato") ? "Il preventivo è già stato accettato." : "Non è stato possibile accettare il preventivo." };
   }
-  aggiornaElenchi();
+  aggiornaElenchi("/commesse", "/preventivi");
   return { ok: true, id: data };
 }
 
