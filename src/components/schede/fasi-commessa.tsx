@@ -44,9 +44,21 @@ export function FasiCommessa({
   catalogo,
   committenza,
   documenti,
+  modificabile = true,
+  importi = true,
+  allegati = 2,
+  eliminabile = true,
 }: {
   commessaId: string;
   documenti: Documento[];
+  /** Permesso "Fasi" modificabile: apre l'editor e permette di aggiungere fasi */
+  modificabile?: boolean;
+  /** Mostra l'onorario delle singole fasi */
+  importi?: boolean;
+  /** Livello sugli allegati: 0 nascosti, 1 visibili, 2 modificabili */
+  allegati?: number;
+  /** Può eliminare fasi e allegati ("Completo" sulle commesse) */
+  eliminabile?: boolean;
   fasi: Fase[];
   profili: Profilo[];
   catalogo: VoceCatalogo[];
@@ -57,7 +69,7 @@ export function FasiCommessa({
   return (
     <div>
       {fasi.length === 0 ? (
-        <p className="px-5 py-8 text-[0.9375rem] text-tenue md:px-6">Nessuna fase definita. Aggiungine una qui sotto.</p>
+        <p className="px-5 py-8 text-[0.9375rem] text-tenue md:px-6">{modificabile ? "Nessuna fase definita. Aggiungine una qui sotto." : "Nessuna fase definita."}</p>
       ) : (
         <ol className="divide-y divide-linea">
           {fasi.map((f, i) => (
@@ -72,11 +84,15 @@ export function FasiCommessa({
               onChiudi={() => setAperta(null)}
               prima={i === 0}
               ultima={i === fasi.length - 1}
+              modificabile={modificabile}
+              importi={importi}
+              allegati={allegati}
+              eliminabile={eliminabile}
             />
           ))}
         </ol>
       )}
-      <AggiungiFase commessaId={commessaId} catalogo={catalogo} presenti={fasi.map((f) => f.codice).filter(Boolean) as string[]} committenza={committenza} />
+      {modificabile ? <AggiungiFase commessaId={commessaId} catalogo={catalogo} presenti={fasi.map((f) => f.codice).filter(Boolean) as string[]} committenza={committenza} /> : null}
     </div>
   );
 }
@@ -91,6 +107,10 @@ function RigaFase({
   onChiudi,
   prima,
   ultima,
+  modificabile,
+  importi,
+  allegati,
+  eliminabile,
 }: {
   fase: Fase;
   commessaId: string;
@@ -101,16 +121,21 @@ function RigaFase({
   onChiudi: () => void;
   prima: boolean;
   ultima: boolean;
+  modificabile: boolean;
+  importi: boolean;
+  allegati: number;
+  eliminabile: boolean;
 }) {
   const colore = COLORI_FASE[f.stato] ?? "var(--tenue)";
-  const dettagli = [periodo(f), f.onorario ? formattaEuro(f.onorario) : null, f.ore_budget ? `${f.ore_budget} h` : null].filter(Boolean);
+  const apribile = modificabile || allegati >= 1;
+  const dettagli = [periodo(f), importi && f.onorario ? formattaEuro(f.onorario) : null, f.ore_budget ? `${f.ore_budget} h` : null].filter(Boolean);
 
   return (
     <li className={cn(aperta && "bg-superficie-2/60")}>
       <button
         type="button"
-        onClick={onApri}
-        aria-expanded={aperta}
+        onClick={apribile ? onApri : undefined}
+        aria-expanded={apribile ? aperta : undefined}
         className="grid w-full grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-superficie-2/60 md:grid-cols-[3.5rem_minmax(0,1fr)_auto_auto] md:px-6"
       >
         <span className="numeri etichetta">{f.codice ?? "—"}</span>
@@ -122,7 +147,7 @@ function RigaFase({
           </span>
         </span>
         <span className="flex items-center gap-2">
-          {documenti.length ? (
+          {allegati >= 1 && documenti.length ? (
             <span className="hidden items-center gap-1 text-sm text-tenue sm:inline-flex" data-suggerimento={`${documenti.length} allegati`}>
               <Paperclip className="size-3.5" strokeWidth={1.8} />
               <span className="numeri">{documenti.length}</span>
@@ -141,14 +166,16 @@ function RigaFase({
             {STATI_FASE[f.stato] ?? f.stato}
           </span>
         </span>
-        <ChevronDown className={cn("hidden size-4 text-tenue transition-transform md:block", aperta && "rotate-180")} strokeWidth={1.8} />
+        {apribile ? <ChevronDown className={cn("hidden size-4 text-tenue transition-transform md:block", aperta && "rotate-180")} strokeWidth={1.8} /> : <span className="hidden md:block" />}
       </button>
-      {aperta ? (
+      {aperta && apribile ? (
         <>
-          <EditorFase fase={f} profili={profili} onChiudi={onChiudi} prima={prima} ultima={ultima} />
-          <div className="mx-5 border-t border-dashed border-linea pb-5 pt-4 md:mx-6">
-            <AllegatiFase commessaId={commessaId} faseId={f.id} documenti={documenti} />
-          </div>
+          {modificabile ? <EditorFase fase={f} profili={profili} onChiudi={onChiudi} prima={prima} ultima={ultima} eliminabile={eliminabile} importi={importi} /> : null}
+          {allegati >= 1 ? (
+            <div className={cn("mx-5 pb-5 pt-4 md:mx-6", modificabile && "border-t border-dashed border-linea")}>
+              <AllegatiFase commessaId={commessaId} faseId={f.id} documenti={documenti} modificabile={allegati >= 2} eliminabile={eliminabile} />
+            </div>
+          ) : null}
         </>
       ) : null}
     </li>
@@ -161,12 +188,16 @@ function EditorFase({
   onChiudi,
   prima,
   ultima,
+  eliminabile,
+  importi,
 }: {
   fase: Fase;
   profili: Profilo[];
   onChiudi: () => void;
   prima: boolean;
   ultima: boolean;
+  eliminabile: boolean;
+  importi: boolean;
 }) {
   const router = useRouter();
   const [inCorso, avvia] = useTransition();
@@ -201,7 +232,7 @@ function EditorFase({
       className="grid gap-4 border-t border-linea px-5 pb-5 pt-4 md:px-6"
       onSubmit={(e) => {
         e.preventDefault();
-        esegui(() => aggiornaFase(f.id, { ...v, responsabile_id: v.responsabile_id || null }), true);
+        esegui(() => aggiornaFase(f.id, { ...v, responsabile_id: v.responsabile_id || null, onorario: importi ? v.onorario : undefined }), true);
       }}
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -238,8 +269,8 @@ function EditorFase({
         </div>
         <Campo etichetta="Inizio previsto" id={`${p}-ini`} type="date" value={v.data_inizio_prev} onChange={(e) => cambia("data_inizio_prev", e.target.value)} />
         <Campo etichetta="Fine prevista" id={`${p}-fine`} type="date" value={v.data_fine_prev} onChange={(e) => cambia("data_fine_prev", e.target.value)} />
-        <div className="grid grid-cols-2 gap-4">
-          <Campo etichetta="Onorario €" id={`${p}-on`} inputMode="decimal" value={v.onorario} onChange={(e) => cambia("onorario", e.target.value)} />
+        <div className={cn("grid gap-4", importi && "grid-cols-2")}>
+          {importi ? <Campo etichetta="Onorario €" id={`${p}-on`} inputMode="decimal" value={v.onorario} onChange={(e) => cambia("onorario", e.target.value)} /> : null}
           <Campo etichetta="Ore stimate" id={`${p}-ore`} inputMode="decimal" value={v.ore_budget} onChange={(e) => cambia("ore_budget", e.target.value)} />
         </div>
       </div>
@@ -263,7 +294,7 @@ function EditorFase({
           <Pulsante type="button" variante="discreto" className="px-2.5" disabled={inCorso || ultima} onClick={() => esegui(() => spostaFase(f.id, "giu"))} data-suggerimento="Sposta giù" aria-label="Sposta giù">
             <ArrowDown className="size-4" strokeWidth={1.8} />
           </Pulsante>
-          {eliminare ? (
+          {!eliminabile ? null : eliminare ? (
             <span className="ml-2 flex items-center gap-2 text-sm">
               Eliminare la fase?
               <Pulsante type="button" variante="secondario" className="h-9 px-3 text-[color:var(--stato-sospesa)]" disabled={inCorso} onClick={() => esegui(() => eliminaFase(f.id), true)}>

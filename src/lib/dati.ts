@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
+import { senzaImporti, vedeImporti } from "@/lib/permessi";
 
 export type CommessaSintesi = Tables<"v_commesse_sintesi">;
 
@@ -13,7 +14,7 @@ export async function elencoCommesse(): Promise<CommessaSintesi[]> {
     .order("data_apertura", { ascending: false })
     .order("codice", { ascending: false });
   if (error) throw new Error(`Impossibile leggere le commesse: ${error.message}`);
-  return data ?? [];
+  return senzaImporti(data ?? [], "onorario_concordato", await vedeImporti());
 }
 
 /** Fasi di tutte le commesse con le date, per il Gantt generale. */
@@ -168,7 +169,7 @@ export async function elencoPratiche(tipo: "preventivo" | "prefattibilita"): Pro
     .order("data", { ascending: false })
     .order("numero", { ascending: false });
   if (error) throw new Error(`Impossibile leggere l'elenco: ${error.message}`);
-  return data ?? [];
+  return senzaImporti(data ?? [], "importo", await vedeImporti());
 }
 
 export async function leggiPreventivo(id: string) {

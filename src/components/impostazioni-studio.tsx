@@ -2,12 +2,14 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, ImageUp, Loader2, Trash2, UserPlus } from "lucide-react";
+import { Check, Copy, ImageUp, Loader2, SlidersHorizontal, Trash2, UserPlus } from "lucide-react";
 import { Campo, Messaggio } from "@/components/campo";
 import { LogoImmagine } from "@/components/studio-contesto";
 import { Pulsante } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { RUOLI } from "@/lib/dominio";
+import type { MappaPermessi, RuoloConfigurabile } from "@/lib/permessi-catalogo";
+import { PermessiPersonali } from "@/components/ruoli-permessi";
 import { aggiornaUtente, creaUtente, impostaLogo, salvaStudio, type DatiStudioModulo } from "@/lib/azioni-studio";
 import type { DatiStudio } from "@/lib/studio";
 import { cn } from "@/lib/utils";
@@ -151,12 +153,22 @@ export function ImpostazioniStudio({ studio }: { studio: DatiStudio }) {
 
 /* ── Utenti e ruoli ───────────────────────────────────────────────────── */
 
-export type UtenteStudio = { id: string; nome: string; email: string; ruolo: string; attivo: boolean };
+export type UtenteStudio = { id: string; nome: string; email: string; ruolo: string; attivo: boolean; personali: MappaPermessi };
 
-export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: string }) {
+export function UtentiStudio({
+  utenti,
+  ioId,
+  ruoli,
+}: {
+  utenti: UtenteStudio[];
+  ioId: string;
+  /** Permessi dei ruoli, base delle eccezioni personali */
+  ruoli: Record<RuoloConfigurabile, MappaPermessi>;
+}) {
   const router = useRouter();
   const [errore, setErrore] = useState<string | null>(null);
   const [inModifica, setInModifica] = useState<string | null>(null);
+  const [aperto, setAperto] = useState<string | null>(null);
   const [, avvia] = useTransition();
 
   function cambia(id: string, modifica: { ruolo?: string; attivo?: boolean }) {
@@ -176,6 +188,8 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
       <ul className="divide-y divide-linea border-t border-linea">
         {utenti.map((u) => {
           const io = u.id === ioId;
+          const configurabile = u.ruolo !== "titolare";
+          const eccezioni = Object.keys(u.personali).length;
           return (
             <li key={u.id} className={cn("grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1fr)_13rem_5.5rem] md:items-center md:px-6", !u.attivo && "opacity-60")}>
               <div className="min-w-0">
@@ -185,6 +199,18 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
                   {!u.attivo ? <span className="ml-2 text-[0.8125rem] font-normal text-[color:var(--stato-sospesa)]">disattivato</span> : null}
                 </p>
                 <p className="truncate text-[0.8125rem] text-tenue">{u.email}</p>
+                {configurabile ? (
+                  <button
+                    type="button"
+                    onClick={() => setAperto(aperto === u.id ? null : u.id)}
+                    aria-expanded={aperto === u.id}
+                    className="mt-1 inline-flex items-center gap-1.5 text-[0.8125rem] text-accento hover:underline"
+                  >
+                    <SlidersHorizontal className="size-3.5" strokeWidth={1.9} />
+                    Permessi personali
+                    {eccezioni ? <span className="text-tenue">· {eccezioni} {eccezioni === 1 ? "eccezione" : "eccezioni"}</span> : null}
+                  </button>
+                ) : null}
               </div>
               <select
                 aria-label={`Ruolo di ${u.nome}`}
@@ -213,6 +239,18 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
                   </button>
                 )}
               </div>
+              {configurabile && aperto === u.id ? (
+                <div className="md:col-span-3">
+                  <PermessiPersonali
+                    key={u.ruolo}
+                    id={u.id}
+                    nome={u.nome}
+                    ruolo={u.ruolo as RuoloConfigurabile}
+                    delRuolo={ruoli[u.ruolo as RuoloConfigurabile] ?? {}}
+                    personali={u.personali}
+                  />
+                </div>
+              ) : null}
             </li>
           );
         })}
@@ -223,9 +261,9 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
         </div>
       ) : null}
       <p className="border-t border-linea px-5 py-4 text-sm text-tenue md:px-6">
-        Ruoli: il <strong className="font-medium text-inchiostro-2">titolare</strong> gestisce impostazioni e utenti; architetti e titolari possono eliminare
-        documenti e dati catastali; collaboratori e amministrazione lavorano su pratiche e commesse. Un utente disattivato non può più accedere.
-        I nuovi utenti ricevono una password provvisoria da cambiare al primo accesso.
+        Il <strong className="font-medium text-inchiostro-2">titolare</strong> ha sempre accesso completo e gestisce utenti e permessi; cosa possono fare
+        architetti e collaboratori si decide in Ruoli e permessi, con eventuali eccezioni personali. Un utente disattivato non può più accedere. I nuovi
+        utenti ricevono una password provvisoria da cambiare al primo accesso.
       </p>
     </div>
   );

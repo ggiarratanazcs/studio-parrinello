@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { senzaImporti, vedeImporti } from "@/lib/permessi";
 import type { Tables } from "@/lib/database.types";
 import { statoCommessa } from "@/lib/dominio";
 import { STATI_PREFATTIBILITA, STATI_PREVENTIVO } from "@/lib/preventivo";
@@ -62,7 +63,8 @@ export type SchedaClienteDati = {
   preventivi: PraticaCliente[];
   commesse: PraticaCliente[];
   immobili: ImmobileCliente[];
-  analisi: AnalisiCliente;
+  /** Assente se l'utente non può vedere importi e analisi */
+  analisi: AnalisiCliente | null;
 };
 
 const STATI_COMMESSA_PERSE = ["persa", "annullata"];
@@ -180,14 +182,15 @@ export async function leggiCliente(id: string): Promise<SchedaClienteDati | null
   const integrativi = righePreventivi.filter((p) => p.integrativo && p.stato === "accettato");
   const somma = (xs: { imponibile: number | null }[]) => xs.reduce((s, p) => s + (p.imponibile ?? 0), 0);
 
+  const importi = await vedeImporti();
   return {
     cliente: cliente.data,
     referenti: referenti.data ?? [],
-    prefattibilita: elencoPf,
-    preventivi: elencoPreventivi,
-    commesse: elencoCommesse,
+    prefattibilita: senzaImporti(elencoPf, "importo", importi),
+    preventivi: senzaImporti(elencoPreventivi, "importo", importi),
+    commesse: senzaImporti(elencoCommesse, "importo", importi),
     immobili: [...immobili.values()],
-    analisi: {
+    analisi: !importi ? null : {
       onorariAcquisiti: commesseValide.reduce((s, c) => s + (c.onorario_concordato ?? 0), 0),
       commesse: commesseValide.length,
       commesseInCorso: righeCommesse.filter((c) => c.stato === "attiva").length,
@@ -308,12 +311,13 @@ export async function leggiImmobile(id: string): Promise<SchedaImmobileDati | nu
       .map((d) => ({ id: d.id, titolo: d.titolo, categoria: d.categoria, data: d.created_at, commessa: { id: d.commessa!.id, codice: d.commessa!.codice, titolo: d.commessa!.titolo } }));
   }
 
+  const importi = await vedeImporti();
   return {
     immobile: immobile.data,
     catasto: catasto.data ?? [],
-    prefattibilita: elencoPf,
-    preventivi: elencoPreventivi,
-    commesse: elencoCommesse,
+    prefattibilita: senzaImporti(elencoPf, "importo", importi),
+    preventivi: senzaImporti(elencoPreventivi, "importo", importi),
+    commesse: senzaImporti(elencoCommesse, "importo", importi),
     committenti: [...committenti.values()].sort((a, b) => b.pratiche - a.pratiche),
     documenti,
     totaleDocumenti,

@@ -8,6 +8,7 @@ import { geocodifica } from "@/lib/geocodifica";
 import { datiProcedura, prefattibilitaDaModificare, preventivoDaModificare } from "@/lib/dati";
 import { origineNuovoPreventivo } from "@/lib/origine-preventivo";
 import { oggiIso } from "@/lib/utils";
+import { getPermessi } from "@/lib/permessi";
 
 export type Esito = { ok: true; id: string } | { ok: false; errore: string };
 
@@ -212,7 +213,9 @@ export async function aggiornaStatoCommessa(id: string, stato: string): Promise<
   if (!STATI_COMMESSA_AMMESSI.includes(stato)) return { ok: false, errore: "Stato non valido." };
   const supabase = await clientAutenticato();
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
-  const chiusa = stato === "conclusa" || stato === "annullata";
+  // Avviare, sospendere, concludere o annullare richiede "Completo" sulle commesse
+  if ((await getPermessi()).liv("commesse") < 3) return { ok: false, errore: "Il tuo profilo non può cambiare lo stato della commessa." };
+  const chiusa =stato === "conclusa" || stato === "annullata";
   const { error } = await supabase
     .from("commesse")
     .update({ stato, data_chiusura: chiusa ? oggiIso() : null })
@@ -227,7 +230,8 @@ export type DatiFase = {
   responsabile_id: string | null;
   data_inizio_prev: string | null;
   data_fine_prev: string | null;
-  onorario: string | number | null;
+  /** Assente quando l'utente non può vedere gli importi: il valore salvato non cambia */
+  onorario?: string | number | null;
   ore_budget: string | number | null;
   avanzamento_pct: number;
   note: string | null;
@@ -263,7 +267,7 @@ export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
       responsabile_id: dati.responsabile_id || null,
       data_inizio_prev: inizio,
       data_fine_prev: fine,
-      onorario: numeroO(dati.onorario),
+      ...(dati.onorario !== undefined && (await getPermessi()).liv("c.onorario") >= 1 ? { onorario: numeroO(dati.onorario) } : {}),
       ore_budget: numeroO(dati.ore_budget),
       avanzamento_pct: avanzamento,
       note: dati.note?.trim() || null,

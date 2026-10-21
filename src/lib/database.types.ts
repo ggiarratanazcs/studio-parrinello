@@ -625,6 +625,42 @@ export type Database = {
           },
         ]
       }
+      permessi_ruolo: {
+        Row: {
+          chiave: string
+          livello: number
+          ruolo: string
+        }
+        Insert: {
+          chiave: string
+          livello: number
+          ruolo: string
+        }
+        Update: {
+          chiave?: string
+          livello?: number
+          ruolo?: string
+        }
+        Relationships: []
+      }
+      permessi_utente: {
+        Row: {
+          chiave: string
+          livello: number
+          profilo_id: string
+        }
+        Insert: {
+          chiave: string
+          livello: number
+          profilo_id: string
+        }
+        Update: {
+          chiave?: string
+          livello?: number
+          profilo_id?: string
+        }
+        Relationships: []
+      }
       prefattibilita: {
         Row: {
           numero: string | null

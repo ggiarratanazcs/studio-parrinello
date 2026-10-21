@@ -12,3 +12,7 @@ Migrazioni applicate al progetto `commesse`, in ordine:
    funzioni `crea_preventivo`, `crea_prefattibilita`, `converti_in_commessa`, vista `v_pratiche` per i tassi di conversione
 
 Dopo ogni migrazione rigenerare i tipi in `src/lib/database.types.ts`.
+
+5. `configurazione_studio.sql` — tabella `studio` (nome, claim, logo, dati dei documenti) e spazio `studio` per il logo
+6. `permessi.sql` — ruoli titolare/architetto/collaboratore, tabelle `permessi_ruolo` e `permessi_utente`,
+   funzioni `permesso(chiave)` e `vede_commessa(id)`, regole di accesso riscritte sui permessi

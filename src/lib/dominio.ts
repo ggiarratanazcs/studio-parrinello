@@ -33,7 +33,6 @@ export const RUOLI: Record<string, string> = {
   titolare: "Titolare",
   architetto: "Architetto",
   collaboratore: "Collaboratore",
-  amministrazione: "Amministrazione",
 };
 
 export const STATI_FASE: Record<string, string> = {

@@ -24,6 +24,7 @@ function NavLateraleCorpo({ pathname }: { pathname: string | null }) {
           <Link
             key={href}
             href={href}
+            data-sezione={href}
             aria-label={soloIcona ? etichetta : undefined}
             data-suggerimento={etichetta}
             data-suggerimento-lato="destra"
@@ -55,6 +56,7 @@ function NavSuperioreCorpo({ pathname }: { pathname: string | null }) {
           <Link
             key={href}
             href={href}
+            data-sezione={href}
             aria-label={soloIcona ? etichetta : undefined}
             data-suggerimento={soloIcona ? etichetta : undefined}
             data-suggerimento-lato="sotto"
@@ -86,6 +88,7 @@ function NavMobileCorpo({ pathname }: { pathname: string | null }) {
             <li key={href}>
               <Link
                 href={href}
+                data-sezione={href}
                 aria-label={soloIcona ? etichetta : undefined}
                 aria-current={corrente ? "page" : undefined}
                 className={cn(

@@ -216,11 +216,18 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
       {/* ── Carta chiara: pratiche, immobili, analisi ── */}
       <section className="carta-chiara flex min-w-0 flex-col lg:min-h-0">
         <SchedeSezioni
-          sezioni={[
-            ["pratiche", "Pratiche", totale],
-            ["immobili", "Immobili", scheda.immobili.length],
-            ["analisi", "Analisi", null],
-          ] as const}
+          sezioni={
+            scheda.analisi
+              ? ([
+                  ["pratiche", "Pratiche", totale],
+                  ["immobili", "Immobili", scheda.immobili.length],
+                  ["analisi", "Analisi", null],
+                ] as const)
+              : ([
+                  ["pratiche", "Pratiche", totale],
+                  ["immobili", "Immobili", scheda.immobili.length],
+                ] as const)
+          }
           scelta={vista}
           onScegli={setVista}
           chiudi={<Chiudi elenco="/clienti" nomeElenco="clienti" />}
@@ -235,9 +242,9 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
             </div>
           ) : vista === "immobili" ? (
             <ImmobiliCliente immobili={scheda.immobili} />
-          ) : (
+          ) : scheda.analisi ? (
             <Analisi a={scheda.analisi} />
-          )}
+          ) : null}
         </div>
       </section>
     </div>

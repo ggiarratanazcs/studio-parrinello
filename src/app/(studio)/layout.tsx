@@ -8,6 +8,7 @@ import { Benvenuto } from "@/components/benvenuto";
 import { CursoreCompasso } from "@/components/cursore-compasso";
 import { LogoImmagine, StudioProvider } from "@/components/studio-contesto";
 import { leggiStudio } from "@/lib/studio";
+import { NascondiSezioni } from "@/components/permessi";
 
 /**
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
@@ -22,6 +23,10 @@ export default async function LayoutStudio({ children, modale }: LayoutProps<"/"
       <Benvenuto />
       <Suspense fallback={null}>
         <CursoreCompasso />
+      </Suspense>
+      {/* Sezioni non permesse: tolte dal menu e dal "+" */}
+      <Suspense fallback={null}>
+        <NascondiSezioni />
       </Suspense>
       {/* ── Impaginazione "laterale": barra fluttuante a sinistra, richiudibile ── */}
       <aside className="barra-laterale solo-laterale sticky top-0 z-40 hidden h-dvh shrink-0 p-3 lg:block">

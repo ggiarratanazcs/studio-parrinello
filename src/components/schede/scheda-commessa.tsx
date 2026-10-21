@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, CircleDot, Euro } from "lucide-react";
 import { AvanzamentoFasi, Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
+import { getPermessi } from "@/lib/permessi";
 import { FONDI } from "@/lib/fondi";
 import { AMBITI, TIPI_CLIENTE, TIPOLOGIE_INTERVENTO, statoCommessa } from "@/lib/dominio";
 import { formattaData, formattaEuro, oggiIso } from "@/lib/utils";
@@ -37,10 +38,29 @@ const plurale = (n: number, uno: string, molti: string) => `${n} ${n === 1 ? uno
  */
 export async function SchedaCommessa({ id }: { id: string }) {
   if (!UUID.test(id)) notFound();
-  const c = await leggiCommessa(id);
+  const [c, permessi] = await Promise.all([leggiCommessa(id), getPermessi()]);
   if (!c) notFound();
 
-  const fasi = c.fasi ?? [];
+  // Cosa vede e cosa può cambiare l'utente (Impostazioni → Ruoli e permessi)
+  const liv = permessi.liv;
+  const vede = {
+    stato: liv("c.stato") >= 1,
+    onorario: liv("c.onorario") >= 1,
+    incarico: liv("c.incarico") >= 1,
+    importoLavori: liv("c.importo_lavori") >= 1,
+    committente: liv("c.committente") >= 1,
+    immobile: liv("c.immobile") >= 1,
+    pratiche: liv("c.pratiche") >= 1,
+    fasi: liv("c.fasi") >= 1,
+    cronoprogramma: liv("c.cronoprogramma") >= 1,
+    allegati: liv("c.allegati") >= 1,
+    team: liv("c.team") >= 1,
+    diario: liv("c.diario") >= 1,
+  };
+  const completo = liv("commesse") >= 3;
+
+  // Le cifre non lasciano il server se l'utente non le può vedere
+  const fasi = (c.fasi ?? []).map((f) => (vede.onorario ? f : { ...f, onorario: null }));
   const team = c.team ?? [];
   const diario = c.diario ?? [];
   const documenti = c.documenti ?? [];
@@ -53,12 +73,13 @@ export async function SchedaCommessa({ id }: { id: string }) {
 
   const datiGenerali = (
     <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
+      {vede.incarico ? (
       <Blocco titolo="Incarico">
         <Dato etichetta="Committenza" valore={c.committenza === "pubblica" ? "Pubblica" : "Privata"} />
         <Dato etichetta="Intervento" valore={TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""]} />
         <Dato etichetta="Ambito" valore={AMBITI[c.ambito ?? ""]} />
         <Dato etichetta="Responsabile" valore={responsabile} />
-        <Dato etichetta="Importo lavori" valore={c.importo_lavori_stimato != null ? formattaEuro(c.importo_lavori_stimato) : null} />
+        {vede.importoLavori ? <Dato etichetta="Importo lavori" valore={c.importo_lavori_stimato != null ? formattaEuro(c.importo_lavori_stimato) : null} /> : null}
         <Dato etichetta="Fine prevista" valore={c.data_fine_prevista ? formattaData(c.data_fine_prevista) : null} />
         <Dato etichetta="Chiusa il" valore={c.data_chiusura ? formattaData(c.data_chiusura) : null} />
         {c.committenza === "pubblica" ? (
@@ -71,8 +92,10 @@ export async function SchedaCommessa({ id }: { id: string }) {
         <Dato etichetta="Nata dal preventivo" valore={daPreventivo?.numero} href={daPreventivo ? `/preventivi/${daPreventivo.id}` : undefined} />
         <Dato etichetta="Nata dalla pre-fattibilità" valore={daPrefattibilita?.numero} href={daPrefattibilita ? `/prefattibilita/${daPrefattibilita.id}` : undefined} />
       </Blocco>
+      ) : null}
 
       <div className="flex flex-col gap-6">
+        {vede.committente ? (
         <Blocco titolo="Committente">
           {cliente ? (
             <>
@@ -85,7 +108,9 @@ export async function SchedaCommessa({ id }: { id: string }) {
             </>
           ) : null}
         </Blocco>
+        ) : null}
 
+        {vede.immobile ? (
         <Blocco titolo="Immobile">
           {immobile ? (
             <>
@@ -104,9 +129,10 @@ export async function SchedaCommessa({ id }: { id: string }) {
             <p className="text-[0.9375rem] text-tenue">Immobile da definire.</p>
           )}
         </Blocco>
+        ) : null}
       </div>
 
-      {c.descrizione ? (
+      {vede.incarico && c.descrizione ? (
         <Pannello className="px-5 py-5 xl:col-span-2">
           <h2 className="mb-3 text-base font-medium">Descrizione</h2>
           <p className="max-w-prose whitespace-pre-line text-[0.9375rem]">{c.descrizione}</p>
@@ -122,23 +148,27 @@ export async function SchedaCommessa({ id }: { id: string }) {
         titolo={c.titolo}
         sottotitolo={[cliente?.denominazione, immobile?.comune].filter(Boolean).join(", ")}
         celle={[
-          { etichetta: "Stato", valore: statoCommessa(c.stato).etichetta, tinta: statoCommessa(c.stato).colore, icona: CircleDot },
-          { etichetta: "Apertura", valore: formattaData(c.data_apertura), icona: CalendarDays },
-          { etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato), icona: Euro },
+          ...(vede.stato
+            ? [
+                { etichetta: "Stato", valore: statoCommessa(c.stato).etichetta, tinta: statoCommessa(c.stato).colore, icona: CircleDot },
+                { etichetta: "Apertura", valore: formattaData(c.data_apertura), icona: CalendarDays },
+              ]
+            : []),
+          ...(vede.onorario ? [{ etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato), icona: Euro }] : []),
         ]}
-        azioni={<AzioniCommessa id={c.id} stato={c.stato} />}
+        azioni={completo ? <AzioniCommessa id={c.id} stato={c.stato} /> : null}
       />
 
       <SezioniScheda
         tinta={FONDI.commessa.chiaro}
         sezioni={[
-          {
+          (vede.incarico || vede.committente || vede.immobile) && {
             id: "generali",
             titolo: "Dati generali",
             sottotitolo: TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""] ?? (c.committenza === "pubblica" ? "Committenza pubblica" : "Committenza privata"),
             contenuto: datiGenerali,
           },
-          {
+          vede.pratiche && {
             id: "pratiche",
             titolo: "Pratiche",
             sottotitolo: (() => {
@@ -150,21 +180,23 @@ export async function SchedaCommessa({ id }: { id: string }) {
               <PraticheCommessa
                 c={c}
                 azioneNuovo={
-                  <PulsanteNuovoPreventivo fonte={{ commessa: c.id }}>Preventivo integrativo</PulsanteNuovoPreventivo>
+                  liv("c.pratiche") >= 2 && liv("pratiche") >= 2 ? (
+                    <PulsanteNuovoPreventivo fonte={{ commessa: c.id }}>Preventivo integrativo</PulsanteNuovoPreventivo>
+                  ) : null
                 }
               />
             ),
           },
-          {
+          (vede.fasi || vede.cronoprogramma || vede.allegati) && {
             id: "fasi",
-            titolo: "Fasi e allegati",
-            sottotitolo: `${completate}/${fasi.length} completate · ${plurale(documenti.length, "allegato", "allegati")}`,
+            titolo: vede.fasi ? (vede.allegati ? "Fasi e allegati" : "Fasi") : vede.allegati ? "Allegati" : "Cronoprogramma",
+            sottotitolo: [vede.fasi ? `${completate}/${fasi.length} completate` : null, vede.allegati ? plurale(documenti.length, "allegato", "allegati") : null].filter(Boolean).join(" · "),
             contenuto: (
               <Pannello>
                 <Cartelle
                   destra={<AvanzamentoFasi completate={completate} totali={fasi.length} colore={statoCommessa(c.stato).colore} />}
                   cartelle={[
-                    {
+                    vede.fasi && {
                       id: "fasi",
                       nome: "Fasi",
                       conteggio: fasi.length,
@@ -176,26 +208,30 @@ export async function SchedaCommessa({ id }: { id: string }) {
                           catalogo={c.catalogoFasi}
                           committenza={c.committenza}
                           documenti={documenti}
+                          modificabile={liv("c.fasi") >= 2}
+                          importi={vede.onorario}
+                          allegati={liv("c.allegati")}
+                          eliminabile={completo}
                         />
                       ),
                     },
-                    {
+                    vede.cronoprogramma && {
                       id: "cronoprogramma",
                       nome: "Cronoprogramma",
                       contenuto: <Cronoprogramma fasi={fasi} apertura={c.data_apertura} finePrevista={c.data_fine_prevista} oggi={oggiIso()} />,
                     },
-                    {
+                    vede.allegati && {
                       id: "allegati",
                       nome: "Allegati",
                       conteggio: documenti.length,
                       contenuto: <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />,
                     },
-                  ]}
+                  ].filter((x) => !!x)}
                 />
               </Pannello>
             ),
           },
-          {
+          vede.team && {
             id: "team",
             titolo: "Team",
             sottotitolo: team.length ? plurale(team.length, "persona", "persone") : "Da assegnare",
@@ -203,23 +239,23 @@ export async function SchedaCommessa({ id }: { id: string }) {
               <Pannello>
                 <TitoloSezione titolo="Team" descrizione="Chi lavora sulla commessa e con quale ruolo." />
                 <div className="px-5 py-5 md:px-6">
-                  <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} />
+                  <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} modificabile={liv("c.team") >= 2} />
                 </div>
               </Pannello>
             ),
           },
-          {
+          vede.diario && {
             id: "diario",
             titolo: "Diario",
             sottotitolo: diario.length ? plurale(diario.length, "voce", "voci") : "Nessuna voce",
             contenuto: (
               <Pannello>
                 <TitoloSezione titolo="Diario di commessa" descrizione="Sopralluoghi, telefonate, riunioni e decisioni, in ordine di data." />
-                <DiarioCommessa commessaId={c.id} diario={diario} />
+                <DiarioCommessa commessaId={c.id} diario={diario} modificabile={liv("c.diario") >= 2} eliminabile={completo} />
               </Pannello>
             ),
           },
-        ]}
+        ].filter((x) => !!x)}
       />
     </>
   );

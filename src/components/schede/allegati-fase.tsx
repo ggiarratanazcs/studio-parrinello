@@ -69,7 +69,21 @@ function nomeSicuro(nome: string) {
  * apertura con collegamento temporaneo ed eliminazione. I file vanno nel bucket privato
  * "documenti" sotto {commessa}/{fase}/.
  */
-export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: string; faseId: string; documenti: Documento[] }) {
+export function AllegatiFase({
+  commessaId,
+  faseId,
+  documenti,
+  modificabile = true,
+  eliminabile = true,
+}: {
+  commessaId: string;
+  faseId: string;
+  documenti: Documento[];
+  /** Può caricare file (permesso "Allegati" modificabile) */
+  modificabile?: boolean;
+  /** Può eliminarli (anche "Completo" sulle commesse) */
+  eliminabile?: boolean;
+}) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [categoria, setCategoria] = useState("elaborato_grafico");
@@ -132,7 +146,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
       const supabase = createClient();
       const { data, error } = await supabase.from("documenti").delete().eq("id", d.id).select("id");
       if (error || !data?.length) {
-        setErrore("Solo titolari e architetti possono eliminare gli allegati.");
+        setErrore("Il tuo profilo non può eliminare questo allegato.");
         return;
       }
       await supabase.storage.from("documenti").remove([d.storage_path]);
@@ -164,7 +178,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
                     {[CATEGORIE_DOCUMENTO[d.categoria] ?? d.categoria, dimensione(d.dimensione_byte), formattaData(d.created_at)].filter(Boolean).join(" · ")}
                   </span>
                 </button>
-                {daEliminare === d.id ? (
+                {!eliminabile ? null : daEliminare === d.id ? (
                   <span className="flex items-center gap-1.5 text-sm">
                     <Pulsante type="button" variante="secondario" className="h-8 px-3 text-[color:var(--stato-sospesa)]" disabled={inCorso} onClick={() => elimina(d)}>
                       Elimina
@@ -189,10 +203,11 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
           })}
         </ul>
       ) : (
-        <p className="text-sm text-tenue">Nessun allegato. Carica tavole, relazioni, pratiche o foto dal cantiere.</p>
+        <p className="text-sm text-tenue">{modificabile ? "Nessun allegato. Carica tavole, relazioni, pratiche o foto dal cantiere." : "Nessun allegato."}</p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      {modificabile ? (
+        <div className="flex flex-wrap items-center gap-2">
         <select
           aria-label="Categoria dei file"
           value={categoria}
@@ -216,7 +231,8 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
           {caricamento ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" strokeWidth={1.8} />}
           {caricamento ? `Caricamento ${caricamento.fatti}/${caricamento.totali}…` : "Carica file"}
         </label>
-      </div>
+        </div>
+      ) : null}
       {caricamento ? (
         <div className="flex items-center gap-4 rounded-medio bg-superficie-2/60 px-4 py-2">
           <Compasso className="w-16 shrink-0" didascalia={null} />

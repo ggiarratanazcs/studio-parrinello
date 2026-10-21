@@ -4,6 +4,8 @@ import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { TAG_STUDIO } from "@/lib/studio";
 import { RUOLI } from "@/lib/dominio";
+import { CHIAVI_PERMESSI, MASSIMO, RUOLI_CONFIGURABILI, VOCI_PERMESSI, type RuoloConfigurabile } from "@/lib/permessi-catalogo";
+import { getPermessi } from "@/lib/permessi";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Impostazioni dello studio (solo titolare): dati dello studio, logo, utenti.
@@ -23,7 +25,7 @@ export type DatiStudioModulo = {
   partita_iva: string;
 };
 
-const SOLO_TITOLARE = "Solo il titolare può modificare le impostazioni dello studio.";
+const SOLO_TITOLARE = "Solo il titolare può gestire utenti, ruoli e permessi.";
 
 async function titolare() {
   const supabase = await createClient();
@@ -33,6 +35,15 @@ async function titolare() {
   const { data: p } = await supabase.from("profili").select("ruolo, attivo").eq("id", id).maybeSingle();
   if (!p || !p.attivo || p.ruolo !== "titolare") return null;
   return { supabase, id };
+}
+
+/** Chi può modificare i dati dello studio (logo, nome, claim): titolare o permesso "Impostazioni" in modifica. */
+async function gestoreStudio() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims?.sub) return null;
+  if ((await getPermessi()).liv("impostazioni") < 2) return null;
+  return { supabase };
 }
 
 const pulito = (v: string) => {
@@ -47,8 +58,8 @@ function aggiornaStudio() {
 }
 
 export async function salvaStudio(d: DatiStudioModulo): Promise<Esito> {
-  const t = await titolare();
-  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  const t = await gestoreStudio();
+  if (!t) return { ok: false, errore: "Il tuo profilo non può modificare le impostazioni dello studio." };
   if (!pulito(d.nome)) return { ok: false, errore: "Il nome dello studio è necessario." };
   if (pulito(d.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) return { ok: false, errore: "L'indirizzo email non sembra corretto." };
   const { error } = await t.supabase
@@ -73,8 +84,8 @@ export async function salvaStudio(d: DatiStudioModulo): Promise<Esito> {
  * ed elimina quello precedente. Con `percorso` null rimuove il logo: torna il monogramma.
  */
 export async function impostaLogo(percorso: string | null): Promise<Esito> {
-  const t = await titolare();
-  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  const t = await gestoreStudio();
+  if (!t) return { ok: false, errore: "Il tuo profilo non può modificare le impostazioni dello studio." };
   if (percorso && !/^logo\/[\w.-]+$/.test(percorso)) return { ok: false, errore: "File del logo non valido." };
   const { data: prima } = await t.supabase.from("studio").select("logo_path").eq("id", 1).maybeSingle();
   const { error } = await t.supabase.from("studio").update({ logo_path: percorso }).eq("id", 1);
@@ -186,4 +197,49 @@ export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> 
 
   revalidatePath("/impostazioni");
   return { ok: true, email, password };
+}
+
+/* ── Ruoli e permessi ─────────────────────────────────────────────────── */
+
+function livelloValido(chiave: string, livello: number) {
+  const voce = VOCI_PERMESSI.find((v) => v.chiave === chiave);
+  return !!voce && Number.isInteger(livello) && livello >= 0 && livello <= MASSIMO[voce.scala];
+}
+
+/** Cambia il livello di un ruolo su una voce (solo titolare). */
+export async function salvaPermessoRuolo(ruolo: string, chiave: string, livello: number): Promise<Esito> {
+  const t = await titolare();
+  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  if (!RUOLI_CONFIGURABILI.includes(ruolo as RuoloConfigurabile)) return { ok: false, errore: "Ruolo non valido." };
+  if (!CHIAVI_PERMESSI.has(chiave) || !livelloValido(chiave, livello)) return { ok: false, errore: "Permesso non valido." };
+  const { error } = await t.supabase.from("permessi_ruolo").upsert({ ruolo, chiave, livello });
+  if (error) {
+    return { ok: false, errore: /permessi_ruolo/.test(error.message) ? "Prima va aggiornato il database (file supabase/permessi.sql)." : "Non è stato possibile salvare. Riprova." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Eccezione personale per un utente; con livello null torna a valere il ruolo. */
+export async function salvaPermessoUtente(id: string, chiave: string, livello: number | null): Promise<Esito> {
+  const t = await titolare();
+  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  if (!CHIAVI_PERMESSI.has(chiave) || (livello !== null && !livelloValido(chiave, livello))) return { ok: false, errore: "Permesso non valido." };
+  const { error } =
+    livello === null
+      ? await t.supabase.from("permessi_utente").delete().eq("profilo_id", id).eq("chiave", chiave)
+      : await t.supabase.from("permessi_utente").upsert({ profilo_id: id, chiave, livello });
+  if (error) return { ok: false, errore: "Non è stato possibile salvare. Riprova." };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** Toglie tutte le eccezioni personali di un utente. */
+export async function ripristinaPermessiUtente(id: string): Promise<Esito> {
+  const t = await titolare();
+  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  const { error } = await t.supabase.from("permessi_utente").delete().eq("profilo_id", id);
+  if (error) return { ok: false, errore: "Non è stato possibile ripristinare. Riprova." };
+  revalidatePath("/", "layout");
+  return { ok: true };
 }

@@ -39,7 +39,18 @@ const RUOLI_COMMESSA = [
 
 /* ── Team di commessa ─────────────────────────────────────────────────── */
 
-export function TeamCommessa({ commessaId, team, profili }: { commessaId: string; team: Membro[]; profili: Profilo[] }) {
+export function TeamCommessa({
+  commessaId,
+  team,
+  profili,
+  modificabile = true,
+}: {
+  commessaId: string;
+  team: Membro[];
+  profili: Profilo[];
+  /** Permesso "Team" modificabile: aggiunge e toglie persone */
+  modificabile?: boolean;
+}) {
   const router = useRouter();
   const [inCorso, avvia] = useTransition();
   const [aperto, setAperto] = useState(false);
@@ -75,6 +86,7 @@ export function TeamCommessa({ commessaId, team, profili }: { commessaId: string
               </span>
               {m.ruolo_commessa ? <span className="block truncate text-sm text-tenue">{m.ruolo_commessa}</span> : null}
             </span>
+            {modificabile ? (
             <button
               type="button"
               onClick={() => esegui(() => rimuoviMembro(commessaId, m.profilo_id))}
@@ -85,11 +97,12 @@ export function TeamCommessa({ commessaId, team, profili }: { commessaId: string
             >
               <X className="size-4" strokeWidth={1.8} />
             </button>
+            ) : null}
           </li>
         ))}
       </ul>
 
-      {aperto ? (
+      {!modificabile ? null : aperto ? (
         <div className="grid gap-3 rounded-medio bg-superficie-2/70 p-3">
           <Selezione etichetta="Persona" id={`team-p-${commessaId}`} value={persona} onChange={(e) => setPersona(e.target.value)}>
             <option value="">Scegli…</option>
@@ -159,7 +172,19 @@ const TIPI: Record<string, { etichetta: string; icona: Icona; colore: string }> 
 
 const dataOra = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short", year: "numeric" });
 
-export function DiarioCommessa({ commessaId, diario }: { commessaId: string; diario: Nota[] }) {
+export function DiarioCommessa({
+  commessaId,
+  diario,
+  modificabile = true,
+  eliminabile = true,
+}: {
+  commessaId: string;
+  diario: Nota[];
+  /** Permesso "Diario" modificabile: registra nuove voci */
+  modificabile?: boolean;
+  /** Può eliminare le voci ("Completo" sulle commesse) */
+  eliminabile?: boolean;
+}) {
   const router = useRouter();
   const [inCorso, avvia] = useTransition();
   // null = consultazione; un tipo = modulo di registrazione aperto per quel tipo
@@ -204,6 +229,7 @@ export function DiarioCommessa({ commessaId, diario }: { commessaId: string; dia
   return (
     <div>
       {/* Registra: solo le icone; il modulo si apre scegliendone una */}
+      {modificabile ? (
       <div className="flex flex-wrap items-center gap-2.5 border-b border-linea px-5 py-3.5 md:px-6">
         <span className="mr-1 text-sm text-tenue">Registra</span>
         {Object.entries(TIPI).map(([k, t]) => {
@@ -233,6 +259,7 @@ export function DiarioCommessa({ commessaId, diario }: { commessaId: string; dia
           );
         })}
       </div>
+      ) : null}
 
       {scelto ? (
         <form
@@ -310,6 +337,7 @@ export function DiarioCommessa({ commessaId, diario }: { commessaId: string; dia
                     </p>
                   ) : null}
                 </div>
+                {eliminabile ? (
                 <button
                   type="button"
                   onClick={() => setDaEliminare(n.id)}
@@ -319,6 +347,7 @@ export function DiarioCommessa({ commessaId, diario }: { commessaId: string; dia
                 >
                   <Trash2 className="size-4" strokeWidth={1.8} />
                 </button>
+                ) : null}
               </li>
             );
           })}

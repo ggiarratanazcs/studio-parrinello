@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Building2, Palette, User, Users } from "lucide-react";
+import { Building2, Palette, ShieldCheck, User, Users } from "lucide-react";
 import { FotoProfilo } from "@/components/foto-profilo";
 import { Cartiglio } from "@/components/cartiglio";
 import { LinkPulsante, Scheletro } from "@/components/ui";
@@ -10,6 +10,9 @@ import { SezioneImpostazioni } from "@/components/sezione-impostazioni";
 import { ImpostazioniStudio, UtentiStudio } from "@/components/impostazioni-studio";
 import { createClient } from "@/lib/supabase/server";
 import { leggiStudio } from "@/lib/studio";
+import { getPermessi } from "@/lib/permessi";
+import { PREDEFINITI, RUOLI_CONFIGURABILI, type MappaPermessi, type RuoloConfigurabile } from "@/lib/permessi-catalogo";
+import { MatricePermessi } from "@/components/ruoli-permessi";
 
 export const metadata = { title: "Impostazioni" };
 
@@ -98,38 +101,62 @@ async function SezioneProfilo() {
 }
 
 async function SezioniTitolare() {
-  const io = await getProfilo();
-  if (io.ruolo !== "titolare") return null;
+  const [io, permessi] = await Promise.all([getProfilo(), getPermessi()]);
+  const studio = await leggiStudio();
+  const sezioneStudio = (
+    <SezioneImpostazioni
+      icona={<Building2 className={icona} strokeWidth={1.7} />}
+      titolo="Studio"
+      descrizione="Logo, nome, claim e dati sui documenti"
+      riepilogo={studio.nome}
+    >
+      <ImpostazioniStudio studio={studio} />
+    </SezioneImpostazioni>
+  );
+  // Chi ha "Impostazioni dello studio" in modifica vede solo la sezione Studio
+  if (io.ruolo !== "titolare") return permessi.liv("impostazioni") >= 2 ? sezioneStudio : null;
+
   const supabase = await createClient();
-  const [studio, { data: profili }] = await Promise.all([
-    leggiStudio(),
+  const [{ data: profili }, { data: righeRuolo }, { data: righeUtente }] = await Promise.all([
     supabase.from("profili").select("id, nome, cognome, email, ruolo, attivo").order("attivo", { ascending: false }).order("cognome"),
+    supabase.from("permessi_ruolo").select("ruolo, chiave, livello"),
+    supabase.from("permessi_utente").select("profilo_id, chiave, livello"),
   ]);
+
+  // Valori dei ruoli: quelli salvati sopra i valori di partenza
+  const ruoli = Object.fromEntries(RUOLI_CONFIGURABILI.map((r) => [r, { ...PREDEFINITI[r] }])) as Record<RuoloConfigurabile, MappaPermessi>;
+  for (const r of righeRuolo ?? []) if (r.ruolo in ruoli) ruoli[r.ruolo as RuoloConfigurabile][r.chiave] = r.livello;
+  const personali = new Map<string, MappaPermessi>();
+  for (const r of righeUtente ?? []) personali.set(r.profilo_id, { ...(personali.get(r.profilo_id) ?? {}), [r.chiave]: r.livello });
+
   const utenti = (profili ?? []).map((u) => ({
     id: u.id,
     nome: [u.nome, u.cognome].filter(Boolean).join(" ") || u.email,
     email: u.email,
     ruolo: u.ruolo ?? "collaboratore",
     attivo: u.attivo,
+    personali: personali.get(u.id) ?? {},
   }));
   const attivi = utenti.filter((u) => u.attivo).length;
+  const conEccezioni = utenti.filter((u) => Object.keys(u.personali).length).length;
   return (
     <>
-      <SezioneImpostazioni
-        icona={<Building2 className={icona} strokeWidth={1.7} />}
-        titolo="Studio"
-        descrizione="Logo, nome, claim e dati sui documenti · solo titolare"
-        riepilogo={studio.nome}
-      >
-        <ImpostazioniStudio studio={studio} />
-      </SezioneImpostazioni>
+      {sezioneStudio}
       <SezioneImpostazioni
         icona={<Users className={icona} strokeWidth={1.7} />}
         titolo="Utenti dello studio"
-        descrizione="Accessi e ruoli · solo titolare"
+        descrizione="Accessi, ruoli ed eccezioni personali · solo titolare"
         riepilogo={`${attivi} ${attivi === 1 ? "attivo" : "attivi"}`}
       >
-        <UtentiStudio utenti={utenti} ioId={io.id} />
+        <UtentiStudio utenti={utenti} ioId={io.id} ruoli={ruoli} />
+      </SezioneImpostazioni>
+      <SezioneImpostazioni
+        icona={<ShieldCheck className={icona} strokeWidth={1.7} />}
+        titolo="Ruoli e permessi"
+        descrizione="Cosa può vedere e fare ogni ruolo · solo titolare"
+        riepilogo={conEccezioni ? `${conEccezioni} ${conEccezioni === 1 ? "utente" : "utenti"} con eccezioni` : "Architetto · Collaboratore"}
+      >
+        <MatricePermessi valori={ruoli} />
       </SezioneImpostazioni>
     </>
   );

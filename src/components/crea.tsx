@@ -211,7 +211,7 @@ export function Crea() {
               const Icona = v.icona;
               const selezionata = v === voceScelta;
               return (
-                <li key={v.etichetta}>
+                <li key={v.etichetta} data-crea={v.href}>
                   {primaDelGruppo ? (
                     <p className="px-2.5 pb-1 pt-2.5 text-[0.6875rem] uppercase tracking-[0.12em] text-tenue">{v.gruppo}</p>
                   ) : null}
@@ -261,6 +261,7 @@ export function Crea() {
             return (
               <button
                 key={v.etichetta}
+                data-crea={v.href}
                 type="button"
                 onClick={() => vai(v)}
                 disabled={!v.href}
