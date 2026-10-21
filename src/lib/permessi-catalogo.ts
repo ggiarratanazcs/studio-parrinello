@@ -55,7 +55,7 @@ export const GRUPPI_PERMESSI: GruppoPermessi[] = [
       { chiave: "c.fasi", etichetta: "Fasi", scala: "parte" },
       { chiave: "c.cronoprogramma", etichetta: "Cronoprogramma", scala: "parte" },
       { chiave: "c.allegati", etichetta: "Allegati", scala: "parte" },
-      { chiave: "c.team", etichetta: "Team", scala: "parte" },
+      { chiave: "c.team", etichetta: "Team di commessa", scala: "parte" },
       { chiave: "c.diario", etichetta: "Diario", scala: "parte" },
     ],
   },

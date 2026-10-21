@@ -130,6 +130,14 @@ export async function SchedaCommessa({ id }: { id: string }) {
           )}
         </Blocco>
         ) : null}
+
+        {/* Chi lavora sulla commessa: prima era una sezione a sé */}
+        {vede.team ? (
+          <Pannello className="px-5 py-5">
+            <h2 className="mb-4 text-base font-medium">Team di commessa</h2>
+            <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} modificabile={liv("c.team") >= 2} />
+          </Pannello>
+        ) : null}
       </div>
 
       {vede.incarico && c.descrizione ? (
@@ -162,7 +170,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
       <SezioniScheda
         tinta={FONDI.commessa.chiaro}
         sezioni={[
-          (vede.incarico || vede.committente || vede.immobile) && {
+          (vede.incarico || vede.committente || vede.immobile || vede.team) && {
             id: "generali",
             titolo: "Dati generali",
             sottotitolo: TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""] ?? (c.committenza === "pubblica" ? "Committenza pubblica" : "Committenza privata"),
@@ -227,19 +235,6 @@ export async function SchedaCommessa({ id }: { id: string }) {
                     ].filter((x) => !!x)}
                   />
                 )}
-              </Pannello>
-            ),
-          },
-          vede.team && {
-            id: "team",
-            titolo: "Team",
-            sottotitolo: team.length ? plurale(team.length, "persona", "persone") : "Da assegnare",
-            contenuto: (
-              <Pannello>
-                <TitoloSezione titolo="Team" descrizione="Chi lavora sulla commessa e con quale ruolo." />
-                <div className="px-5 py-5 md:px-6">
-                  <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} modificabile={liv("c.team") >= 2} />
-                </div>
               </Pannello>
             ),
           },
