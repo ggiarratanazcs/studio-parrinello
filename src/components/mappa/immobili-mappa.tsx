@@ -10,18 +10,13 @@ import { posizionaImmobile, posizionaImmobiliMancanti } from "@/lib/azioni";
 import type { ImmobileElenco } from "@/lib/dati";
 import { cn } from "@/lib/utils";
 import { Compasso } from "@/components/compasso";
-import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, SchedeElenco, useRegistro, type GruppoFiltro } from "@/components/registro";
+import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, useRegistro } from "@/components/registro";
 import { MappaImmobili, SceltaPosizione, STATI_IMMOBILE, statoImmobile } from "./mappa";
 
 const COLONNE = "md:grid-cols-[minmax(0,1fr)_10rem_6rem_5.5rem]";
 type Chiave = "immobile" | "comune" | "zona";
 const ORDINE_STATI = Object.keys(STATI_IMMOBILE);
 const infoStato = (s: string) => STATI_IMMOBILE[s as keyof typeof STATI_IMMOBILE] ?? STATI_IMMOBILE.nessuno;
-const GRUPPI: GruppoFiltro[] = [
-  { id: "tutti", etichetta: "Tutti" },
-  { id: "mappa", etichetta: "Sulla mappa", stati: [] },
-  { id: "senza", etichetta: "Da posizionare", stati: [] },
-];
 const sullaMappa = (i: ImmobileElenco) => i.latitudine != null && i.longitudine != null;
 const testo = (i: ImmobileElenco) => [
   i.denominazione,
@@ -132,30 +127,16 @@ export function ImmobiliConMappa({ immobili }: { immobili: ImmobileElenco[] }) {
 /** Registro degli immobili: ricerca, schede (tutti, sulla mappa, da posizionare), pallini per stato, ordinamento. */
 function ElencoImmobili({ immobili, children }: { immobili: ImmobileElenco[]; children: (i: ImmobileElenco) => ReactNode }) {
   const r = useRegistro<ImmobileElenco, Chiave>({ righe: immobili, testo, valore, filtro, iniziale: { chiave: "comune", verso: "asc" }, filtroIniziale: "tutti|" });
-  // Conteggi delle schede calcolati sulla posizione, non sullo stato
-  const gruppi = GRUPPI;
   const statiRighe = immobili.map((i) => statoImmobile(i) as string);
   const intestazione = (chiave: Chiave, nome: string) => (
     <Intestazione chiave={chiave} ordine={r.ordine} onOrdina={r.ordina}>
       {nome}
     </Intestazione>
   );
-  const nMappa = immobili.filter(sullaMappa).length;
   return (
     <>
       <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
-          <SchedeElenco
-            nome="Posizione"
-            voci={gruppi.map((g) => ({
-              id: g.id,
-              etichetta: g.etichetta,
-              numero: g.id === "tutti" ? immobili.length : g.id === "mappa" ? nMappa : immobili.length - nMappa,
-            }))}
-            scelta={r.scelto.split("|")[0]}
-            onScegli={(id) => r.setScelto(`${id}|${r.scelto.split("|")[1] ?? ""}`)}
-          />
-          <span aria-hidden className="hidden h-5 w-px bg-linea-forte lg:block" />
           <FiltroGruppi
             senzaSchede
             gruppi={[]}
