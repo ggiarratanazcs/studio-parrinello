@@ -99,7 +99,6 @@ export function FasiCommessa({
   const elenco = ids.map((id) => ({ ...perId.get(id)!, ...modifiche[id] }) as Fase);
 
   const completate = elenco.filter((f) => f.stato === "completata").length;
-  const generali = documenti.filter((d) => !d.fase_id);
   const nomi = new Map(profili.map((p) => [p.id, p]));
 
   const colonne = [
@@ -405,23 +404,6 @@ export function FasiCommessa({
               );
             })}
 
-            {/* Documenti della commessa che non appartengono a una fase */}
-            {allegati >= 1 ? (
-              <div role="row" className={cn(classeRiga, "min-h-12 py-2 text-inchiostro-2")} style={griglia}>
-                {modificabile ? <span /> : null}
-                <span />
-                <span role="cell" className="truncate text-[0.9375rem]">
-                  Documenti generali
-                </span>
-                <span />
-                <span />
-                <span />
-                <span />
-                <CellaAllegati commessaId={commessaId} faseId={null} nome="documenti generali" documenti={generali} carica={allegati >= 2} eliminabile={eliminabile} />
-                <span />
-                {eliminabile ? <span /> : null}
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

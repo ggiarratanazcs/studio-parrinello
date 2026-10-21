@@ -129,6 +129,7 @@ export function AllegatiFase({
   documenti,
   modificabile = true,
   eliminabile = true,
+  soloCaricamento = false,
 }: {
   commessaId: string;
   /** null = documenti generali della commessa, senza fase */
@@ -138,6 +139,8 @@ export function AllegatiFase({
   modificabile?: boolean;
   /** Può eliminarli (anche "Completo" sulle commesse) */
   eliminabile?: boolean;
+  /** Solo la zona di caricamento, senza titolo né elenco (l'elenco è altrove) */
+  soloCaricamento?: boolean;
 }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
@@ -178,6 +181,8 @@ export function AllegatiFase({
 
   return (
     <div className="flex flex-col gap-3">
+      {soloCaricamento ? null : (
+      <>
       <div className="flex items-center justify-between gap-3">
         <h4 className="flex items-center gap-2 text-sm font-medium text-inchiostro-2">
           <Paperclip className="size-4" strokeWidth={1.8} />
@@ -225,6 +230,8 @@ export function AllegatiFase({
         </ul>
       ) : (
         <p className="text-sm text-tenue">{modificabile ? "Nessun allegato. Carica tavole, relazioni, pratiche o foto dal cantiere." : "Nessun allegato."}</p>
+      )}
+      </>
       )}
 
       {modificabile ? (

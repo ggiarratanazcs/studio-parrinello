@@ -160,7 +160,7 @@ export function AlberoAllegati({ codice, fasi, documenti }: { codice: string; fa
         </Cartella>
       </ul>
       {documenti.length === 0 ? (
-        <p className="px-2 pt-2 text-sm text-tenue">Nessun allegato. Si caricano dalla singola fase, nella cartella Fasi.</p>
+        <p className="px-2 pt-2 text-sm text-tenue">Nessun allegato. Caricali qui sopra oppure con il + nella tabella delle fasi.</p>
       ) : null}
       {errore ? (
         <div className="px-2 pt-2">

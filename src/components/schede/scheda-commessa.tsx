@@ -13,6 +13,7 @@ import { PulsanteNuovoPreventivo } from "@/components/procedura/modale-nuovo-pre
 import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
+import { AllegatiFase } from "./allegati-fase";
 import { Cronoprogramma } from "./cronoprogramma";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
@@ -195,10 +196,10 @@ export async function SchedaCommessa({ id }: { id: string }) {
               />
             ),
           },
-          (vede.fasi || vede.cronoprogramma || vede.allegati) && {
+          (vede.fasi || vede.cronoprogramma) && {
             id: "fasi",
-            titolo: vede.fasi ? "Fasi e cronoprogramma" : vede.allegati ? "Allegati" : "Cronoprogramma",
-            sottotitolo: [vede.fasi ? `${completate}/${fasi.length} completate` : null, vede.allegati ? plurale(documenti.length, "allegato", "allegati") : null].filter(Boolean).join(" · "),
+            titolo: vede.fasi ? "Fasi e cronoprogramma" : "Cronoprogramma",
+            sottotitolo: `${completate}/${fasi.length} completate`,
             contenuto: (
               <Pannello>
                 {vede.fasi ? (
@@ -226,15 +227,28 @@ export async function SchedaCommessa({ id }: { id: string }) {
                         nome: "Cronoprogramma",
                         contenuto: <Cronoprogramma fasi={fasi} apertura={c.data_apertura} finePrevista={c.data_fine_prevista} oggi={oggiIso()} />,
                       },
-                      vede.allegati && {
-                        id: "allegati",
-                        nome: "Allegati",
-                        conteggio: documenti.length,
-                        contenuto: <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />,
-                      },
                     ].filter((x) => !!x)}
                   />
                 )}
+              </Pannello>
+            ),
+          },
+          vede.allegati && {
+            id: "allegati",
+            titolo: "Allegati",
+            sottotitolo: documenti.length ? plurale(documenti.length, "allegato", "allegati") : "Nessun allegato",
+            contenuto: (
+              <Pannello>
+                <TitoloSezione
+                  titolo="Allegati"
+                  descrizione="Tutti i file della commessa, divisi per fase. Qui puoi caricare anche documenti che non appartengono a una fase."
+                />
+                {liv("c.allegati") >= 2 ? (
+                  <div className="border-b border-linea px-5 py-4 md:px-6">
+                    <AllegatiFase commessaId={c.id} faseId={null} documenti={[]} soloCaricamento />
+                  </div>
+                ) : null}
+                <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />
               </Pannello>
             ),
           },
