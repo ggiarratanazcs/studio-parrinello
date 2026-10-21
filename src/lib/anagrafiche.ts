@@ -26,6 +26,15 @@ export type PraticaCliente = {
   luogo: string | null;
 };
 
+/** Immobile collegato al cliente attraverso le sue pratiche. */
+export type ImmobileCliente = {
+  id: string;
+  nome: string;
+  indirizzo: string;
+  /** Pratiche del cliente su questo immobile, dalla più recente */
+  pratiche: { tipo: "commessa" | "preventivo" | "prefattibilita"; sigla: string | null; href: string; colore: string }[];
+};
+
 export type AnalisiCliente = {
   /** Onorari concordati delle commesse non perse né annullate */
   onorariAcquisiti: number;
@@ -52,17 +61,18 @@ export type SchedaClienteDati = {
   prefattibilita: PraticaCliente[];
   preventivi: PraticaCliente[];
   commesse: PraticaCliente[];
+  immobili: ImmobileCliente[];
   analisi: AnalisiCliente;
 };
 
 const STATI_COMMESSA_PERSE = ["persa", "annullata"];
 
-type ImmobileRiga = { denominazione: string | null; indirizzo: string; comune: string } | null;
+type ImmobileRiga = { id: string; denominazione: string | null; indirizzo: string; cap: string | null; comune: string; provincia: string | null } | null;
 const luogo = (i: ImmobileRiga) => (i ? i.denominazione || [i.indirizzo, i.comune].filter(Boolean).join(", ") : null);
 
 export async function leggiCliente(id: string): Promise<SchedaClienteDati | null> {
   const supabase = await createClient();
-  const immobile = "immobile:immobili(denominazione, indirizzo, comune)";
+  const immobile = "immobile:immobili(id, denominazione, indirizzo, cap, comune, provincia)";
   const [cliente, referenti, commesse, preventivi, prefattibilita] = await Promise.all([
     supabase.from("clienti").select("*").eq("id", id).maybeSingle(),
     supabase
@@ -145,6 +155,26 @@ export async function leggiCliente(id: string): Promise<SchedaClienteDati | null
     };
   });
 
+  // Immobili toccati dalle pratiche del cliente, ciascuno con le sue pratiche
+  const immobili = new Map<string, ImmobileCliente>();
+  const segna = (i: ImmobileRiga, pratica: ImmobileCliente["pratiche"][number]) => {
+    if (!i) return;
+    let voce = immobili.get(i.id);
+    if (!voce) {
+      voce = {
+        id: i.id,
+        nome: i.denominazione || i.indirizzo,
+        indirizzo: [i.indirizzo, [i.cap, i.comune, i.provincia ? `(${i.provincia})` : null].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+        pratiche: [],
+      };
+      immobili.set(i.id, voce);
+    }
+    voce.pratiche.push(pratica);
+  };
+  righeCommesse.forEach((c, k) => segna(c.immobile, { tipo: "commessa", sigla: c.codice, href: elencoCommesse[k].href, colore: elencoCommesse[k].colore }));
+  righePreventivi.forEach((p, k) => segna(p.immobile, { tipo: "preventivo", sigla: p.numero, href: elencoPreventivi[k].href, colore: elencoPreventivi[k].colore }));
+  righePf.forEach((p, k) => segna(p.immobile, { tipo: "prefattibilita", sigla: p.numero, href: elencoPf[k].href, colore: elencoPf[k].colore }));
+
   const commesseValide = righeCommesse.filter((c) => !STATI_COMMESSA_PERSE.includes(c.stato));
   const diretti = righePreventivi.filter((p) => !p.integrativo && p.stato !== "bozza");
   const integrativi = righePreventivi.filter((p) => p.integrativo && p.stato === "accettato");
@@ -156,6 +186,7 @@ export async function leggiCliente(id: string): Promise<SchedaClienteDati | null
     prefattibilita: elencoPf,
     preventivi: elencoPreventivi,
     commesse: elencoCommesse,
+    immobili: [...immobili.values()],
     analisi: {
       onorariAcquisiti: commesseValide.reduce((s, c) => s + (c.onorario_concordato ?? 0), 0),
       commesse: commesseValide.length,

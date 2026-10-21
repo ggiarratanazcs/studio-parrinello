@@ -19,7 +19,7 @@ import {
   type DatiReferente,
   type PossibileDoppione,
 } from "@/lib/azioni-anagrafiche";
-import type { AnalisiCliente, Cliente, PraticaCliente, Referente, SchedaClienteDati } from "@/lib/anagrafiche";
+import type { AnalisiCliente, Cliente, ImmobileCliente, PraticaCliente, Referente, SchedaClienteDati } from "@/lib/anagrafiche";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Scheda del cliente, impostazione "profilo con colonna":
@@ -127,7 +127,7 @@ export function SchedaCliente({ scheda }: { scheda: SchedaClienteDati | null }) 
 
 function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onModifica: () => void }) {
   const { cliente: c, referenti } = scheda;
-  const [vista, setVista] = useState<"pratiche" | "analisi">("pratiche");
+  const [vista, setVista] = useState<"pratiche" | "immobili" | "analisi">("pratiche");
   const ente = c.tipo === "ente_pubblico";
   const localita = [c.cap, c.comune, c.provincia ? `(${c.provincia})` : null].filter(Boolean).join(" ");
   const sede = [c.indirizzo, localita].filter(Boolean).join(", ");
@@ -206,6 +206,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
             {(
               [
                 ["pratiche", `Pratiche${totale ? ` · ${totale}` : ""}`],
+                ["immobili", `Immobili${scheda.immobili.length ? ` · ${scheda.immobili.length}` : ""}`],
                 ["analisi", "Analisi"],
               ] as const
             ).map(([valore, etichetta]) => (
@@ -235,6 +236,8 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
             <GruppoPratiche titolo="Preventivi" pratiche={scheda.preventivi} vuoto="Nessun preventivo per questo cliente." importo="Imponibile" />
             <GruppoPratiche titolo="Commesse" pratiche={scheda.commesse} vuoto="Nessuna commessa per questo cliente." importo="Onorario" />
           </div>
+        ) : vista === "immobili" ? (
+          <ImmobiliCliente immobili={scheda.immobili} />
         ) : (
           <Analisi a={scheda.analisi} />
         )}
@@ -300,8 +303,8 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
 }
 
 function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; pratiche: PraticaCliente[]; vuoto: string; importo: string }) {
-  // Aperti i gruppi con qualcosa dentro, chiusi quelli vuoti
-  const [aperto, setAperto] = useState(pratiche.length > 0);
+  // All'apertura della scheda i gruppi sono chiusi: si vedono titolo e quantità, si espandono al clic
+  const [aperto, setAperto] = useState(false);
   return (
     <section>
       <button
@@ -350,6 +353,52 @@ function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; 
         </ul>
       )}
     </section>
+  );
+}
+
+/* ── Immobili ─────────────────────────────────────────────────────────── */
+
+const NOME_TIPO: Record<ImmobileCliente["pratiche"][number]["tipo"], string> = {
+  commessa: "Commessa",
+  preventivo: "Preventivo",
+  prefattibilita: "Pre-fattibilità",
+};
+
+function ImmobiliCliente({ immobili }: { immobili: ImmobileCliente[] }) {
+  if (!immobili.length) {
+    return (
+      <p className="mt-6 text-[0.9375rem] text-tenue">
+        Nessun immobile collegato: gli immobili compaiono qui quando una pre-fattibilità, un preventivo o una commessa del cliente ne indica uno.
+      </p>
+    );
+  }
+  return (
+    <ul className="mt-6 flex flex-col gap-2.5">
+      {immobili.map((i) => (
+        <li key={i.id} className="flex items-start gap-3.5 rounded-medio border border-linea px-4 py-3.5">
+          <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro-2">
+            <Building2 className="size-[18px]" strokeWidth={1.6} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[0.9375rem] font-medium">{i.nome}</p>
+            <p className="truncate text-[0.8125rem] text-tenue">{i.indirizzo}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {i.pratiche.map((p) => (
+                <Link
+                  key={p.href}
+                  href={p.href}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-linea px-2.5 py-0.5 text-[0.75rem] text-inchiostro-2 transition-colors hover:border-linea-forte hover:text-inchiostro"
+                >
+                  <span aria-hidden className="size-1.5 rounded-full" style={{ background: p.colore }} />
+                  {NOME_TIPO[p.tipo]}
+                  {p.sigla ? <span className="numeri text-tenue">{p.sigla}</span> : null}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
