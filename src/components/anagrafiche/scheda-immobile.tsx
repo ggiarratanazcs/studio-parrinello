@@ -8,7 +8,7 @@ import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
 import { useInFinestra } from "@/components/anagrafiche/finestra-anagrafica";
-import { Chiudi, DatoCopiabile, GruppoPratiche, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
+import { Chiudi, DatoCopiabile, GruppoPratiche, Indietro, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
 import { CATEGORIE_DOCUMENTO } from "@/components/schede/allegati-fase";
 import { TIPI_CLIENTE, VINCOLI } from "@/lib/dominio";
 import { cn, formattaData } from "@/lib/utils";
@@ -106,6 +106,7 @@ function VistaImmobile({ scheda, onModifica }: { scheda: SchedaImmobileDati; onM
     <div className="grid gap-4 lg:h-full lg:grid-cols-[21.5rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
       {/* ── Carta dell'identità ── */}
       <aside className="carta-chiara senza-barra px-6 py-6 lg:overflow-y-auto">
+        <Indietro />
         <div className="flex items-center justify-between gap-3">
           <span className="etichetta-anagrafica">Anagrafica · Immobile</span>
           <span className="lg:hidden">
@@ -247,7 +248,7 @@ function Committenti({ committenti }: { committenti: CommittenteImmobile[] }) {
         const Icona = c.tipo === "persona_fisica" ? User : c.tipo === "ente_pubblico" ? Landmark : Building2;
         return (
           <li key={c.id}>
-            <Link href={`/clienti/${c.id}`} className="flex items-center gap-3.5 rounded-[12px] bg-superficie-2/80 px-4 py-3.5 transition-colors hover:bg-superficie-2">
+            <Link href={`/clienti/${c.id}?da=immobile`} className="flex items-center gap-3.5 rounded-[12px] bg-superficie-2/80 px-4 py-3.5 transition-colors hover:bg-superficie-2">
               <Icona aria-hidden className="size-6 shrink-0 text-inchiostro-2" strokeWidth={1.4} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[0.9375rem] font-medium text-inchiostro">{c.nome}</span>

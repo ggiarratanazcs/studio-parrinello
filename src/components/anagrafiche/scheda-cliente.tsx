@@ -7,12 +7,13 @@ import { Building2, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Star, Trash2
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
-import { Chiudi, DatoCopiabile, GruppoPratiche, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
+import { Chiudi, DatoCopiabile, GruppoPratiche, Indietro, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
 import { useInFinestra } from "@/components/anagrafiche/finestra-anagrafica";
 import { TIPI_CLIENTE } from "@/lib/dominio";
 import { cn, formattaEuro } from "@/lib/utils";
 import {
   cercaDoppioniCliente,
+  datiDaPartitaIva,
   eliminaReferente,
   salvaCliente,
   salvaReferente,
@@ -129,6 +130,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
     <div className="grid gap-4 lg:h-full lg:grid-cols-[21.5rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
       {/* ── Carta dell'identità: chi è il cliente ── */}
       <aside className="carta-chiara senza-barra px-6 py-6 lg:overflow-y-auto">
+        <Indietro />
         <div className="flex items-center justify-between gap-3">
           <span className="etichetta-anagrafica">Anagrafica · Cliente</span>
           <span className="lg:hidden">
@@ -255,7 +257,7 @@ function ImmobiliCliente({ immobili }: { immobili: ImmobileCliente[] }) {
     <ul className="flex flex-col gap-2">
       {immobili.map((i) => (
         <li key={i.id}>
-          <Link href={`/immobili/${i.id}`} className="flex items-center gap-3.5 rounded-[12px] bg-superficie-2/80 px-4 py-3.5 transition-colors hover:bg-superficie-2">
+          <Link href={`/immobili/${i.id}?da=cliente`} className="flex items-center gap-3.5 rounded-[12px] bg-superficie-2/80 px-4 py-3.5 transition-colors hover:bg-superficie-2">
           <Building2 aria-hidden className="size-6 shrink-0 text-inchiostro-2" strokeWidth={1.4} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[0.9375rem] font-medium text-inchiostro">{i.nome}</p>
@@ -533,6 +535,29 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
   const [errore, setErrore] = useState<string | null>(null);
   const [doppioni, setDoppioni] = useState<PossibileDoppione[] | null>(null);
   const [inCorso, avvia] = useTransition();
+  const [vies, setVies] = useState<{ ok: boolean; testo: string } | null>(null);
+  const [cercaVies, avviaVies] = useTransition();
+
+  function compilaDaVies() {
+    setVies(null);
+    avviaVies(async () => {
+      const r = await datiDaPartitaIva(d.partita_iva);
+      if (!r.ok) return setVies({ ok: false, testo: r.errore });
+      setD((prima) => ({
+        ...prima,
+        ragione_sociale: r.ragione_sociale || prima.ragione_sociale,
+        indirizzo: r.indirizzo || prima.indirizzo,
+        cap: r.cap || prima.cap,
+        comune: r.comune || prima.comune,
+        provincia: r.provincia || prima.provincia,
+      }));
+      setDoppioni(null);
+      setVies({
+        ok: true,
+        testo: `Trovata: ${[r.ragione_sociale, r.comune].filter(Boolean).join(", ")}. Controlla i dati e aggiungi PEC e codice SDI, che VIES non fornisce.`,
+      });
+    });
+  }
 
   const set = (campo: keyof DatiCliente) => (e: { target: { value: string } }) => {
     setD({ ...d, [campo]: e.target.value });
@@ -618,6 +643,40 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
                 <Campo etichetta="Nome" id="c-nome" value={d.nome} onChange={set("nome")} autoComplete="off" />
               </>
             ) : (
+              <>
+              {/* Partita IVA per prima: da qui si possono compilare gli altri dati (VIES, gratuito) */}
+              <div className="md:col-span-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="sm:w-64">
+                    <Campo
+                      etichetta="Partita IVA"
+                      id="c-piva"
+                      value={d.partita_iva}
+                      onChange={(e) => {
+                        set("partita_iva")(e);
+                        setVies(null);
+                      }}
+                      inputMode="numeric"
+                      autoComplete="off"
+                      autoFocus={!id}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={compilaDaVies}
+                    disabled={cercaVies || d.partita_iva.replace(/\s+/g, "").replace(/^IT/i, "").length !== 11}
+                    className={cn(classePillola, "h-11 rounded-medio")}
+                    data-suggerimento="Cerca denominazione e indirizzo nel servizio europeo VIES"
+                  >
+                    {cercaVies ? "Ricerca…" : "Compila dalla partita IVA"}
+                  </button>
+                </div>
+                {vies ? (
+                  <div className="mt-2">
+                    <Messaggio tipo={vies.ok ? "ok" : "errore"}>{vies.testo}</Messaggio>
+                  </div>
+                ) : null}
+              </div>
               <div className="md:col-span-2">
                 <Campo
                   etichetta={ente ? "Denominazione dell'ente" : "Ragione sociale"}
@@ -627,16 +686,15 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
                   onChange={set("ragione_sociale")}
                   errore={errori.ragione_sociale}
                   placeholder={ente ? "Comune di Noto" : "Rossi Immobiliare S.r.l."}
-                  autoFocus={!id}
                 />
               </div>
+              </>
             )}
           </div>
         </SezioneModulo>
 
         <SezioneModulo titolo="Dati fiscali">
           <div className="grid gap-5 md:grid-cols-2">
-            {!privato ? <Campo etichetta="Partita IVA" id="c-piva" value={d.partita_iva} onChange={set("partita_iva")} inputMode="numeric" autoComplete="off" /> : null}
             <Campo etichetta="Codice fiscale" id="c-cf" value={d.codice_fiscale} onChange={set("codice_fiscale")} className="uppercase" autoComplete="off" />
             {ente ? (
               <Campo etichetta="Codice univoco ufficio (IPA)" id="c-ipa" value={d.codice_ipa} onChange={set("codice_ipa")} className="uppercase" aiuto="Per la fattura elettronica alla pubblica amministrazione." />

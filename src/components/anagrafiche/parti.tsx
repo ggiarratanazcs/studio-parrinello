@@ -2,8 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Check, ChevronDown, Copy, Mail, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Check, ChevronDown, Copy, Mail, X } from "lucide-react";
 import { useInFinestra } from "@/components/anagrafiche/finestra-anagrafica";
 import { cn, formattaData, formattaEuro } from "@/lib/utils";
 import type { PraticaCliente } from "@/lib/anagrafiche";
@@ -200,3 +200,32 @@ export function SchedeSezioni<T extends string>({
 
 /** Pulsante d'azione quadrato della carta dell'identità (scrivi, chiama, mappa…); spento se manca il dato. */
 export const classeAzione = "grid h-10 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro transition-colors hover:bg-linea";
+
+/** Da dove si è arrivati a una scheda (parametro ?da=…): serve per la freccia "torna indietro". */
+const PROVENIENZE: Record<string, string> = {
+  cliente: "Torna al cliente",
+  immobile: "Torna all'immobile",
+};
+
+/**
+ * Freccia per tornare alla scheda da cui si è arrivati (es. dal cliente all'immobile).
+ * Compare solo se l'indirizzo dice da dove si viene; torna indietro nella cronologia.
+ */
+export function Indietro() {
+  const router = useRouter();
+  const da = useSearchParams().get("da");
+  const etichetta = da ? PROVENIENZE[da] : null;
+  if (!etichetta) return null;
+  return (
+    <div className="mb-3">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        className="-ml-1.5 inline-flex h-8 items-center gap-1.5 rounded-full pl-1.5 pr-3 text-[0.8125rem] text-inchiostro-2 transition-colors hover:bg-superficie-2 hover:text-inchiostro"
+      >
+        <ArrowLeft className="size-4" strokeWidth={1.8} />
+        {etichetta}
+      </button>
+    </div>
+  );
+}

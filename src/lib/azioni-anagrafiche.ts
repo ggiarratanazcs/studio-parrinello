@@ -364,3 +364,87 @@ export async function eliminaCatasto(id: string): Promise<Esito> {
   revalidatePath("/immobili");
   return { ok: true, id };
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Compilazione dalla partita IVA con VIES, il servizio gratuito della
+   Commissione europea. Restituisce denominazione e indirizzo solo per le
+   partite IVA abilitate alle operazioni intracomunitarie: per le altre non
+   trova nulla e si compila a mano. Non fornisce PEC né codice SDI.
+   ────────────────────────────────────────────────────────────────────────── */
+
+export type DatiDaPartitaIva =
+  | { ok: true; ragione_sociale: string; indirizzo: string; cap: string; comune: string; provincia: string }
+  | { ok: false; errore: string };
+
+/** Controllo formale della partita IVA italiana (11 cifre e cifra di controllo). */
+function partitaIvaValida(p: string) {
+  if (!/^\d{11}$/.test(p)) return false;
+  let somma = 0;
+  for (let i = 0; i < 10; i++) {
+    let c = Number(p[i]);
+    if (i % 2 === 1) {
+      c *= 2;
+      if (c > 9) c -= 9;
+    }
+    somma += c;
+  }
+  return (10 - (somma % 10)) % 10 === Number(p[10]);
+}
+
+/** "VIA ROMA 12" → "Via Roma 12"; lascia in maiuscolo sigle brevi come "SS" o "SNC". */
+function iniziale(t: string) {
+  return t
+    .toLowerCase()
+    .split(/(\s+|-|')/)
+    .map((p) => (p.length > 0 && /\p{L}/u.test(p) ? p.charAt(0).toUpperCase() + p.slice(1) : p))
+    .join("")
+    .replace(/\b(Ss|Sp|Sr|Snc|Sas|Srl|Spa)\b/g, (m) => m.toUpperCase());
+}
+
+export async function datiDaPartitaIva(partitaIva: string): Promise<DatiDaPartitaIva> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const piva = partitaIva.replace(/\s+/g, "").replace(/^IT/i, "");
+  if (!partitaIvaValida(piva)) return { ok: false, errore: "La partita IVA non è corretta: controlla le 11 cifre." };
+
+  let risposta: { isValid?: boolean; name?: string; address?: string; userError?: string };
+  try {
+    const r = await fetch(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/${piva}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    if (!r.ok) return { ok: false, errore: "Il servizio VIES non risponde in questo momento. Riprova tra poco o compila a mano." };
+    risposta = await r.json();
+  } catch {
+    return { ok: false, errore: "Il servizio VIES non risponde in questo momento. Riprova tra poco o compila a mano." };
+  }
+
+  if (!risposta.isValid) {
+    return {
+      ok: false,
+      errore:
+        risposta.userError && risposta.userError !== "INVALID"
+          ? "Il servizio VIES è momentaneamente non disponibile. Riprova tra poco o compila a mano."
+          : "Partita IVA non presente in VIES (succede per chi non opera con l'estero): compila i dati a mano.",
+    };
+  }
+
+  const nome = (risposta.name ?? "").trim();
+  const righe = (risposta.address ?? "")
+    .split(/\n/)
+    .map((r) => r.trim())
+    .filter(Boolean);
+  // Ultima riga di solito: "00144 ROMA RM"
+  const ultima = righe.length ? righe[righe.length - 1] : "";
+  const m = ultima.match(/^(\d{5})\s+(.+?)\s+([A-Z]{2})$/i);
+  const indirizzo = m ? righe.slice(0, -1).join(" ") : righe.join(" ");
+  return {
+    ok: true,
+    ragione_sociale: nome && nome !== "---" ? nome : "",
+    indirizzo: indirizzo && indirizzo !== "---" ? iniziale(indirizzo) : "",
+    cap: m ? m[1] : "",
+    comune: m ? iniziale(m[2]) : "",
+    provincia: m ? m[3].toUpperCase() : "",
+  };
+}
