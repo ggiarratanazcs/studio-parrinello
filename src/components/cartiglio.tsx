@@ -44,7 +44,7 @@ export function Cartiglio({
         {/* Disegno della sezione */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-90 md:bg-[position:right_center]"
+          className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-50 md:bg-[position:right_center]"
           style={{ backgroundImage: `url(${f.disegno})` }}
         />
         {/* Velatura: piena a sinistra per il testo, si apre sul disegno a destra */}
@@ -52,7 +52,7 @@ export function Cartiglio({
           aria-hidden
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, rgba(${f.rgb},0.97) 0%, rgba(${f.rgb},0.82) 34%, rgba(${f.rgb},0.25) 68%, rgba(${f.riflesso},0.18) 100%)`,
+            background: `linear-gradient(90deg, rgba(${f.rgb},0.97) 0%, rgba(${f.rgb},0.82) 34%, rgba(${f.rgb},0.5) 68%, rgba(${f.rgb},0.42) 100%)`,
           }}
         />
         {/* Su telefono il disegno passa sotto il testo: velatura più piena */}
