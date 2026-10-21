@@ -34,5 +34,5 @@ export const DISEGNO_CLIENTI = "/brand/riunione.webp";
 /** Disegno della testata degli Immobili: schizzo prospettico di una casa a due volumi. */
 export const DISEGNO_IMMOBILI = "/brand/casa.webp";
 
-/** Disegno della testata dei Documenti: tavole tecniche sul tavolo, a tratti. */
+/** Disegno della testata dei Documenti: mani al lavoro su una pianta, con riga e matita, a tratti. */
 export const DISEGNO_DOCUMENTI = "/brand/tavole.webp";
