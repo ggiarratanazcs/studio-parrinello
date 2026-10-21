@@ -64,6 +64,60 @@ function nomeSicuro(nome: string) {
   return `${base || "file"}${est ? `.${est}` : ""}`;
 }
 
+
+/**
+ * Carica i file nello spazio "documenti" sotto {commessa}/{fase o "generali"}/ e li registra.
+ * Le immagini caricate come elaborato grafico diventano foto. Restituisce un messaggio d'errore o null.
+ */
+export async function caricaAllegati(
+  commessaId: string,
+  faseId: string | null,
+  elenco: File[],
+  categoria = "elaborato_grafico",
+  progresso?: (fatti: number, totali: number) => void,
+): Promise<string | null> {
+  const troppoGrandi = elenco.filter((f) => f.size > MAX_BYTE);
+  if (troppoGrandi.length) return `Supera i 100 MB: ${troppoGrandi.map((f) => f.name).join(", ")}`;
+  const supabase = createClient();
+  progresso?.(0, elenco.length);
+  const falliti: string[] = [];
+  for (const [i, file] of elenco.entries()) {
+    const percorso = `${commessaId}/${faseId ?? "generali"}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
+    const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });
+    if (su.error) {
+      falliti.push(file.name);
+    } else {
+      const immagine = file.type.startsWith("image/");
+      const { error } = await supabase.from("documenti").insert({
+        commessa_id: commessaId,
+        fase_id: faseId,
+        categoria: immagine && categoria === "elaborato_grafico" ? "foto_sopralluogo" : categoria,
+        titolo: file.name.replace(/\.[^.]+$/, ""),
+        nome_file: file.name,
+        storage_path: percorso,
+        mime_type: file.type || null,
+        dimensione_byte: file.size,
+        scattata_il: immagine && file.lastModified ? new Date(file.lastModified).toISOString() : null,
+      });
+      if (error) {
+        falliti.push(file.name);
+        await supabase.storage.from("documenti").remove([percorso]);
+      }
+    }
+    progresso?.(i + 1, elenco.length);
+  }
+  return falliti.length ? `Non caricati: ${falliti.join(", ")}. Riprova.` : null;
+}
+
+/** Elimina un allegato (riga e file); false se il profilo non può. */
+export async function eliminaAllegato(d: { id: string; storage_path: string }) {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("documenti").delete().eq("id", d.id).select("id");
+  if (error || !data?.length) return false;
+  await supabase.storage.from("documenti").remove([d.storage_path]);
+  return true;
+}
+
 /**
  * Allegati di una fase: caricamento di più file (anche foto dal telefono), elenco,
  * apertura con collegamento temporaneo ed eliminazione. I file vanno nel bucket privato
@@ -98,43 +152,10 @@ export function AllegatiFase({
   async function carica(files: FileList | null) {
     if (!files?.length) return;
     setErrore(null);
-    const supabase = createClient();
-    const elenco = Array.from(files);
-    const troppoGrandi = elenco.filter((f) => f.size > MAX_BYTE);
-    if (troppoGrandi.length) {
-      setErrore(`Supera i 100 MB: ${troppoGrandi.map((f) => f.name).join(", ")}`);
-      return;
-    }
-    setCaricamento({ fatti: 0, totali: elenco.length });
-    const falliti: string[] = [];
-    for (const [i, file] of elenco.entries()) {
-      const percorso = `${commessaId}/${faseId ?? "generali"}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
-      const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });
-      if (su.error) {
-        falliti.push(file.name);
-      } else {
-        const immagine = file.type.startsWith("image/");
-        const { error } = await supabase.from("documenti").insert({
-          commessa_id: commessaId,
-          fase_id: faseId,
-          categoria: immagine && categoria === "elaborato_grafico" ? "foto_sopralluogo" : categoria,
-          titolo: file.name.replace(/\.[^.]+$/, ""),
-          nome_file: file.name,
-          storage_path: percorso,
-          mime_type: file.type || null,
-          dimensione_byte: file.size,
-          scattata_il: immagine && file.lastModified ? new Date(file.lastModified).toISOString() : null,
-        });
-        if (error) {
-          falliti.push(file.name);
-          await supabase.storage.from("documenti").remove([percorso]);
-        }
-      }
-      setCaricamento({ fatti: i + 1, totali: elenco.length });
-    }
+    const esito = await caricaAllegati(commessaId, faseId, Array.from(files), categoria, (fatti, totali) => setCaricamento({ fatti, totali }));
     setCaricamento(null);
     if (input.current) input.current.value = "";
-    if (falliti.length) setErrore(`Non caricati: ${falliti.join(", ")}. Riprova.`);
+    if (esito) setErrore(esito);
     router.refresh();
   }
 
@@ -146,13 +167,10 @@ export function AllegatiFase({
   function elimina(d: Documento) {
     setErrore(null);
     avvia(async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("documenti").delete().eq("id", d.id).select("id");
-      if (error || !data?.length) {
+      if (!(await eliminaAllegato(d))) {
         setErrore("Il tuo profilo non può eliminare questo allegato.");
         return;
       }
-      await supabase.storage.from("documenti").remove([d.storage_path]);
       setDaEliminare(null);
       router.refresh();
     });

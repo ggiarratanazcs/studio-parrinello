@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { Json } from "@/lib/database.types";
+import type { Json, TablesUpdate } from "@/lib/database.types";
 import { propostaFasi } from "@/lib/fasi";
 import { geocodifica } from "@/lib/geocodifica";
 import { datiProcedura, prefattibilitaDaModificare, preventivoDaModificare } from "@/lib/dati";
@@ -314,6 +314,41 @@ export async function avanzaFase(id: string, percentuale: number): Promise<Esito
     .eq("id", id)
     .select("id");
   if (error || !data?.length) return { ok: false, errore: "Non è stato possibile aggiornare l'avanzamento." };
+  aggiornaElenchi("/commesse");
+  return { ok: true, id };
+}
+
+/** Modifica di un solo campo della fase direttamente dalla tabella. */
+export type CampoFase = "data_inizio_prev" | "data_fine_prev" | "responsabile_id" | "stato";
+
+export async function modificaFase(id: string, campo: CampoFase, valore: string | null): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: attuale } = await supabase
+    .from("commesse_fasi")
+    .select("stato, avanzamento_pct, data_inizio_prev, data_fine_prev, data_inizio_eff, data_fine_eff")
+    .eq("id", id)
+    .maybeSingle();
+  if (!attuale) return { ok: false, errore: "Fase non trovata." };
+
+  let modifica: TablesUpdate<"commesse_fasi">;
+  if (campo === "data_inizio_prev" || campo === "data_fine_prev") {
+    const data = dataO(valore);
+    const inizio = campo === "data_inizio_prev" ? data : attuale.data_inizio_prev;
+    const fine = campo === "data_fine_prev" ? data : attuale.data_fine_prev;
+    if (inizio && fine && fine < inizio) return { ok: false, errore: "La fine prevista non può precedere l'inizio." };
+    modifica = campo === "data_inizio_prev" ? { data_inizio_prev: data } : { data_fine_prev: data };
+  } else if (campo === "responsabile_id") {
+    modifica = { responsabile_id: valore || null };
+  } else {
+    // "auto" = lo stato torna a seguire l'avanzamento; completata porta l'avanzamento al 100%
+    if (valore !== "auto" && !STATI_FASE_AMMESSI.includes(valore ?? "")) return { ok: false, errore: "Stato della fase non valido." };
+    const stato = valore === "auto" ? statoDaAvanzamento(attuale.avanzamento_pct) : valore!;
+    modifica = { stato, ...(stato === "completata" ? { avanzamento_pct: 100 } : {}), ...dateEffettive(stato, attuale) };
+  }
+
+  const { data, error } = await supabase.from("commesse_fasi").update(modifica).eq("id", id).select("id");
+  if (error || !data?.length) return { ok: false, errore: "Non è stato possibile salvare la modifica." };
   aggiornaElenchi("/commesse");
   return { ok: true, id };
 }

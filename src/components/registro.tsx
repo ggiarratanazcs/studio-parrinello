@@ -186,7 +186,8 @@ export function BarraRegistro({
   );
 }
 
-function PulsanteEspandi() {
+/** Pulsante per portare a tutto schermo il contenuto di <Espandibile> (fuori da un Espandibile non compare). */
+export function PulsanteEspandi({ className }: { className?: string }) {
   const e = useContext(ContestoEspansione);
   if (!e) return null;
   const Icona = e.espanso ? Minimize2 : Maximize2;
@@ -194,7 +195,10 @@ function PulsanteEspandi() {
     <button
       type="button"
       onClick={e.cambia}
-      className="ml-auto hidden size-10 shrink-0 place-items-center rounded-full border border-linea text-tenue transition-colors hover:border-linea-forte hover:text-inchiostro md:grid"
+      className={cn(
+        "ml-auto hidden size-10 shrink-0 place-items-center rounded-full border border-linea text-tenue transition-colors hover:border-linea-forte hover:text-inchiostro md:grid",
+        className,
+      )}
       data-suggerimento={e.espanso ? "Riduci (Esc)" : "A tutto schermo"}
       data-suggerimento-lato="sotto"
     >

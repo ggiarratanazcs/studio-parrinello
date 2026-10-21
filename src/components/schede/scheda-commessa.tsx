@@ -201,13 +201,8 @@ export async function SchedaCommessa({ id }: { id: string }) {
                     catalogo={c.catalogoFasi}
                     committenza={c.committenza}
                     documenti={documenti}
-                    apertura={c.data_apertura}
-                    finePrevista={c.data_fine_prevista}
-                    oggi={oggiIso()}
                     modificabile={liv("c.fasi") >= 2}
-                    importi={vede.onorario}
                     allegati={liv("c.allegati")}
-                    cronoprogramma={vede.cronoprogramma}
                     eliminabile={completo}
                   />
                 ) : (
