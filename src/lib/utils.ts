@@ -25,3 +25,8 @@ export function formattaData(valore: string | null | undefined) {
 export function oggiIso() {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" }).format(new Date());
 }
+
+/** Istante attuale in millisecondi (da chiamare lato server dopo connection()). */
+export function istanteAttuale() {
+  return Date.now();
+}

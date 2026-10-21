@@ -1,6 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Crea } from "@/components/crea";
+import { DaFare } from "@/components/da-fare";
+import { getProfilo } from "@/lib/auth";
+import { leggiDaFare, ultimeAttivita } from "@/lib/da-fare";
+import { istanteAttuale, oggiIso } from "@/lib/utils";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
@@ -8,7 +13,6 @@ import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati
 export const metadata = { title: { absolute: "Studio Parrinello" } };
 
 const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
-
 
 export default function HomePage() {
   return (
@@ -19,10 +23,16 @@ export default function HomePage() {
 }
 
 async function PanoramicaContenuto() {
-  const [commesse, preventivi, prefattibilita] = await Promise.all([
+  await connection();
+  const oggi = oggiIso();
+  const adesso = istanteAttuale();
+  const [commesse, preventivi, prefattibilita, daFare, attivita, profilo] = await Promise.all([
     elencoCommesse(),
     elencoPratiche("preventivo"),
     elencoPratiche("prefattibilita"),
+    leggiDaFare(oggi),
+    ultimeAttivita(),
+    getProfilo(),
   ]);
 
   const aperte = commesse.filter((c) => STATI_APERTI.includes(c.stato ?? ""));
@@ -55,7 +65,15 @@ async function PanoramicaContenuto() {
     <>
       <Cartiglio titolo="Architettura e Design" crea={<Crea />} />
 
-      <Pannello className="px-5 py-5 md:px-6">
+      <DaFare
+        voci={daFare}
+        attivita={attivita}
+        profiloId={profilo.id}
+        vedeTutto={profilo.ruolo === "titolare"}
+        adesso={adesso}
+      />
+
+      <Pannello className="mt-6 px-5 py-5 md:px-6">
         <h2 className="text-base font-medium">Dalla proposta alla commessa</h2>
         <p className="mt-1 text-sm text-tenue">Pre-fattibilità e preventivi aperti, commesse in corso e concluse.</p>
         <ol className="mt-5 grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-4">
