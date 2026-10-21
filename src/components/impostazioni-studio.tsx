@@ -2,13 +2,13 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImageUp, Loader2, Trash2 } from "lucide-react";
+import { Check, Copy, ImageUp, Loader2, Trash2, UserPlus } from "lucide-react";
 import { Campo, Messaggio } from "@/components/campo";
 import { LogoImmagine } from "@/components/studio-contesto";
 import { Pulsante } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { RUOLI } from "@/lib/dominio";
-import { aggiornaUtente, impostaLogo, salvaStudio, type DatiStudioModulo } from "@/lib/azioni-studio";
+import { aggiornaUtente, creaUtente, impostaLogo, salvaStudio, type DatiStudioModulo } from "@/lib/azioni-studio";
 import type { DatiStudio } from "@/lib/studio";
 import { cn } from "@/lib/utils";
 
@@ -172,7 +172,8 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
 
   return (
     <div>
-      <ul className="divide-y divide-linea">
+      <NuovoUtente />
+      <ul className="divide-y divide-linea border-t border-linea">
         {utenti.map((u) => {
           const io = u.id === ioId;
           return (
@@ -224,8 +225,95 @@ export function UtentiStudio({ utenti, ioId }: { utenti: UtenteStudio[]; ioId: s
       <p className="border-t border-linea px-5 py-4 text-sm text-tenue md:px-6">
         Ruoli: il <strong className="font-medium text-inchiostro-2">titolare</strong> gestisce impostazioni e utenti; architetti e titolari possono eliminare
         documenti e dati catastali; collaboratori e amministrazione lavorano su pratiche e commesse. Un utente disattivato non può più accedere.
-        L&apos;invito di nuovi utenti dall&apos;app arriverà con la configurazione delle email.
+        I nuovi utenti ricevono una password provvisoria da cambiare al primo accesso.
       </p>
+    </div>
+  );
+}
+
+/* ── Aggiunta di un utente ────────────────────────────────────────────── */
+
+function NuovoUtente() {
+  const router = useRouter();
+  const [d, setD] = useState({ nome: "", cognome: "", email: "", ruolo: "collaboratore" });
+  const [errore, setErrore] = useState<string | null>(null);
+  const [creato, setCreato] = useState<{ email: string; password: string } | null>(null);
+  const [copiato, setCopiato] = useState(false);
+  const [inCorso, avvia] = useTransition();
+  const set = (campo: keyof typeof d) => (e: { target: { value: string } }) => {
+    setD({ ...d, [campo]: e.target.value });
+    setErrore(null);
+  };
+
+  function aggiungi() {
+    setErrore(null);
+    setCreato(null);
+    avvia(async () => {
+      const r = await creaUtente(d);
+      if (!r.ok) return setErrore(r.errore);
+      setCreato({ email: r.email, password: r.password });
+      setD({ nome: "", cognome: "", email: "", ruolo: d.ruolo });
+      router.refresh();
+    });
+  }
+
+  async function copia() {
+    if (!creato) return;
+    try {
+      await navigator.clipboard.writeText(`Accesso al gestionale dello studio\nEmail: ${creato.email}\nPassword provvisoria: ${creato.password}\nAl primo accesso cambiala da Impostazioni → Cambia password.`);
+      setCopiato(true);
+      setTimeout(() => setCopiato(false), 1500);
+    } catch {
+      // appunti non disponibili: la password resta selezionabile
+    }
+  }
+
+  const campo = "h-10 w-full rounded-medio border border-linea-forte bg-superficie px-3 text-[0.9375rem] text-inchiostro outline-none placeholder:text-tenue/70 focus:border-accento focus:ring-2 focus:ring-accento/20";
+
+  return (
+    <div className="px-5 py-5 md:px-6">
+      <p className="mb-3 text-[0.6875rem] uppercase tracking-[0.14em] text-tenue">Aggiungi un utente</p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          aggiungi();
+        }}
+        className="grid gap-2 md:grid-cols-[1fr_1fr_1.4fr_11rem_auto]"
+      >
+        <input aria-label="Nome" placeholder="Nome" value={d.nome} onChange={set("nome")} className={campo} autoComplete="off" />
+        <input aria-label="Cognome" placeholder="Cognome" value={d.cognome} onChange={set("cognome")} className={campo} autoComplete="off" />
+        <input aria-label="Email" placeholder="nome@studio.it" type="email" value={d.email} onChange={set("email")} className={campo} autoComplete="off" />
+        <select aria-label="Ruolo" value={d.ruolo} onChange={set("ruolo")} className={campo}>
+          {Object.entries(RUOLI).map(([valore, etichetta]) => (
+            <option key={valore} value={valore}>
+              {etichetta}
+            </option>
+          ))}
+        </select>
+        <Pulsante type="submit" disabled={inCorso} className="h-10">
+          {inCorso ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" strokeWidth={1.8} />}
+          Aggiungi
+        </Pulsante>
+      </form>
+      {errore ? (
+        <div className="mt-3">
+          <Messaggio tipo="errore">{errore}</Messaggio>
+        </div>
+      ) : null}
+      {creato ? (
+        <div role="status" className="mt-3 rounded-medio border border-[color:var(--stato-attiva)]/35 bg-[color:var(--stato-attiva)]/8 p-4">
+          <p className="text-[0.9375rem] font-medium">Utente creato: {creato.email}</p>
+          <p className="mt-1 text-sm text-inchiostro-2">
+            Password provvisoria, mostrata solo ora:{" "}
+            <span className="numeri select-all rounded-piccolo bg-superficie px-2 py-0.5 font-medium text-inchiostro">{creato.password}</span>
+          </p>
+          <p className="mt-1 text-sm text-inchiostro-2">Comunicala al collega: al primo accesso la cambierà da Impostazioni → Cambia password.</p>
+          <button type="button" onClick={copia} className="mt-2 inline-flex items-center gap-1.5 text-sm text-accento hover:underline">
+            {copiato ? <Check className="size-4" strokeWidth={2} /> : <Copy className="size-4" strokeWidth={1.8} />}
+            {copiato ? "Copiato" : "Copia email e password"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

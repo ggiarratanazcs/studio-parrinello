@@ -108,3 +108,60 @@ export async function aggiornaUtente(id: string, modifica: { ruolo?: string; att
   revalidatePath("/impostazioni");
   return { ok: true };
 }
+
+/* ── Nuovi utenti ─────────────────────────────────────────────────────── */
+
+export type DatiNuovoUtente = { nome: string; cognome: string; email: string; ruolo: string };
+export type EsitoNuovoUtente = { ok: true; email: string; password: string } | { ok: false; errore: string };
+
+/** Password provvisoria leggibile (niente caratteri ambigui come 0/O, 1/l). */
+function passwordProvvisoria() {
+  const lettere = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const byte = crypto.getRandomValues(new Uint8Array(12));
+  const corpo = Array.from(byte, (b) => lettere[b % lettere.length]).join("");
+  return `${corpo.slice(0, 4)}-${corpo.slice(4, 8)}-${corpo.slice(8, 12)}`;
+}
+
+/**
+ * Crea l'account di un nuovo utente dello studio con una password provvisoria,
+ * che il titolare comunica al collega; al primo accesso il collega la cambia.
+ */
+export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> {
+  const t = await titolare();
+  if (!t) return { ok: false, errore: SOLO_TITOLARE };
+  const email = (d.email ?? "").trim().toLowerCase();
+  if (!pulito(d.nome) || !pulito(d.cognome)) return { ok: false, errore: "Scrivi nome e cognome." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, errore: "L'indirizzo email non sembra corretto." };
+  if (!(d.ruolo in RUOLI)) return { ok: false, errore: "Scegli il ruolo." };
+
+  const { clientAmministratore } = await import("@/lib/supabase/admin");
+  const admin = clientAmministratore();
+  if (!admin) {
+    return {
+      ok: false,
+      errore: "Per creare utenti manca la chiave segreta di Supabase sul server: aggiungi SUPABASE_SECRET_KEY nelle impostazioni del progetto su Vercel.",
+    };
+  }
+
+  const password = passwordProvvisoria();
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { nome: pulito(d.nome), cognome: pulito(d.cognome), password_provvisoria: true },
+  });
+  if (error || !data.user) {
+    const giaPresente = /already|registered|exists/i.test(error?.message ?? "");
+    return { ok: false, errore: giaPresente ? "Esiste già un utente con questa email." : "Non è stato possibile creare l'utente. Riprova." };
+  }
+
+  // Il profilo nasce da solo (trigger sul database): qui si completano ruolo e stato
+  const { error: e2 } = await admin
+    .from("profili")
+    .update({ ruolo: d.ruolo, attivo: true, nome: pulito(d.nome)!, cognome: pulito(d.cognome)! })
+    .eq("id", data.user.id);
+  if (e2) return { ok: false, errore: "Utente creato, ma non è stato possibile impostare il ruolo: impostalo dall'elenco." };
+
+  revalidatePath("/impostazioni");
+  return { ok: true, email, password };
+}
