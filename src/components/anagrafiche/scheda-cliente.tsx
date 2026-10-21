@@ -70,30 +70,21 @@ function daCliente(c: Cliente): DatiCliente {
   };
 }
 
-/** Colore del quadrato con l'icona, per tipo di cliente */
-const COLORE_TIPO: Record<string, string> = {
-  persona_fisica: "var(--stato-attiva)",
-  azienda: "var(--stato-preventivo)",
-  ente_pubblico: "var(--stato-prefattibilita)",
-};
-
-/** Icona del tipo di cliente: persona per i privati, edificio per le aziende, edificio con "PA" per gli enti. */
+/** Icona del tipo di cliente, a tratto, senza contenitore: persona, edificio, edificio della PA. */
 function IconaTipo({ tipo }: { tipo: string }) {
   const Icona = tipo === "persona_fisica" ? User : Building2;
   return (
-    <span aria-hidden className="relative grid size-14 shrink-0 place-items-center rounded-[14px] text-white" style={{ background: COLORE_TIPO[tipo] ?? "var(--tenue)" }}>
-      <Icona className="size-6" strokeWidth={1.6} />
+    <span aria-hidden className="relative inline-flex text-inchiostro">
+      <Icona className="size-9" strokeWidth={1.25} />
       {tipo === "ente_pubblico" ? (
-        <span className="absolute -right-2 -top-2 rounded-full border border-linea-forte bg-superficie px-1.5 py-px text-[0.625rem] font-semibold leading-tight tracking-[0.06em] text-inchiostro">
-          PA
-        </span>
+        <span className="absolute -right-4 -top-1.5 text-[0.6875rem] font-semibold leading-none tracking-[0.06em] text-inchiostro">PA</span>
       ) : null}
     </span>
   );
 }
 
 const classeIcona =
-  "grid size-9 shrink-0 place-items-center rounded-full border border-linea-forte bg-superficie text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro";
+  "grid size-9 shrink-0 place-items-center rounded-full text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro";
 
 /** Chiusura: in finestra torna indietro, a pagina intera porta all'elenco. */
 function Chiudi() {
@@ -101,11 +92,11 @@ function Chiudi() {
   const router = useRouter();
   return inFinestra ? (
     <button type="button" onClick={() => router.back()} className={classeIcona} aria-label="Chiudi" data-suggerimento="Chiudi (Esc)" data-suggerimento-lato="sotto">
-      <X className="size-4" strokeWidth={1.8} />
+      <X className="size-5" strokeWidth={1.8} />
     </button>
   ) : (
     <Link href="/clienti" className={classeIcona} aria-label="Torna ai clienti">
-      <X className="size-4" strokeWidth={1.8} />
+      <X className="size-5" strokeWidth={1.8} />
     </Link>
   );
 }
@@ -113,13 +104,15 @@ function Chiudi() {
 export function SchedaCliente({ scheda }: { scheda: SchedaClienteDati | null }) {
   const [modifica, setModifica] = useState(!scheda);
   return (
-    <article className="scheda-profilo overflow-hidden rounded-piccolo border border-linea-forte bg-superficie">
+    <div className="scheda-profilo">
       {modifica ? (
-        <ModuloCliente scheda={scheda} onFatto={() => setModifica(false)} />
+        <div className="carta-chiara h-full overflow-hidden">
+          <ModuloCliente scheda={scheda} onFatto={() => setModifica(false)} />
+        </div>
       ) : scheda ? (
         <VistaCliente scheda={scheda} onModifica={() => setModifica(true)} />
       ) : null}
-    </article>
+    </div>
   );
 }
 
@@ -133,52 +126,61 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
   const sede = [c.indirizzo, localita].filter(Boolean).join(", ");
   const scrivi = c.pec ?? c.email;
   const totale = scheda.prefattibilita.length + scheda.preventivi.length + scheda.commesse.length;
+  const azione = "grid h-10 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro transition-colors hover:bg-superficie";
 
   return (
-    <div className="grid lg:h-full lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-      {/* ── Colonna dell'identità ── */}
-      <aside className="border-b border-linea bg-superficie-2/45 px-5 py-6 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
-        <div className="flex items-start justify-between gap-3">
-          <IconaTipo tipo={c.tipo} />
+    <div className="grid gap-4 lg:h-full lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+      {/* ── Carta scura: chi è il cliente ── */}
+      <aside className="carta-scura px-6 py-6 lg:overflow-y-auto">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-tenue">Anagrafica · Cliente</p>
           <span className="lg:hidden">
             <Chiudi />
           </span>
         </div>
-        <h1 className="titolo-display mt-4 text-[1.5rem] leading-tight">{c.denominazione ?? "Senza nome"}</h1>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <Etichetta>{TIPI_CLIENTE[c.tipo] ?? c.tipo}</Etichetta>
-        </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-7">
+          <IconaTipo tipo={c.tipo} />
+        </div>
+        <h1 className="titolo-display mt-4 text-[1.625rem] leading-[1.1] text-inchiostro">{c.denominazione ?? "Senza nome"}</h1>
+        <p className="mt-1.5 text-[0.9375rem] text-inchiostro-2">{TIPI_CLIENTE[c.tipo] ?? c.tipo}</p>
+
+        <div className="mt-5 grid grid-cols-4 gap-2">
           {scrivi ? (
-            <a href={`mailto:${scrivi}`} className={classeIcona} aria-label={`Scrivi a ${scrivi}`} data-suggerimento={c.pec ? "Scrivi alla PEC" : "Scrivi"} data-suggerimento-lato="sotto">
-              <Mail className="size-4" strokeWidth={1.8} />
+            <a href={`mailto:${scrivi}`} className={azione} aria-label={`Scrivi a ${scrivi}`} data-suggerimento={c.pec ? "Scrivi alla PEC" : "Scrivi"} data-suggerimento-lato="sotto">
+              <Mail className="size-[18px]" strokeWidth={1.7} />
             </a>
-          ) : null}
+          ) : (
+            <span className={cn(azione, "pointer-events-none opacity-35")} aria-hidden><Mail className="size-[18px]" strokeWidth={1.7} /></span>
+          )}
           {c.telefono ? (
-            <a href={`tel:${c.telefono.replace(/\s+/g, "")}`} className={classeIcona} aria-label={`Chiama ${c.telefono}`} data-suggerimento="Chiama" data-suggerimento-lato="sotto">
-              <Phone className="size-4" strokeWidth={1.8} />
+            <a href={`tel:${c.telefono.replace(/\s+/g, "")}`} className={azione} aria-label={`Chiama ${c.telefono}`} data-suggerimento="Chiama" data-suggerimento-lato="sotto">
+              <Phone className="size-[18px]" strokeWidth={1.7} />
             </a>
-          ) : null}
+          ) : (
+            <span className={cn(azione, "pointer-events-none opacity-35")} aria-hidden><Phone className="size-[18px]" strokeWidth={1.7} /></span>
+          )}
           {sede ? (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sede)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={classeIcona}
+              className={azione}
               aria-label="Apri la sede sulla mappa"
               data-suggerimento="Sede sulla mappa"
               data-suggerimento-lato="sotto"
             >
-              <MapPin className="size-4" strokeWidth={1.8} />
+              <MapPin className="size-[18px]" strokeWidth={1.7} />
             </a>
-          ) : null}
-          <button type="button" onClick={onModifica} className={classeIcona} aria-label="Modifica" data-suggerimento="Modifica" data-suggerimento-lato="sotto">
-            <Pencil className="size-4" strokeWidth={1.8} />
+          ) : (
+            <span className={cn(azione, "pointer-events-none opacity-35")} aria-hidden><MapPin className="size-[18px]" strokeWidth={1.7} /></span>
+          )}
+          <button type="button" onClick={onModifica} className="grid h-10 place-items-center rounded-[10px] bg-inchiostro text-[color:var(--fondo-carta)] transition-opacity hover:opacity-90" aria-label="Modifica" data-suggerimento="Modifica" data-suggerimento-lato="sotto">
+            <Pencil className="size-[18px]" strokeWidth={1.7} />
           </button>
         </div>
 
-        <dl className="mt-6 flex flex-col gap-3.5">
+        <dl className="mt-7 flex flex-col gap-4">
           {c.tipo !== "persona_fisica" ? <DatoCopiabile voce="Partita IVA" valore={c.partita_iva} codice /> : null}
           <DatoCopiabile voce="Codice fiscale" valore={c.codice_fiscale} codice />
           {ente ? <DatoCopiabile voce="Codice IPA" valore={c.codice_ipa} codice /> : <DatoCopiabile voce="Codice SDI" valore={c.codice_sdi} codice />}
@@ -191,7 +193,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
         <Referenti clienteId={c.id} referenti={referenti} ente={ente} />
 
         {c.fonte || c.note ? (
-          <div className="mt-7">
+          <div className="mt-8">
             <TitoloColonna>Note</TitoloColonna>
             {c.fonte ? <p className="text-[0.875rem] text-inchiostro-2">Ci ha conosciuti: {c.fonte}</p> : null}
             {c.note ? <p className="mt-1.5 whitespace-pre-line text-[0.875rem] text-inchiostro-2">{c.note}</p> : null}
@@ -199,17 +201,17 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
         ) : null}
       </aside>
 
-      {/* ── Pratiche e analisi ── */}
-      <section className="min-w-0 px-5 py-6 lg:overflow-y-auto lg:px-8 lg:py-7">
-        <div className="flex items-center justify-between gap-3">
-          <div role="tablist" aria-label="Sezioni" className="inline-flex gap-1 rounded-full bg-superficie-2 p-1">
+      {/* ── Carta chiara: pratiche, immobili, analisi ── */}
+      <section className="carta-chiara flex min-w-0 flex-col lg:min-h-0">
+        <div className="flex items-end justify-between gap-3 border-b border-linea px-6 pt-4 lg:px-8">
+          <div role="tablist" aria-label="Sezioni" className="-mb-px flex gap-7">
             {(
               [
-                ["pratiche", `Pratiche${totale ? ` · ${totale}` : ""}`],
-                ["immobili", `Immobili${scheda.immobili.length ? ` · ${scheda.immobili.length}` : ""}`],
-                ["analisi", "Analisi"],
+                ["pratiche", "Pratiche", totale],
+                ["immobili", "Immobili", scheda.immobili.length],
+                ["analisi", "Analisi", null],
               ] as const
-            ).map(([valore, etichetta]) => (
+            ).map(([valore, etichetta, numero]) => (
               <button
                 key={valore}
                 type="button"
@@ -217,43 +219,42 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
                 aria-selected={vista === valore}
                 onClick={() => setVista(valore)}
                 className={cn(
-                  "rounded-full px-4 py-1.5 text-[0.875rem] transition-colors",
-                  vista === valore ? "bg-superficie text-inchiostro shadow-[0_0_0_1px_var(--linea)]" : "text-tenue hover:text-inchiostro",
+                  "flex items-baseline gap-1.5 border-b-2 pb-3 pt-3 text-[0.9375rem] transition-colors",
+                  vista === valore ? "border-inchiostro font-medium text-inchiostro" : "border-transparent text-inchiostro-2 hover:text-inchiostro",
                 )}
               >
                 {etichetta}
+                {numero ? <span className="numeri text-[0.8125rem] font-normal text-tenue">{numero}</span> : null}
               </button>
             ))}
           </div>
-          <span className="hidden lg:block">
+          <span className="hidden pb-1.5 lg:block">
             <Chiudi />
           </span>
         </div>
 
-        {vista === "pratiche" ? (
-          <div className="mt-6 flex flex-col gap-6">
-            <GruppoPratiche titolo="Pre-fattibilità" pratiche={scheda.prefattibilita} vuoto="Nessuna pre-fattibilità per questo cliente." importo="Onorario" />
-            <GruppoPratiche titolo="Preventivi" pratiche={scheda.preventivi} vuoto="Nessun preventivo per questo cliente." importo="Imponibile" />
-            <GruppoPratiche titolo="Commesse" pratiche={scheda.commesse} vuoto="Nessuna commessa per questo cliente." importo="Onorario" />
-          </div>
-        ) : vista === "immobili" ? (
-          <ImmobiliCliente immobili={scheda.immobili} />
-        ) : (
-          <Analisi a={scheda.analisi} />
-        )}
+        <div className="min-h-0 flex-1 px-6 pb-7 pt-5 lg:overflow-y-auto lg:px-8">
+          {vista === "pratiche" ? (
+            <div className="flex flex-col gap-2.5">
+              <GruppoPratiche titolo="Pre-fattibilità" colore="var(--stato-prefattibilita)" pratiche={scheda.prefattibilita} vuoto="Nessuna pre-fattibilità per questo cliente." importo="Onorario" />
+              <GruppoPratiche titolo="Preventivi" colore="var(--stato-preventivo)" pratiche={scheda.preventivi} vuoto="Nessun preventivo per questo cliente." importo="Imponibile" />
+              <GruppoPratiche titolo="Commesse" colore="var(--stato-attiva)" pratiche={scheda.commesse} vuoto="Nessuna commessa per questo cliente." importo="Onorario" />
+            </div>
+          ) : vista === "immobili" ? (
+            <ImmobiliCliente immobili={scheda.immobili} />
+          ) : (
+            <Analisi a={scheda.analisi} />
+          )}
+        </div>
       </section>
     </div>
   );
 }
 
-function Etichetta({ children }: { children: ReactNode }) {
-  return <span className="rounded-full bg-superficie px-2.5 py-0.5 text-[0.75rem] text-inchiostro-2 shadow-[0_0_0_1px_var(--linea)]">{children}</span>;
-}
-
 function TitoloColonna({ children, azione }: { children: ReactNode; azione?: ReactNode }) {
   return (
-    <div className="mb-2 flex items-center justify-between gap-2">
-      <h2 className="text-[0.6875rem] uppercase tracking-[0.14em] text-tenue">{children}</h2>
+    <div className="mb-2.5 flex items-center justify-between gap-2">
+      <h2 className="text-[0.6875rem] font-medium uppercase tracking-[0.16em] text-tenue">{children}</h2>
       {azione}
     </div>
   );
@@ -278,10 +279,10 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
       <dd className="mt-0.5 flex items-start gap-1.5">
         <span
           className={cn(
-            "min-w-0 flex-1 [overflow-wrap:anywhere]",
+            "min-w-0 flex-1 text-inchiostro [overflow-wrap:anywhere]",
             // Gli indirizzi email lunghi (PEC degli enti) stanno su una riga con un corpo appena più piccolo
             valore?.includes("@") ? "text-[0.8125rem] leading-6" : "text-[0.9375rem]",
-            codice && "numeri tracking-[0.02em]",
+            codice && "numeri tracking-[0.03em]",
             !valore && "text-tenue",
           )}
         >
@@ -294,7 +295,7 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
             className="grid size-6 shrink-0 place-items-center rounded-full text-tenue opacity-100 transition-opacity hover:text-inchiostro md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
             aria-label={copiato ? `${voce} copiato` : `Copia ${voce}`}
           >
-            {copiato ? <Check className="size-3.5 text-[color:var(--stato-attiva)]" strokeWidth={2.2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
+            {copiato ? <Check className="size-3.5" strokeWidth={2.2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
           </button>
         ) : null}
       </dd>
@@ -302,51 +303,57 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
   );
 }
 
-function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; pratiche: PraticaCliente[]; vuoto: string; importo: string }) {
+function GruppoPratiche({
+  titolo,
+  colore,
+  pratiche,
+  vuoto,
+  importo,
+}: {
+  titolo: string;
+  colore: string;
+  pratiche: PraticaCliente[];
+  vuoto: string;
+  importo: string;
+}) {
   // All'apertura della scheda i gruppi sono chiusi: si vedono titolo e quantità, si espandono al clic
   const [aperto, setAperto] = useState(false);
   return (
-    <section>
-      <button
-        type="button"
-        onClick={() => setAperto(!aperto)}
-        aria-expanded={aperto}
-        className="flex w-full items-center justify-between gap-3 border-b border-linea pb-2 text-left"
-      >
-        <span className="flex items-center gap-2">
-          <ChevronDown
-            aria-hidden
-            className={cn("size-4 text-tenue transition-transform duration-200", !aperto && "-rotate-90")}
-            strokeWidth={1.8}
-          />
-          <span className="text-[1rem] font-medium">{titolo}</span>
-          <span className="numeri text-[0.875rem] text-tenue">{pratiche.length}</span>
+    <section className="rounded-[14px] bg-superficie-2/80">
+      <button type="button" onClick={() => setAperto(!aperto)} aria-expanded={aperto} className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left">
+        <span className="flex items-center gap-2.5">
+          <span aria-hidden className="size-2 rounded-full" style={{ background: colore }} />
+          <span className="text-[0.9375rem] font-medium text-inchiostro">{titolo}</span>
         </span>
-        {aperto && pratiche.length ? <span className="text-[0.75rem] text-tenue">{importo}</span> : null}
+        <span className="flex items-center gap-2 text-inchiostro-2">
+          <span className="numeri text-[0.875rem]">{pratiche.length}</span>
+          <ChevronDown aria-hidden className={cn("size-4 transition-transform duration-200", aperto && "rotate-180")} strokeWidth={1.8} />
+        </span>
       </button>
       {!aperto ? null : pratiche.length === 0 ? (
-        <p className="py-2.5 text-[0.875rem] text-tenue">{vuoto}</p>
+        <p className="px-4 pb-4 text-[0.875rem] text-inchiostro-2">{vuoto}</p>
       ) : (
-        <ul className="pt-1">
+        <ul className="flex flex-col gap-1.5 px-2 pb-2">
+          <li aria-hidden className="flex justify-end px-3 text-[0.6875rem] uppercase tracking-[0.12em] text-tenue">
+            {importo}
+          </li>
           {pratiche.map((p) => (
             <li key={p.id}>
               <Link
                 href={p.href}
-                className="-mx-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 rounded-piccolo px-2 py-2.5 transition-colors hover:bg-superficie-2/60"
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 rounded-[10px] bg-superficie px-3.5 py-2.5 shadow-[0_1px_2px_rgba(20,30,50,0.06)] transition-shadow hover:shadow-[0_4px_14px_-6px_rgba(20,30,50,0.25)]"
               >
                 <span className="min-w-0">
-                  <span className="flex min-w-0 items-center gap-2 text-[0.9375rem]">
-                    <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: p.colore }} />
-                    <span className="truncate">
-                      {p.sigla ? <span className="numeri text-tenue">{p.sigla} · </span> : null}
-                      {p.titolo}
-                    </span>
+                  <span className="block truncate text-[0.9375rem] text-inchiostro">
+                    {p.sigla ? <span className="numeri text-inchiostro-2">{p.sigla} · </span> : null}
+                    {p.titolo}
                   </span>
-                  <span className="block truncate pl-3.5 text-[0.8125rem] text-tenue">
-                    {[p.statoEtichetta, p.data ? formattaData(p.data) : null, p.luogo].filter(Boolean).join(" · ")}
+                  <span className="block truncate text-[0.8125rem] text-inchiostro-2">
+                    <span style={{ color: p.colore }}>{p.statoEtichetta}</span>
+                    {[p.data ? formattaData(p.data) : null, p.luogo].filter(Boolean).map((x) => ` · ${x}`)}
                   </span>
                 </span>
-                <span className="numeri text-right text-[0.9375rem]">{p.importo != null ? formattaEuro(p.importo) : <span className="text-tenue">—</span>}</span>
+                <span className="numeri text-right text-[0.9375rem] text-inchiostro">{p.importo != null ? formattaEuro(p.importo) : <span className="text-tenue">—</span>}</span>
               </Link>
             </li>
           ))}
@@ -358,44 +365,26 @@ function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; 
 
 /* ── Immobili ─────────────────────────────────────────────────────────── */
 
-const NOME_TIPO: Record<ImmobileCliente["pratiche"][number]["tipo"], string> = {
-  commessa: "Commessa",
-  preventivo: "Preventivo",
-  prefattibilita: "Pre-fattibilità",
-};
-
 function ImmobiliCliente({ immobili }: { immobili: ImmobileCliente[] }) {
   if (!immobili.length) {
     return (
-      <p className="mt-6 text-[0.9375rem] text-tenue">
+      <p className="text-[0.9375rem] text-inchiostro-2">
         Nessun immobile collegato: gli immobili compaiono qui quando una pre-fattibilità, un preventivo o una commessa del cliente ne indica uno.
       </p>
     );
   }
   return (
-    <ul className="mt-6 flex flex-col gap-2.5">
+    <ul className="flex flex-col gap-2">
       {immobili.map((i) => (
-        <li key={i.id} className="flex items-start gap-3.5 rounded-medio border border-linea px-4 py-3.5">
-          <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro-2">
-            <Building2 className="size-[18px]" strokeWidth={1.6} />
-          </span>
+        <li key={i.id} className="flex items-center gap-3.5 rounded-[12px] bg-superficie-2/80 px-4 py-3.5">
+          <Building2 aria-hidden className="size-6 shrink-0 text-inchiostro-2" strokeWidth={1.4} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.9375rem] font-medium">{i.nome}</p>
-            <p className="truncate text-[0.8125rem] text-tenue">{i.indirizzo}</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {i.pratiche.map((p) => (
-                <Link
-                  key={p.href}
-                  href={p.href}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-linea px-2.5 py-0.5 text-[0.75rem] text-inchiostro-2 transition-colors hover:border-linea-forte hover:text-inchiostro"
-                >
-                  <span aria-hidden className="size-1.5 rounded-full" style={{ background: p.colore }} />
-                  {NOME_TIPO[p.tipo]}
-                  {p.sigla ? <span className="numeri text-tenue">{p.sigla}</span> : null}
-                </Link>
-              ))}
-            </div>
+            <p className="truncate text-[0.9375rem] font-medium text-inchiostro">{i.nome}</p>
+            <p className="truncate text-[0.8125rem] text-inchiostro-2">{i.indirizzo}</p>
           </div>
+          <span className="numeri shrink-0 text-[0.8125rem] text-inchiostro-2">
+            {i.pratiche.length} {i.pratiche.length === 1 ? "pratica" : "pratiche"}
+          </span>
         </li>
       ))}
     </ul>
@@ -412,7 +401,7 @@ function Analisi({ a }: { a: AnalisiCliente }) {
   const barra = a.preventiviEmessi || 1;
 
   return (
-    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       <Indicatore
         voce="Onorari acquisiti"
         valore={a.commesse ? formattaEuro(a.onorariAcquisiti) : "—"}
@@ -480,9 +469,9 @@ function Analisi({ a }: { a: AnalisiCliente }) {
 
 function Indicatore({ voce, valore, nota, evidenza, children }: { voce: string; valore: string; nota: string; evidenza?: boolean; children?: ReactNode }) {
   return (
-    <div className={cn("rounded-medio border border-linea px-4 py-4", evidenza ? "bg-superficie-2/70" : "bg-superficie")}>
-      <p className="text-[0.75rem] text-tenue">{voce}</p>
-      <p className="numeri mt-1.5 text-[1.5rem] font-medium leading-none" style={{ fontVariationSettings: '"wdth" 108' }}>
+    <div className={cn("rounded-[14px] px-4 py-4", evidenza ? "bg-inchiostro text-[color:var(--fondo-carta)] [&_p]:!text-current" : "bg-superficie-2/80")}>
+      <p className="text-[0.75rem] text-inchiostro-2">{voce}</p>
+      <p className="numeri mt-1.5 text-[1.5rem] font-medium leading-none text-inchiostro" style={{ fontVariationSettings: '"wdth" 108' }}>
         {valore}
       </p>
       <p className="mt-2 text-[0.8125rem] text-inchiostro-2">{nota}</p>
@@ -723,7 +712,7 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
         salva(false);
       }}
       noValidate
-      className="px-5 py-6 md:px-8 md:py-7 lg:h-full lg:overflow-y-auto"
+      className="h-full px-5 py-6 md:px-8 md:py-7 lg:overflow-y-auto"
     >
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">

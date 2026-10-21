@@ -632,11 +632,8 @@ html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
   box-shadow: 0 1px 0 0 var(--superficie);
 }
 
-/* Scheda anagrafica "profilo con colonna": sempre della stessa misura su schermi grandi,
-   qualunque sia la quantità di dati; le due colonne scorrono al loro interno */
-.scheda-profilo {
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 24px 48px -30px rgba(43, 42, 40, 0.35);
-}
+/* Scheda anagrafica "profilo con colonna": due carte affiancate, sempre della stessa misura
+   su schermi grandi; le carte scorrono al loro interno */
 @media (min-width: 1024px) {
   .scheda-profilo {
     width: min(60rem, 100%);
@@ -644,3 +641,32 @@ html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
     margin-inline: auto;
   }
 }
+.carta-chiara {
+  --fondo-carta: var(--superficie);
+  background: var(--superficie);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(20, 30, 50, 0.06), 0 24px 48px -28px rgba(20, 30, 50, 0.4);
+}
+/* Carta scura dell'identità: i colori si capovolgono, così i componenti dentro restano leggibili */
+.carta-scura {
+  --inchiostro: #f6f1e8;
+  --inchiostro-2: rgba(246, 241, 232, 0.8);
+  --tenue: rgba(246, 241, 232, 0.55);
+  --linea: rgba(255, 255, 255, 0.12);
+  --linea-forte: rgba(255, 255, 255, 0.26);
+  --superficie: rgba(255, 255, 255, 0.07);
+  --superficie-2: rgba(255, 255, 255, 0.11);
+  --sfondo: rgba(0, 0, 0, 0.18);
+  --accento: #e2c08e;
+  --accento-hover: #ecd2ab;
+  --fondo-carta: var(--fondo-studio-base);
+  color: var(--inchiostro);
+  background: var(--fondo-studio-base);
+  border-radius: 18px;
+  box-shadow: 0 24px 48px -26px rgba(15, 22, 38, 0.6);
+}
+html[data-theme="navy"] .carta-scura {
+  --accento: #a9cbf7;
+  --accento-hover: #c6ddfb;
+}
+
