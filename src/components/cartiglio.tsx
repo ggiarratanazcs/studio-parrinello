@@ -16,6 +16,7 @@ export function Cartiglio({
   sottotitolo,
   celle = [],
   azioni,
+  crea,
   tipo = "studio",
   sopratitolo = "Studio Parrinello",
   icona: IconaTitolo,
@@ -24,6 +25,8 @@ export function Cartiglio({
   sottotitolo?: string;
   celle?: Cella[];
   azioni?: ReactNode;
+  /** Pulsante "Crea" appoggiato sul bordo inferiore della testata (home) */
+  crea?: ReactNode;
   tipo?: TipoFondo;
   sopratitolo?: string;
   /** Al posto del titolo scritto (es. la casa per la home): il titolo resta per gli screen reader. */
@@ -71,6 +74,8 @@ export function Cartiglio({
           {sottotitolo ? <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-[#f3ece0]/70">{sottotitolo}</p> : null}
         </div>
       </div>
+
+      {crea ? <div className="relative z-30 lg:-mt-7 lg:px-10">{crea}</div> : null}
 
       {celle.length > 0 || azioni ? (
         <div className="mt-4 flex flex-col gap-4 md:flex-row-reverse md:items-start md:justify-between md:px-6">

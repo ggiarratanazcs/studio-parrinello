@@ -513,3 +513,25 @@ html[data-theme="navy"] .barra-laterale > div .bg-inchiostro,
 html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
   color: #13213a;
 }
+
+/* Pulsante "Crea" della home: pallino con ombra colorata, come i pulsanti "nuovo" */
+.pulsante-crea {
+  color: #fbf6ee;
+  box-shadow:
+    0 14px 28px -12px rgba(var(--ombra), 0.85),
+    0 3px 6px -3px rgba(var(--ombra), 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.pulsante-crea:hover {
+  transform: translateY(-2px);
+}
+.pulsante-crea:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 3px;
+  border-radius: 9999px;
+}
+/* Su telefono e tablet il "+" galleggia sopra la barra di navigazione in basso */
+.crea-mobile {
+  bottom: calc(76px + env(safe-area-inset-bottom));
+}

@@ -1,29 +1,14 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Activity, Euro, FolderOpen } from "lucide-react";
-import { PulsanteNuovo } from "@/components/tessere";
+import { Crea } from "@/components/crea";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
-import { formattaEuro } from "@/lib/utils";
 
 export const metadata = { title: { absolute: "Studio Parrinello" } };
 
 const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
 
-const azioni = (
-  <>
-    <PulsanteNuovo href="/nuova/prefattibilita" tipo="prefattibilita">
-      Pre-fattibilità
-    </PulsanteNuovo>
-    <PulsanteNuovo href="/nuova/preventivo" tipo="preventivo">
-      Preventivo
-    </PulsanteNuovo>
-    <PulsanteNuovo href="/nuova/commessa" tipo="commessa">
-      Commessa
-    </PulsanteNuovo>
-  </>
-);
 
 export default function HomePage() {
   return (
@@ -42,7 +27,6 @@ async function PanoramicaContenuto() {
 
   const aperte = commesse.filter((c) => STATI_APERTI.includes(c.stato ?? ""));
   const inCorso = commesse.filter((c) => c.stato === "attiva");
-  const portafoglio = inCorso.reduce((somma, c) => somma + (c.onorario_concordato ?? 0), 0);
 
   const imbuto = [
     {
@@ -69,15 +53,7 @@ async function PanoramicaContenuto() {
 
   return (
     <>
-      <Cartiglio
-        titolo="Architettura e Design" discreto
-        celle={[
-          { etichetta: "Commesse aperte", valore: aperte.length, icona: FolderOpen },
-          { etichetta: "In corso", valore: inCorso.length, icona: Activity },
-          { etichetta: "Onorari in corso", valore: formattaEuro(portafoglio), icona: Euro },
-        ]}
-        azioni={azioni}
-      />
+      <Cartiglio titolo="Architettura e Design" crea={<Crea />} />
 
       <Pannello className="px-5 py-5 md:px-6">
         <h2 className="text-base font-medium">Dalla proposta alla commessa</h2>
@@ -122,6 +98,8 @@ async function PanoramicaContenuto() {
           </ul>
         )}
       </Pannello>
+      {/* Su telefono lascia spazio al "+" che galleggia sopra la navigazione */}
+      <div aria-hidden className="h-16 lg:hidden" />
     </>
   );
 }
@@ -150,7 +128,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" discreto azioni={azioni} />
+      <Cartiglio titolo="Architettura e Design" crea={<Crea />} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />
