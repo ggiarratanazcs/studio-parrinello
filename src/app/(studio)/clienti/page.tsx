@@ -4,6 +4,7 @@ import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, Vuoto } from "@/components/ui";
 import { elencoClienti } from "@/lib/dati";
 import { TabellaClienti } from "@/components/tabella-clienti";
+import { DISEGNO_CLIENTI } from "@/lib/fondi";
 
 export const metadata = { title: "Clienti" };
 
@@ -12,7 +13,7 @@ export default function PaginaClienti() {
     <Suspense
       fallback={
         <>
-          <Cartiglio titolo="Clienti" />
+          <Cartiglio titolo="Clienti" disegno={DISEGNO_CLIENTI} />
           <Pannello className="p-6">
             <Scheletro className="h-4 w-2/3" />
           </Pannello>
@@ -32,6 +33,7 @@ async function ElencoClienti() {
     <>
       <Cartiglio
         titolo="Clienti"
+        disegno={DISEGNO_CLIENTI}
         celle={[
           { etichetta: "Privati", valore: conta("persona_fisica"), icona: User },
           { etichetta: "Aziende", valore: conta("azienda"), icona: Building2 },

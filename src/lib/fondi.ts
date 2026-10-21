@@ -27,3 +27,6 @@ export type TipoFondo = keyof typeof FONDI;
 
 /** Disegno della testata della home: la mappa di Ortigia (prima era delle commesse). */
 export const DISEGNO_HOME = "/brand/ortigia.webp";
+
+/** Disegno della testata dei Clienti: il tavolo di lavoro con i committenti, visto dall'alto. */
+export const DISEGNO_CLIENTI = "/brand/riunione.webp";
