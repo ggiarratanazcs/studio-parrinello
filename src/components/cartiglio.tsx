@@ -20,6 +20,7 @@ export function Cartiglio({
   tipo = "studio",
   sopratitolo = "Studio Parrinello",
   icona: IconaTitolo,
+  disegno,
 }: {
   titolo: string;
   sottotitolo?: string;
@@ -31,6 +32,8 @@ export function Cartiglio({
   sopratitolo?: string;
   /** Al posto del titolo scritto (es. la casa per la home): il titolo resta per gli screen reader. */
   icona?: ComponentType<LucideProps>;
+  /** Disegno di sfondo diverso da quello della sezione (es. la home) */
+  disegno?: string;
   /** Non più necessario: ora tutti i titoli sono piccoli e delicati (resta per compatibilità) */
   discreto?: boolean;
 }) {
@@ -45,7 +48,7 @@ export function Cartiglio({
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-50 md:bg-[position:right_center]"
-          style={{ backgroundImage: `url(${f.disegno})` }}
+          style={{ backgroundImage: `url(${disegno ?? f.disegno})` }}
         />
         {/* Velatura: piena a sinistra per il testo, si apre sul disegno a destra */}
         <div

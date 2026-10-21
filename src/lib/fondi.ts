@@ -13,14 +13,17 @@ const fondo = (tipo: string, disegno: string) => ({
 
 /** I colori sono variabili CSS definite per ogni tema in globals.css (Caldo: oliva, bronzo, ardesia, antracite; Navy: quattro blu). */
 export const FONDI = {
-  // mappa di Ortigia
-  commessa: fondo("commessa", "/brand/ortigia.webp"),
+  // pianta del Teatro Greco (scambiata con la home, che ora ha la mappa di Ortigia)
+  commessa: fondo("commessa", "/brand/teatro.svg"),
   // costruzione della spirale
   preventivo: fondo("preventivo", "/brand/spirale.svg"),
   // pianta del Castello Maniace
   prefattibilita: fondo("prefattibilita", "/brand/castello.webp"),
-  // pianta del Teatro Greco (home e anagrafiche)
+  // pianta del Teatro Greco (anagrafiche; la home usa la mappa di Ortigia, vedi DISEGNO_HOME)
   studio: fondo("studio", "/brand/teatro.svg"),
 } as const;
 
 export type TipoFondo = keyof typeof FONDI;
+
+/** Disegno della testata della home: la mappa di Ortigia (prima era delle commesse). */
+export const DISEGNO_HOME = "/brand/ortigia.webp";

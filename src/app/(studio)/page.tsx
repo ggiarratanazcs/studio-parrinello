@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { Crea } from "@/components/crea";
 import { DaFare } from "@/components/da-fare";
 import { getProfilo } from "@/lib/auth";
+import { DISEGNO_HOME } from "@/lib/fondi";
 import { leggiDaFare, ultimeAttivita } from "@/lib/da-fare";
 import { istanteAttuale, oggiIso } from "@/lib/utils";
 import { Cartiglio } from "@/components/cartiglio";
@@ -63,7 +64,7 @@ async function PanoramicaContenuto() {
 
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" crea={<Crea />} />
+      <Cartiglio titolo="Architettura e Design" disegno={DISEGNO_HOME} crea={<Crea />} />
 
       <DaFare
         voci={daFare}
@@ -146,7 +147,7 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
 function PanoramicaSegnaposto() {
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" crea={<Crea />} />
+      <Cartiglio titolo="Architettura e Design" disegno={DISEGNO_HOME} crea={<Crea />} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />
