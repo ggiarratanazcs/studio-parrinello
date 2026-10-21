@@ -71,61 +71,76 @@ export function TeamCommessa({
     });
   }
 
+  // Persone come pillole in fila; "+ Aggiungi" apre una riga compatta per sceglierne un'altra
   return (
-    <div className="flex flex-col gap-3">
-      {team.length === 0 ? <p className="text-[0.9375rem] text-tenue">Nessuno assegnato.</p> : null}
-      <ul className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-1 flex-col gap-3">
+      <ul className="flex flex-wrap items-center gap-2">
+        {team.length === 0 && !modificabile ? <li className="text-[0.9375rem] text-tenue">Nessuno assegnato.</li> : null}
         {team.map((m) => (
-          <li key={m.profilo_id} className="group flex items-center gap-3">
-            <span className="pallino-tessera grid size-9 shrink-0 place-items-center rounded-full text-[0.75rem] font-medium">
+          <li key={m.profilo_id} className="group flex h-9 items-center gap-2 rounded-full border border-linea bg-superficie py-1 pl-1 pr-3 text-[0.875rem]">
+            <span className="pallino-tessera grid size-7 shrink-0 place-items-center rounded-full text-[0.6875rem] font-medium">
               {m.profilo?.iniziali ?? m.profilo?.nome?.slice(0, 1)}
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[0.9375rem]">
-                {m.profilo?.nome} {m.profilo?.cognome}
-              </span>
-              {m.ruolo_commessa ? <span className="block truncate text-sm text-tenue">{m.ruolo_commessa}</span> : null}
+            <span className="whitespace-nowrap">
+              {m.profilo?.nome} {m.profilo?.cognome}
+              {m.ruolo_commessa ? <span className="text-tenue"> · {m.ruolo_commessa}</span> : null}
             </span>
             {modificabile ? (
-            <button
-              type="button"
-              onClick={() => esegui(() => rimuoviMembro(commessaId, m.profilo_id))}
-              disabled={inCorso}
-              aria-label={`Togli ${m.profilo?.nome} dal team`}
-              data-suggerimento="Togli dal team"
-              className="grid size-8 place-items-center rounded-full text-tenue opacity-60 transition hover:bg-superficie-2 hover:text-inchiostro group-hover:opacity-100"
-            >
-              <X className="size-4" strokeWidth={1.8} />
-            </button>
+              <button
+                type="button"
+                onClick={() => esegui(() => rimuoviMembro(commessaId, m.profilo_id))}
+                disabled={inCorso}
+                aria-label={`Togli ${m.profilo?.nome} dal team`}
+                data-suggerimento="Togli dal team"
+                className="-mr-1.5 grid size-6 place-items-center rounded-full text-tenue opacity-50 transition hover:bg-superficie-2 hover:text-inchiostro group-hover:opacity-100"
+              >
+                <X className="size-3.5" strokeWidth={1.9} />
+              </button>
             ) : null}
           </li>
         ))}
+        {modificabile && !aperto && liberi.length ? (
+          <li>
+            <button
+              type="button"
+              onClick={() => setAperto(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-dashed border-linea-forte px-3.5 text-[0.875rem] text-inchiostro-2 transition-colors hover:bg-superficie-2"
+            >
+              <Plus className="size-3.5" strokeWidth={2} />
+              {team.length ? "Aggiungi" : "Aggiungi una persona"}
+            </button>
+          </li>
+        ) : null}
       </ul>
 
-      {!modificabile ? null : aperto ? (
-        <div className="grid gap-3 rounded-medio bg-superficie-2/70 p-3">
-          <Selezione etichetta="Persona" id={`team-p-${commessaId}`} value={persona} onChange={(e) => setPersona(e.target.value)}>
-            <option value="">Scegli…</option>
-            {liberi.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nome} {p.cognome}
-              </option>
-            ))}
-          </Selezione>
-          <Campo
-            etichetta="Ruolo nella commessa"
-            id={`team-r-${commessaId}`}
-            list={`ruoli-${commessaId}`}
-            value={ruolo}
-            onChange={(e) => setRuolo(e.target.value)}
-            placeholder="es. Direttore dei lavori"
-          />
-          <datalist id={`ruoli-${commessaId}`}>
-            {RUOLI_COMMESSA.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
-          <div className="flex justify-end gap-2">
+      {modificabile && aperto ? (
+        <div className="flex flex-wrap items-end gap-3 rounded-medio bg-superficie-2/70 p-3">
+          <div className="w-56">
+            <Selezione etichetta="Persona" id={`team-p-${commessaId}`} value={persona} onChange={(e) => setPersona(e.target.value)}>
+              <option value="">Scegli…</option>
+              {liberi.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome} {p.cognome}
+                </option>
+              ))}
+            </Selezione>
+          </div>
+          <div className="w-60">
+            <Campo
+              etichetta="Ruolo nella commessa"
+              id={`team-r-${commessaId}`}
+              list={`ruoli-${commessaId}`}
+              value={ruolo}
+              onChange={(e) => setRuolo(e.target.value)}
+              placeholder="es. Direttore dei lavori"
+            />
+            <datalist id={`ruoli-${commessaId}`}>
+              {RUOLI_COMMESSA.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
+          </div>
+          <div className="flex gap-2">
             <Pulsante type="button" variante="discreto" onClick={() => setAperto(false)} disabled={inCorso}>
               Annulla
             </Pulsante>
@@ -148,11 +163,6 @@ export function TeamCommessa({
             </Pulsante>
           </div>
         </div>
-      ) : liberi.length ? (
-        <Pulsante type="button" variante="discreto" className="-ml-3 w-fit" onClick={() => setAperto(true)}>
-          <Plus className="size-4" strokeWidth={2} />
-          Aggiungi al team
-        </Pulsante>
       ) : null}
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
     </div>

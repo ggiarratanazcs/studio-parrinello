@@ -33,11 +33,28 @@ export function TestataScheda({
   );
 }
 
-export function Blocco({ titolo, children, className }: { titolo: string; children: ReactNode; className?: string }) {
+export function Blocco({
+  titolo,
+  children,
+  className,
+  icona,
+  dueColonne,
+}: {
+  titolo: string;
+  children: ReactNode;
+  className?: string;
+  /** Icona piccola accanto al titolo */
+  icona?: ReactNode;
+  /** Dati affiancati a coppie, per tenere basso il riquadro */
+  dueColonne?: boolean;
+}) {
   return (
     <Pannello className={cn("px-5 py-5", className)}>
-      <h2 className="mb-4 text-base font-medium">{titolo}</h2>
-      <dl className="flex flex-col gap-3">{children}</dl>
+      <h2 className="mb-4 flex items-center gap-2 text-base font-medium">
+        {icona ? <span className="text-tenue [&>svg]:size-4">{icona}</span> : null}
+        {titolo}
+      </h2>
+      <dl className={cn(dueColonne ? "grid grid-cols-2 gap-x-5 gap-y-3" : "flex flex-col gap-3")}>{children}</dl>
     </Pannello>
   );
 }

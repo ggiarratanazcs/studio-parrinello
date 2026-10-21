@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import { CalendarDays, CircleDot, Euro } from "lucide-react";
+import Link from "next/link";
+import { BriefcaseBusiness, CalendarDays, CircleDot, Euro, Fingerprint, Hash, House, Mail, MailCheck, Phone, UserRound, UsersRound } from "lucide-react";
 import { Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
 import { getPermessi } from "@/lib/permessi";
@@ -72,77 +73,110 @@ export async function SchedaCommessa({ id }: { id: string }) {
   const daPreventivo = c.preventivi?.find((p) => !p.integrativo);
   const daPrefattibilita = c.prefattibilita?.[0];
 
-  const datiGenerali = (
-    <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
-      {vede.incarico ? (
-      <Blocco titolo="Incarico">
-        <Dato etichetta="Committenza" valore={c.committenza === "pubblica" ? "Pubblica" : "Privata"} />
-        <Dato etichetta="Intervento" valore={TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""]} />
-        <Dato etichetta="Ambito" valore={AMBITI[c.ambito ?? ""]} />
-        <Dato etichetta="Responsabile" valore={responsabile} />
-        {vede.importoLavori ? <Dato etichetta="Importo lavori" valore={c.importo_lavori_stimato != null ? formattaEuro(c.importo_lavori_stimato) : null} /> : null}
-        <Dato etichetta="Fine prevista" valore={c.data_fine_prevista ? formattaData(c.data_fine_prevista) : null} />
-        <Dato etichetta="Chiusa il" valore={c.data_chiusura ? formattaData(c.data_chiusura) : null} />
-        {c.committenza === "pubblica" ? (
-          <>
-            <Dato etichetta="CIG" valore={c.cig} />
-            <Dato etichetta="CUP" valore={c.cup} />
-            <Dato etichetta="RUP" valore={c.rup_nome} />
-          </>
-        ) : null}
-        <Dato etichetta="Nata dal preventivo" valore={daPreventivo?.numero} href={daPreventivo ? `/preventivi/${daPreventivo.id}` : undefined} />
-        <Dato etichetta="Nata dalla pre-fattibilità" valore={daPrefattibilita?.numero} href={daPrefattibilita ? `/prefattibilita/${daPrefattibilita.id}` : undefined} />
-      </Blocco>
-      ) : null}
+  const contatto = (Icona: typeof Mail, valore: string | null | undefined, etichetta: string) =>
+    valore ? (
+      <li className="flex min-w-0 items-center gap-2.5" title={etichetta}>
+        <Icona aria-hidden className="size-4 shrink-0 text-tenue" strokeWidth={1.6} />
+        <span className="truncate">{valore}</span>
+      </li>
+    ) : null;
 
-      <div className="flex flex-col gap-6">
+  // Incarico, committente e immobile affiancati alla stessa altezza; sotto il team e la descrizione
+  const datiGenerali = (
+    <div className="flex flex-col gap-6">
+      <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
+        {vede.incarico ? (
+          <Blocco titolo="Incarico" icona={<BriefcaseBusiness strokeWidth={1.7} />} dueColonne className="h-full">
+            <Dato etichetta="Committenza" valore={c.committenza === "pubblica" ? "Pubblica" : "Privata"} />
+            <Dato etichetta="Intervento" valore={TIPOLOGIE_INTERVENTO[c.tipologia_intervento ?? ""]} />
+            <Dato etichetta="Ambito" valore={AMBITI[c.ambito ?? ""]} />
+            <Dato etichetta="Responsabile" valore={responsabile} />
+            {vede.importoLavori ? <Dato etichetta="Importo lavori" valore={c.importo_lavori_stimato != null ? formattaEuro(c.importo_lavori_stimato) : null} /> : null}
+            <Dato etichetta="Fine prevista" valore={c.data_fine_prevista ? formattaData(c.data_fine_prevista) : null} />
+            <Dato etichetta="Chiusa il" valore={c.data_chiusura ? formattaData(c.data_chiusura) : null} />
+            {c.committenza === "pubblica" ? (
+              <>
+                <Dato etichetta="CIG" valore={c.cig} />
+                <Dato etichetta="CUP" valore={c.cup} />
+                <Dato etichetta="RUP" valore={c.rup_nome} />
+              </>
+            ) : null}
+            <Dato etichetta="Dal preventivo" valore={daPreventivo?.numero} href={daPreventivo ? `/preventivi/${daPreventivo.id}` : undefined} />
+            <Dato etichetta="Dalla pre-fattibilità" valore={daPrefattibilita?.numero} href={daPrefattibilita ? `/prefattibilita/${daPrefattibilita.id}` : undefined} />
+          </Blocco>
+        ) : null}
+
         {vede.committente ? (
-        <Blocco titolo="Committente">
-          {cliente ? (
-            <>
-              <Dato etichetta={TIPI_CLIENTE[cliente.tipo] ?? "Committente"} valore={cliente.denominazione} />
-              <Dato etichetta="Email" valore={cliente.email} />
-              <Dato etichetta="Telefono" valore={cliente.telefono} />
-              <Dato etichetta="PEC" valore={cliente.pec} />
-              <Dato etichetta="Codice fiscale" valore={cliente.codice_fiscale} />
-              <Dato etichetta="Partita IVA" valore={cliente.partita_iva} />
-            </>
-          ) : null}
-        </Blocco>
+          <Pannello className="h-full px-5 py-5">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-medium">
+              <UserRound aria-hidden className="size-4 text-tenue" strokeWidth={1.7} />
+              Committente
+            </h2>
+            {cliente ? (
+              <>
+                <Link href={`/clienti/${cliente.id}`} className="block truncate text-[1.0625rem] font-medium hover:text-accento">
+                  {cliente.denominazione}
+                </Link>
+                <p className="etichetta mt-0.5">{TIPI_CLIENTE[cliente.tipo] ?? "Committente"}</p>
+                <ul className="mt-4 flex flex-col gap-2 text-[0.9375rem]">
+                  {contatto(Mail, cliente.email, "Email")}
+                  {contatto(Phone, cliente.telefono, "Telefono")}
+                  {contatto(MailCheck, cliente.pec, "PEC")}
+                  {contatto(Fingerprint, cliente.codice_fiscale, "Codice fiscale")}
+                  {contatto(Hash, cliente.partita_iva, "Partita IVA")}
+                </ul>
+              </>
+            ) : (
+              <p className="text-[0.9375rem] text-tenue">Committente da definire.</p>
+            )}
+          </Pannello>
         ) : null}
 
         {vede.immobile ? (
-        <Blocco titolo="Immobile">
-          {immobile ? (
-            <>
-              <Dato etichetta="Nome" valore={immobile.denominazione} />
-              <Dato etichetta="Indirizzo" valore={[immobile.indirizzo, immobile.comune].filter(Boolean).join(", ")} />
-              <Dato etichetta="Zona urbanistica" valore={immobile.zona_urbanistica} />
-              {(immobile.catasto ?? []).map((k) => (
-                <Dato
-                  key={k.id}
-                  etichetta={k.catasto === "terreni" ? "Catasto terreni" : "Catasto fabbricati"}
-                  valore={`Fg. ${k.foglio}, part. ${k.particella}${k.subalterno ? `, sub. ${k.subalterno}` : ""}${k.categoria ? ` (${k.categoria})` : ""}`}
-                />
-              ))}
-            </>
-          ) : (
-            <p className="text-[0.9375rem] text-tenue">Immobile da definire.</p>
-          )}
-        </Blocco>
-        ) : null}
-
-        {/* Chi lavora sulla commessa: prima era una sezione a sé */}
-        {vede.team ? (
-          <Pannello className="px-5 py-5">
-            <h2 className="mb-4 text-base font-medium">Team di commessa</h2>
-            <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} modificabile={liv("c.team") >= 2} />
+          <Pannello className="h-full px-5 py-5">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-medium">
+              <House aria-hidden className="size-4 text-tenue" strokeWidth={1.7} />
+              Immobile
+            </h2>
+            {immobile ? (
+              <>
+                <Link href={`/immobili/${immobile.id}`} className="block truncate text-[1.0625rem] font-medium hover:text-accento">
+                  {immobile.denominazione || immobile.indirizzo}
+                </Link>
+                <p className="mt-0.5 text-[0.875rem] text-tenue">{[immobile.indirizzo, immobile.comune].filter(Boolean).join(", ")}</p>
+                <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">
+                  <Dato etichetta="Zona urbanistica" valore={immobile.zona_urbanistica} />
+                  {(immobile.catasto ?? []).map((k) => (
+                    <Dato
+                      key={k.id}
+                      etichetta={k.catasto === "terreni" ? "Catasto terreni" : "Catasto fabbricati"}
+                      valore={`Fg. ${k.foglio}, p. ${k.particella}${k.subalterno ? `, sub. ${k.subalterno}` : ""}${k.categoria ? ` (${k.categoria})` : ""}`}
+                    />
+                  ))}
+                </dl>
+              </>
+            ) : (
+              <p className="text-[0.9375rem] text-tenue">Immobile da definire.</p>
+            )}
           </Pannello>
         ) : null}
       </div>
 
+      {/* Chi lavora sulla commessa, in una fascia */}
+      {vede.team ? (
+        <Pannello className="px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
+            <h2 className="flex shrink-0 items-center gap-2 text-base font-medium">
+              <UsersRound aria-hidden className="size-4 text-tenue" strokeWidth={1.7} />
+              Team di commessa
+            </h2>
+            <TeamCommessa commessaId={c.id} team={team} profili={c.profiliStudio} modificabile={liv("c.team") >= 2} />
+          </div>
+        </Pannello>
+      ) : null}
+
       {vede.incarico && c.descrizione ? (
-        <Pannello className="px-5 py-5 xl:col-span-2">
+        <Pannello className="px-5 py-5">
           <h2 className="mb-3 text-base font-medium">Descrizione</h2>
           <p className="max-w-prose whitespace-pre-line text-[0.9375rem]">{c.descrizione}</p>
         </Pannello>
