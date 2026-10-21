@@ -39,7 +39,7 @@ export function Cronoprogramma({
         </span>
         <p className="font-medium">Cronoprogramma da impostare</p>
         <p className="max-w-md text-[0.9375rem] text-tenue">
-          Apri le fasi nella cartella <span className="text-inchiostro">Fasi</span> e inserisci le date di inizio e fine previste: qui comparirà il diagramma dei tempi.
+          Torna alla tabella e inserisci le date di inizio e fine delle fasi: qui comparirà il diagramma dei tempi.
         </p>
       </div>
     );

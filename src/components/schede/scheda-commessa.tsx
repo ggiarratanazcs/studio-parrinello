@@ -189,7 +189,7 @@ export async function SchedaCommessa({ id }: { id: string }) {
           },
           (vede.fasi || vede.cronoprogramma || vede.allegati) && {
             id: "fasi",
-            titolo: vede.fasi ? "Fasi" : vede.allegati ? "Allegati" : "Cronoprogramma",
+            titolo: vede.fasi ? "Fasi e cronoprogramma" : vede.allegati ? "Allegati" : "Cronoprogramma",
             sottotitolo: [vede.fasi ? `${completate}/${fasi.length} completate` : null, vede.allegati ? plurale(documenti.length, "allegato", "allegati") : null].filter(Boolean).join(" · "),
             contenuto: (
               <Pannello>
@@ -201,6 +201,10 @@ export async function SchedaCommessa({ id }: { id: string }) {
                     catalogo={c.catalogoFasi}
                     committenza={c.committenza}
                     documenti={documenti}
+                    apertura={c.data_apertura}
+                    finePrevista={c.data_fine_prevista}
+                    oggi={oggiIso()}
+                    gantt={vede.cronoprogramma}
                     modificabile={liv("c.fasi") >= 2}
                     allegati={liv("c.allegati")}
                     eliminabile={completo}

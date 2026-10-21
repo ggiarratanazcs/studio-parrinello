@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition, type CSSProperties, type PointerEvent as EventoPuntatore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, FileImage, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, X } from "lucide-react";
+import { ChartNoAxesGantt, Check, ChevronDown, FileImage, Table2, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Espandibile, PulsanteEspandi } from "@/components/registro";
 import { aggiungiFase, avanzaFase, eliminaFase, modificaFase, riordinaFasi, type CampoFase } from "@/lib/azioni";
 import type { Commessa } from "@/lib/dati";
 import { apriDocumento, caricaAllegati, dimensione, eliminaAllegato } from "./allegati-fase";
 import { STATI_FASE } from "@/lib/dominio";
+import { Cronoprogramma } from "./cronoprogramma";
 import { cn } from "@/lib/utils";
 
 type Fase = NonNullable<Commessa["fasi"]>[number];
@@ -52,9 +53,13 @@ export function FasiCommessa({
   catalogo,
   committenza,
   documenti,
+  apertura,
+  finePrevista,
+  oggi,
   modificabile = true,
   allegati = 2,
   eliminabile = true,
+  gantt: ganttPermesso = true,
 }: {
   commessaId: string;
   fasi: Fase[];
@@ -62,6 +67,12 @@ export function FasiCommessa({
   catalogo: VoceCatalogo[];
   committenza: string;
   documenti: Documento[];
+  apertura: string | null;
+  finePrevista: string | null;
+  /** Data di oggi (AAAA-MM-GG), dal server */
+  oggi: string;
+  /** Permesso "Cronoprogramma": mostra il pulsante per la vista Gantt */
+  gantt?: boolean;
   /** Permesso "Fasi" modificabile: aggiunge, riordina e modifica le celle */
   modificabile?: boolean;
   /** Livello sugli allegati: 0 nascosti, 1 visibili, 2 modificabili */
@@ -73,6 +84,7 @@ export function FasiCommessa({
   const [inCorso, avvia] = useTransition();
   const [errore, setErrore] = useState<string | null>(null);
   const [aggiunta, setAggiunta] = useState(false);
+  const [vistaGantt, setVistaGantt] = useState(false);
   const [daEliminare, setDaEliminare] = useState<string | null>(null);
   // Modifiche già fatte ma non ancora tornate dal server
   const [ordineLocale, setOrdineLocale] = useState<string[] | null>(null);
@@ -171,7 +183,7 @@ export function FasiCommessa({
       {/* Intestazione: conteggio, aggiunta, tutto schermo */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-linea px-5 py-4 md:px-6">
         <div>
-          <h2 className="text-base font-medium">Fasi</h2>
+          <h2 className="text-base font-medium">Fasi e cronoprogramma</h2>
           <p className="mt-0.5 text-sm text-tenue">
             {elenco.length ? `${completate} di ${elenco.length} completate` : "Nessuna fase"}
             {allegati >= 1 && documenti.length ? ` · ${documenti.length} ${documenti.length === 1 ? "allegato" : "allegati"}` : ""}
@@ -185,7 +197,25 @@ export function FasiCommessa({
               ))}
             </span>
           ) : null}
-          {modificabile ? (
+          {ganttPermesso && elenco.length ? (
+            <button
+              type="button"
+              onClick={() => {
+                setVistaGantt(!vistaGantt);
+                setAggiunta(false);
+              }}
+              aria-pressed={vistaGantt}
+              aria-label={vistaGantt ? "Torna alla tabella delle fasi" : "Vedi il cronoprogramma (Gantt)"}
+              data-suggerimento={vistaGantt ? "Tabella delle fasi" : "Cronoprogramma"}
+              className={cn(
+                "grid size-8 place-items-center rounded-full border transition-colors",
+                vistaGantt ? "border-inchiostro bg-inchiostro text-superficie" : "border-linea-forte text-inchiostro-2 hover:bg-superficie-2",
+              )}
+            >
+              {vistaGantt ? <Table2 className="size-4" strokeWidth={1.7} /> : <ChartNoAxesGantt className="size-4" strokeWidth={1.7} />}
+            </button>
+          ) : null}
+          {modificabile && !vistaGantt ? (
             <button
               type="button"
               onClick={() => setAggiunta(!aggiunta)}
@@ -213,7 +243,10 @@ export function FasiCommessa({
         />
       ) : null}
 
-      {/* Su schermi stretti la tabella scorre in orizzontale */}
+      {vistaGantt ? (
+        <Cronoprogramma fasi={elenco} apertura={apertura} finePrevista={finePrevista} oggi={oggi} />
+      ) : (
+      /* Su schermi stretti la tabella scorre in orizzontale */
       <div className="overflow-x-auto">
         <div role="table" aria-label="Fasi della commessa" className="min-w-[58rem]">
           {elenco.length ? (
@@ -392,6 +425,7 @@ export function FasiCommessa({
           </div>
         </div>
       </div>
+      )}
 
       {errore ? (
         <div className="px-5 pb-4 pt-2 md:px-6">
