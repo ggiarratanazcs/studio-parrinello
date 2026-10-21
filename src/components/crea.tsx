@@ -148,6 +148,9 @@ export function Crea() {
           aria-expanded={aperto}
           aria-haspopup="dialog"
           aria-label={aperto ? "Chiudi" : "Crea"}
+          aria-keyshortcuts="N"
+          data-suggerimento={aperto ? undefined : "Crea · tasto N"}
+          data-suggerimento-lato="destra"
           className="pulsante-crea grid size-14 shrink-0 place-items-center rounded-full"
           style={stileTinta("studio")}
         >
@@ -158,10 +161,6 @@ export function Crea() {
             strokeWidth={2}
           />
         </button>
-        <span className="flex items-center gap-2 pb-1.5 text-[0.9375rem] font-medium text-inchiostro-2">
-          Crea
-          <kbd className="rounded-piccolo border border-linea px-1.5 py-px font-sans text-[0.6875rem] font-normal text-tenue">N</kbd>
-        </span>
 
         <div
           role="dialog"
