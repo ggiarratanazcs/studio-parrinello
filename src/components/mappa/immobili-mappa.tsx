@@ -10,7 +10,7 @@ import { posizionaImmobile, posizionaImmobiliMancanti } from "@/lib/azioni";
 import type { ImmobileElenco } from "@/lib/dati";
 import { cn } from "@/lib/utils";
 import { Compasso } from "@/components/compasso";
-import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, useRegistro, type GruppoFiltro } from "@/components/registro";
+import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, SchedeElenco, useRegistro, type GruppoFiltro } from "@/components/registro";
 import { MappaImmobili, SceltaPosizione, STATI_IMMOBILE, statoImmobile } from "./mappa";
 
 const COLONNE = "md:grid-cols-[minmax(0,1fr)_10rem_6rem_5.5rem]";
@@ -144,29 +144,18 @@ function ElencoImmobili({ immobili, children }: { immobili: ImmobileElenco[]; ch
   return (
     <>
       <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca nome, indirizzo, comune, commessa…">
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-4">
-          <div role="tablist" aria-label="Posizione" className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
-            {gruppi.map((g) => {
-              const attivo = r.scelto.split("|")[0] === g.id;
-              const n = g.id === "tutti" ? immobili.length : g.id === "mappa" ? nMappa : immobili.length - nMappa;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={attivo}
-                  onClick={() => r.setScelto(`${g.id}|${r.scelto.split("|")[1] ?? ""}`)}
-                  className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-[0.8125rem] transition-all duration-200",
-                    attivo ? "bg-superficie font-medium text-inchiostro shadow-[0_4px_14px_-6px_rgba(43,42,40,0.35)]" : "text-tenue hover:text-inchiostro",
-                  )}
-                >
-                  {g.etichetta}
-                  <span className="numeri text-xs text-tenue">{n}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
+          <SchedeElenco
+            nome="Posizione"
+            voci={gruppi.map((g) => ({
+              id: g.id,
+              etichetta: g.etichetta,
+              numero: g.id === "tutti" ? immobili.length : g.id === "mappa" ? nMappa : immobili.length - nMappa,
+            }))}
+            scelta={r.scelto.split("|")[0]}
+            onScegli={(id) => r.setScelto(`${id}|${r.scelto.split("|")[1] ?? ""}`)}
+          />
+          <span aria-hidden className="hidden h-5 w-px bg-linea-forte lg:block" />
           <FiltroGruppi
             senzaSchede
             gruppi={[]}

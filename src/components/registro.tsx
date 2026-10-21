@@ -275,6 +275,46 @@ export function filtroGruppi(gruppi: GruppoFiltro[]) {
  * Filtro a schede (es. In lavorazione · Archivio · Tutte) con, sotto, i pallini colorati
  * dei singoli stati presenti nella scheda scelta: un clic filtra quello stato, un secondo clic torna alla scheda.
  */
+/**
+ * Schede degli elenchi (Tutti, Privati, Aziende…): testo con il numero accanto e una riga sotto la scheda
+ * scelta, come le sezioni delle schede anagrafiche.
+ */
+export function SchedeElenco({
+  nome,
+  voci,
+  scelta,
+  onScegli,
+}: {
+  nome: string;
+  voci: { id: string; etichetta: string; numero: number }[];
+  scelta: string;
+  onScegli: (id: string) => void;
+}) {
+  return (
+    <div role="tablist" aria-label={nome} className="flex w-fit items-center gap-5">
+      {voci.map((v) => {
+        const attivo = v.id === scelta;
+        return (
+          <button
+            key={v.id}
+            type="button"
+            role="tab"
+            aria-selected={attivo}
+            onClick={() => onScegli(v.id)}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 border-b-2 text-[0.875rem] transition-colors duration-200",
+              attivo ? "border-inchiostro font-medium text-inchiostro" : "border-transparent text-inchiostro-2 hover:text-inchiostro",
+            )}
+          >
+            {v.etichetta}
+            <span className="numeri text-[0.75rem] font-normal text-tenue">{v.numero}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function FiltroGruppi({
   gruppi,
   ordine,
@@ -305,31 +345,16 @@ export function FiltroGruppi({
     .map((s) => ({ id: s, ...info(s), conteggio: conta(s) }))
     .filter((s) => s.conteggio > 0);
   return (
-    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-4">
-      {senzaSchede ? null : <div role="tablist" aria-label={nome} className="inline-flex w-fit rounded-full bg-superficie-2 p-1">
-        {gruppi.map((g) => {
-          const attivo = g.id === gruppo;
-          const n = g.stati ? stati.filter((x) => g.stati!.includes(x)).length : stati.length;
-          return (
-            <button
-              key={g.id}
-              type="button"
-              role="tab"
-              aria-selected={attivo}
-              onClick={() => onScegli(`${g.id}|`)}
-              className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-full px-4 text-[0.8125rem] transition-all duration-200",
-                attivo
-                  ? "bg-superficie font-medium text-inchiostro shadow-[0_4px_14px_-6px_rgba(43,42,40,0.35)]"
-                  : "text-tenue hover:text-inchiostro",
-              )}
-            >
-              {g.etichetta}
-              <span className={cn("numeri text-xs", attivo ? "text-tenue" : "text-tenue/70")}>{n}</span>
-            </button>
-          );
-        })}
-      </div>}
+    <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
+      {senzaSchede ? null : (
+        <SchedeElenco
+          nome={nome}
+          voci={gruppi.map((g) => ({ id: g.id, etichetta: g.etichetta, numero: g.stati ? stati.filter((x) => g.stati!.includes(x)).length : stati.length }))}
+          scelta={gruppo}
+          onScegli={(id) => onScegli(`${id}|`)}
+        />
+      )}
+      {!senzaSchede && visibili.length > 1 ? <span aria-hidden className="hidden h-5 w-px bg-linea-forte lg:block" /> : null}
       {visibili.length > 1 ? (
         <div role="group" aria-label="Stato" className="flex flex-wrap items-center gap-1">
           {visibili.map((s) => {
