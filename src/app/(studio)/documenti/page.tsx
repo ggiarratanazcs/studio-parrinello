@@ -1,6 +1,7 @@
 import { Files } from "lucide-react";
 import { Suspense } from "react";
 import { Cartiglio } from "@/components/cartiglio";
+import { DISEGNO_DOCUMENTI } from "@/lib/fondi";
 import { Pannello, Vuoto } from "@/components/ui";
 import { contaDocumenti } from "@/lib/dati";
 
@@ -20,7 +21,7 @@ const CATEGORIE = [
 
 export default function PaginaDocumenti() {
   return (
-    <Suspense fallback={<Cartiglio titolo="Documenti" />}>
+    <Suspense fallback={<Cartiglio titolo="Documenti" disegno={DISEGNO_DOCUMENTI} />}>
       <Documenti />
     </Suspense>
   );
@@ -32,6 +33,7 @@ async function Documenti() {
     <>
       <Cartiglio
         titolo="Documenti"
+        disegno={DISEGNO_DOCUMENTI}
         celle={[{ etichetta: "File archiviati", valore: totale, icona: Files }]}
       />
       <Pannello>
