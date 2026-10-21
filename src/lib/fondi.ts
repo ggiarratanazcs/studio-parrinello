@@ -31,5 +31,5 @@ export const DISEGNO_HOME = "/brand/ortigia.webp";
 /** Disegno della testata dei Clienti: il tavolo di lavoro con i committenti, visto dall'alto. */
 export const DISEGNO_CLIENTI = "/brand/riunione.webp";
 
-/** Disegno della testata degli Immobili: schizzo prospettico di una villa moderna (disegno originale). */
-export const DISEGNO_IMMOBILI = "/brand/villa.svg";
+/** Disegno della testata degli Immobili: schizzo prospettico di una casa a due volumi. */
+export const DISEGNO_IMMOBILI = "/brand/casa.webp";
