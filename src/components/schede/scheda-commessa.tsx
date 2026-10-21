@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { CalendarDays, CircleDot, Euro } from "lucide-react";
-import { AvanzamentoFasi, Pannello } from "@/components/ui";
+import { Pannello } from "@/components/ui";
 import { leggiCommessa } from "@/lib/dati";
 import { getPermessi } from "@/lib/permessi";
 import { FONDI } from "@/lib/fondi";
@@ -189,45 +189,45 @@ export async function SchedaCommessa({ id }: { id: string }) {
           },
           (vede.fasi || vede.cronoprogramma || vede.allegati) && {
             id: "fasi",
-            titolo: vede.fasi ? (vede.allegati ? "Fasi e allegati" : "Fasi") : vede.allegati ? "Allegati" : "Cronoprogramma",
+            titolo: vede.fasi ? "Fasi" : vede.allegati ? "Allegati" : "Cronoprogramma",
             sottotitolo: [vede.fasi ? `${completate}/${fasi.length} completate` : null, vede.allegati ? plurale(documenti.length, "allegato", "allegati") : null].filter(Boolean).join(" · "),
             contenuto: (
               <Pannello>
-                <Cartelle
-                  destra={<AvanzamentoFasi completate={completate} totali={fasi.length} colore={statoCommessa(c.stato).colore} />}
-                  cartelle={[
-                    vede.fasi && {
-                      id: "fasi",
-                      nome: "Fasi",
-                      conteggio: fasi.length,
-                      contenuto: (
-                        <FasiCommessa
-                          commessaId={c.id}
-                          fasi={fasi}
-                          profili={c.profiliStudio}
-                          catalogo={c.catalogoFasi}
-                          committenza={c.committenza}
-                          documenti={documenti}
-                          modificabile={liv("c.fasi") >= 2}
-                          importi={vede.onorario}
-                          allegati={liv("c.allegati")}
-                          eliminabile={completo}
-                        />
-                      ),
-                    },
-                    vede.cronoprogramma && {
-                      id: "cronoprogramma",
-                      nome: "Cronoprogramma",
-                      contenuto: <Cronoprogramma fasi={fasi} apertura={c.data_apertura} finePrevista={c.data_fine_prevista} oggi={oggiIso()} />,
-                    },
-                    vede.allegati && {
-                      id: "allegati",
-                      nome: "Allegati",
-                      conteggio: documenti.length,
-                      contenuto: <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />,
-                    },
-                  ].filter((x) => !!x)}
-                />
+                {vede.fasi ? (
+                  <FasiCommessa
+                    commessaId={c.id}
+                    fasi={fasi}
+                    profili={c.profiliStudio}
+                    catalogo={c.catalogoFasi}
+                    committenza={c.committenza}
+                    documenti={documenti}
+                    apertura={c.data_apertura}
+                    finePrevista={c.data_fine_prevista}
+                    oggi={oggiIso()}
+                    modificabile={liv("c.fasi") >= 2}
+                    importi={vede.onorario}
+                    allegati={liv("c.allegati")}
+                    cronoprogramma={vede.cronoprogramma}
+                    eliminabile={completo}
+                  />
+                ) : (
+                  // Senza le fasi: restano visibili, se permessi, il cronoprogramma e l'archivio degli allegati
+                  <Cartelle
+                    cartelle={[
+                      vede.cronoprogramma && {
+                        id: "cronoprogramma",
+                        nome: "Cronoprogramma",
+                        contenuto: <Cronoprogramma fasi={fasi} apertura={c.data_apertura} finePrevista={c.data_fine_prevista} oggi={oggiIso()} />,
+                      },
+                      vede.allegati && {
+                        id: "allegati",
+                        nome: "Allegati",
+                        conteggio: documenti.length,
+                        contenuto: <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />,
+                      },
+                    ].filter((x) => !!x)}
+                  />
+                )}
               </Pannello>
             ),
           },

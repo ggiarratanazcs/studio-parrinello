@@ -77,7 +77,8 @@ export function AllegatiFase({
   eliminabile = true,
 }: {
   commessaId: string;
-  faseId: string;
+  /** null = documenti generali della commessa, senza fase */
+  faseId: string | null;
   documenti: Documento[];
   /** Può caricare file (permesso "Allegati" modificabile) */
   modificabile?: boolean;
@@ -91,6 +92,8 @@ export function AllegatiFase({
   const [errore, setErrore] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
   const [daEliminare, setDaEliminare] = useState<string | null>(null);
+  const [sopra, setSopra] = useState(false);
+  const idFile = `file-${faseId ?? `generali-${commessaId}`}`;
 
   async function carica(files: FileList | null) {
     if (!files?.length) return;
@@ -105,7 +108,7 @@ export function AllegatiFase({
     setCaricamento({ fatti: 0, totali: elenco.length });
     const falliti: string[] = [];
     for (const [i, file] of elenco.entries()) {
-      const percorso = `${commessaId}/${faseId}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
+      const percorso = `${commessaId}/${faseId ?? "generali"}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
       const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });
       if (su.error) {
         falliti.push(file.name);
@@ -160,7 +163,7 @@ export function AllegatiFase({
       <div className="flex items-center justify-between gap-3">
         <h4 className="flex items-center gap-2 text-sm font-medium text-inchiostro-2">
           <Paperclip className="size-4" strokeWidth={1.8} />
-          Allegati della fase
+          {faseId ? "Allegati della fase" : "Documenti generali della commessa"}
           {documenti.length ? <span className="numeri text-tenue">({documenti.length})</span> : null}
         </h4>
       </div>
@@ -207,7 +210,19 @@ export function AllegatiFase({
       )}
 
       {modificabile ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div
+          className={cn("flex flex-wrap items-center gap-2 rounded-medio border border-dashed p-2 transition-colors", sopra ? "border-accento bg-accento/5" : "border-linea")}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setSopra(true);
+          }}
+          onDragLeave={() => setSopra(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setSopra(false);
+            carica(e.dataTransfer.files);
+          }}
+        >
         <select
           aria-label="Categoria dei file"
           value={categoria}
@@ -220,9 +235,9 @@ export function AllegatiFase({
             </option>
           ))}
         </select>
-        <input ref={input} type="file" multiple className="sr-only" id={`file-${faseId}`} onChange={(e) => carica(e.target.files)} />
+        <input ref={input} type="file" multiple className="sr-only" id={idFile} onChange={(e) => carica(e.target.files)} />
         <label
-          htmlFor={`file-${faseId}`}
+          htmlFor={idFile}
           className={cn(
             "inline-flex h-10 cursor-pointer items-center gap-2 rounded-medio border border-linea-forte bg-superficie px-4 text-[0.9375rem] font-medium transition-colors hover:bg-superficie-2",
             caricamento && "pointer-events-none opacity-60",
@@ -231,6 +246,7 @@ export function AllegatiFase({
           {caricamento ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" strokeWidth={1.8} />}
           {caricamento ? `Caricamento ${caricamento.fatti}/${caricamento.totali}…` : "Carica file"}
         </label>
+        <span className="text-sm text-tenue">o trascinali qui</span>
         </div>
       ) : null}
       {caricamento ? (

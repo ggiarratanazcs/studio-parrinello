@@ -237,12 +237,33 @@ export type DatiFase = {
   note: string | null;
 };
 
+/** Avanzamento a scatti del 25%. */
+const aQuarti = (v: unknown) => Math.max(0, Math.min(100, Math.round((Number(v) || 0) / 25) * 25));
+
 /**
- * Aggiorna una fase. Le date effettive si registrano da sole: l'inizio quando la fase
- * passa "in corso", la fine quando è completata (che porta anche l'avanzamento al 100%).
+ * Stato che deriva dall'avanzamento: 0 da avviare, 100 completata, altrimenti in corso.
+ * Sospesa e annullata si scelgono a mano e non cambiano muovendo l'avanzamento.
+ */
+function statoDaAvanzamento(avanzamento: number, attuale?: string) {
+  if (attuale === "sospesa" || attuale === "annullata") return attuale;
+  return avanzamento >= 100 ? "completata" : avanzamento > 0 ? "in_corso" : "da_avviare";
+}
+
+/** Date effettive: l'inizio quando la fase parte, la fine quando è completata. */
+function dateEffettive(stato: string, attuale: { data_inizio_eff: string | null; data_fine_eff: string | null }) {
+  const avviata = ["in_corso", "in_revisione", "completata"].includes(stato);
+  return {
+    data_inizio_eff: avviata || stato === "sospesa" ? (attuale.data_inizio_eff ?? (avviata ? oggiIso() : null)) : null,
+    data_fine_eff: stato === "completata" ? (attuale.data_fine_eff ?? oggiIso()) : null,
+  };
+}
+
+/**
+ * Aggiorna una fase dalla riga aperta. Con stato "auto" lo stato segue l'avanzamento;
+ * uno stato scelto a mano prevale. Completata porta l'avanzamento al 100%.
  */
 export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
-  if (!STATI_FASE_AMMESSI.includes(dati.stato)) return { ok: false, errore: "Stato della fase non valido." };
+  if (dati.stato !== "auto" && !STATI_FASE_AMMESSI.includes(dati.stato)) return { ok: false, errore: "Stato della fase non valido." };
   const inizio = dataO(dati.data_inizio_prev);
   const fine = dataO(dati.data_fine_prev);
   if (inizio && fine && fine < inizio) return { ok: false, errore: "La fine prevista non può precedere l'inizio." };
@@ -256,14 +277,14 @@ export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
     .maybeSingle();
   if (errLettura || !attuale) return { ok: false, errore: "Fase non trovata." };
 
-  const avviata = ["in_corso", "in_revisione", "completata"].includes(dati.stato);
-  const completata = dati.stato === "completata";
-  const avanzamento = completata ? 100 : Math.max(0, Math.min(100, Math.round(Number(dati.avanzamento_pct) || 0)));
+  let avanzamento = aQuarti(dati.avanzamento_pct);
+  const stato = dati.stato === "auto" ? statoDaAvanzamento(avanzamento) : dati.stato;
+  if (stato === "completata") avanzamento = 100;
 
   const { error } = await supabase
     .from("commesse_fasi")
     .update({
-      stato: dati.stato,
+      stato,
       responsabile_id: dati.responsabile_id || null,
       data_inizio_prev: inizio,
       data_fine_prev: fine,
@@ -271,13 +292,43 @@ export async function aggiornaFase(id: string, dati: DatiFase): Promise<Esito> {
       ore_budget: numeroO(dati.ore_budget),
       avanzamento_pct: avanzamento,
       note: dati.note?.trim() || null,
-      data_inizio_eff: avviata ? (attuale.data_inizio_eff ?? oggiIso()) : null,
-      data_fine_eff: completata ? (attuale.data_fine_eff ?? oggiIso()) : null,
+      ...dateEffettive(stato, attuale),
     })
     .eq("id", id);
   if (error) return { ok: false, errore: "Non è stato possibile salvare la fase." };
   aggiornaElenchi("/commesse");
   return { ok: true, id };
+}
+
+/** Avanzamento dalla tabella (a scatti del 25%): lo stato si aggiorna di conseguenza. */
+export async function avanzaFase(id: string, percentuale: number): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: attuale } = await supabase.from("commesse_fasi").select("stato, data_inizio_eff, data_fine_eff").eq("id", id).maybeSingle();
+  if (!attuale) return { ok: false, errore: "Fase non trovata." };
+  const avanzamento = aQuarti(percentuale);
+  const stato = statoDaAvanzamento(avanzamento, attuale.stato);
+  const { data, error } = await supabase
+    .from("commesse_fasi")
+    .update({ avanzamento_pct: avanzamento, stato, ...dateEffettive(stato, attuale) })
+    .eq("id", id)
+    .select("id");
+  if (error || !data?.length) return { ok: false, errore: "Non è stato possibile aggiornare l'avanzamento." };
+  aggiornaElenchi("/commesse");
+  return { ok: true, id };
+}
+
+/** Nuovo ordine delle fasi dopo un trascinamento. */
+export async function riordinaFasi(commessaId: string, ids: string[]): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: tutte } = await supabase.from("commesse_fasi").select("id").eq("commessa_id", commessaId);
+  const presenti = new Set((tutte ?? []).map((f) => f.id));
+  if (ids.length !== presenti.size || ids.some((id) => !presenti.has(id))) return { ok: false, errore: "Le fasi sono cambiate: ricarica la pagina." };
+  const esiti = await Promise.all(ids.map((id, k) => supabase.from("commesse_fasi").update({ ordine: (k + 1) * 10 }).eq("id", id).select("id")));
+  if (esiti.some((e) => e.error || !e.data?.length)) return { ok: false, errore: "Non è stato possibile riordinare le fasi." };
+  aggiornaElenchi("/commesse");
+  return { ok: true, id: commessaId };
 }
 
 /** Aggiunge una fase dal catalogo (o personalizzata con un nome) in fondo all'elenco. */
@@ -319,7 +370,7 @@ export async function eliminaFase(id: string): Promise<Esito> {
   if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
   const { data, error } = await supabase.from("commesse_fasi").delete().eq("id", id).select("id");
   if (error) return { ok: false, errore: "Non è stato possibile eliminare la fase." };
-  if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare le fasi." };
+  if (!data?.length) return { ok: false, errore: "Il tuo profilo non può eliminare le fasi." };
   aggiornaElenchi("/commesse");
   return { ok: true, id };
 }
