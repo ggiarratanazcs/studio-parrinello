@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Check, ChevronDown, Copy, Mail, MapPin, Pencil, Phone, Plus, Star, Trash2, User, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Copy, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, User, X } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
@@ -74,10 +74,10 @@ function daCliente(c: Cliente): DatiCliente {
 function IconaTipo({ tipo }: { tipo: string }) {
   const Icona = tipo === "persona_fisica" ? User : Building2;
   return (
-    <span aria-hidden className="relative inline-flex text-inchiostro">
-      <Icona className="size-9" strokeWidth={1.25} />
+    <span aria-hidden className="relative inline-flex shrink-0 text-inchiostro">
+      <Icona className="size-8" strokeWidth={1.3} />
       {tipo === "ente_pubblico" ? (
-        <span className="absolute -right-4 -top-1.5 text-[0.6875rem] font-semibold leading-none tracking-[0.06em] text-inchiostro">PA</span>
+        <span className="absolute -right-3.5 -top-1.5 text-[0.625rem] font-semibold leading-none tracking-[0.06em] text-inchiostro">PA</span>
       ) : null}
     </span>
   );
@@ -126,26 +126,42 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
   const sede = [c.indirizzo, localita].filter(Boolean).join(", ");
   const scrivi = c.pec ?? c.email;
   const totale = scheda.prefattibilita.length + scheda.preventivi.length + scheda.commesse.length;
-  const azione = "grid h-10 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro transition-colors hover:bg-superficie";
+  const solo = (coppie: [string, string | null | undefined | false][]) => coppie.filter((x): x is [string, string] => !!x[1]);
+  const codici = solo([
+    ["Partita IVA", c.tipo !== "persona_fisica" && c.partita_iva],
+    ["Cod. fiscale", c.codice_fiscale],
+    [ente ? "Codice IPA" : "Codice SDI", ente ? c.codice_ipa : c.codice_sdi],
+  ]);
+  const contatti: [string, string, typeof Mail][] = (
+    [
+      ["PEC", c.pec, ShieldCheck],
+      ["Email", c.email, Mail],
+      ["Telefono", c.telefono, Phone],
+      ["Sede", sede, MapPin],
+    ] as [string, string | null, typeof Mail][]
+  ).filter((x): x is [string, string, typeof Mail] => !!x[1]);
+  const azione = "grid h-10 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro transition-colors hover:bg-linea";
 
   return (
-    <div className="grid gap-4 lg:h-full lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-      {/* ── Carta scura: chi è il cliente ── */}
-      <aside className="carta-scura px-6 py-6 lg:overflow-y-auto">
+    <div className="grid gap-4 lg:h-full lg:grid-cols-[21.5rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+      {/* ── Carta dell'identità: chi è il cliente ── */}
+      <aside className="carta-chiara senza-barra px-6 py-6 lg:overflow-y-auto">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[0.6875rem] font-medium uppercase tracking-[0.18em] text-tenue">Anagrafica · Cliente</p>
+          <span className="etichetta-anagrafica">Anagrafica · Cliente</span>
           <span className="lg:hidden">
             <Chiudi />
           </span>
         </div>
 
-        <div className="mt-7">
+        <div className={cn("mt-5 flex items-center", ente ? "gap-5" : "gap-3.5")}>
           <IconaTipo tipo={c.tipo} />
+          <div className="min-w-0">
+            <h1 className="titolo-display text-[1.375rem] leading-[1.15] text-inchiostro">{c.denominazione ?? "Senza nome"}</h1>
+            <p className="mt-0.5 text-[0.875rem] text-inchiostro-2">{TIPI_CLIENTE[c.tipo] ?? c.tipo}</p>
+          </div>
         </div>
-        <h1 className="titolo-display mt-4 text-[1.625rem] leading-[1.1] text-inchiostro">{c.denominazione ?? "Senza nome"}</h1>
-        <p className="mt-1.5 text-[0.9375rem] text-inchiostro-2">{TIPI_CLIENTE[c.tipo] ?? c.tipo}</p>
 
-        <div className="mt-5 grid grid-cols-4 gap-2">
+        <div className="mt-4 grid grid-cols-4 gap-2">
           {scrivi ? (
             <a href={`mailto:${scrivi}`} className={azione} aria-label={`Scrivi a ${scrivi}`} data-suggerimento={c.pec ? "Scrivi alla PEC" : "Scrivi"} data-suggerimento-lato="sotto">
               <Mail className="size-[18px]" strokeWidth={1.7} />
@@ -175,28 +191,39 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
           ) : (
             <span className={cn(azione, "pointer-events-none opacity-35")} aria-hidden><MapPin className="size-[18px]" strokeWidth={1.7} /></span>
           )}
-          <button type="button" onClick={onModifica} className="grid h-10 place-items-center rounded-[10px] bg-inchiostro text-[color:var(--fondo-carta)] transition-opacity hover:opacity-90" aria-label="Modifica" data-suggerimento="Modifica" data-suggerimento-lato="sotto">
+          <button type="button" onClick={onModifica} className="grid h-10 place-items-center rounded-[10px] bg-inchiostro text-superficie transition-opacity hover:opacity-90" aria-label="Modifica" data-suggerimento="Modifica" data-suggerimento-lato="sotto">
             <Pencil className="size-[18px]" strokeWidth={1.7} />
           </button>
         </div>
 
-        <dl className="mt-7 flex flex-col gap-4">
-          {c.tipo !== "persona_fisica" ? <DatoCopiabile voce="Partita IVA" valore={c.partita_iva} codice /> : null}
-          <DatoCopiabile voce="Codice fiscale" valore={c.codice_fiscale} codice />
-          {ente ? <DatoCopiabile voce="Codice IPA" valore={c.codice_ipa} codice /> : <DatoCopiabile voce="Codice SDI" valore={c.codice_sdi} codice />}
-          <DatoCopiabile voce="PEC" valore={c.pec} />
-          <DatoCopiabile voce="Email" valore={c.email} />
-          <DatoCopiabile voce="Telefono" valore={c.telefono} />
-          <DatoCopiabile voce="Sede" valore={sede || null} />
-        </dl>
+        {/* Solo i dati compilati: quelli mancanti si aggiungono da Modifica */}
+        {codici.length ? (
+          <dl className="mt-5 flex flex-col gap-1 border-b border-linea pb-4">
+            {codici.map(([voce, valore]) => (
+              <DatoCopiabile key={voce} voce={voce} valore={valore} codice riga />
+            ))}
+          </dl>
+        ) : null}
+        {contatti.length ? (
+          <dl className={cn("flex flex-col gap-2", codici.length ? "mt-4" : "mt-5")}>
+            {contatti.map(([voce, valore, icona]) => (
+              <DatoCopiabile key={voce} voce={voce} valore={valore} icona={icona} />
+            ))}
+          </dl>
+        ) : null}
+        {!codici.length && !contatti.length ? (
+          <button type="button" onClick={onModifica} className="mt-5 text-[0.875rem] text-accento hover:underline">
+            Completa i dati del cliente
+          </button>
+        ) : null}
 
         <Referenti clienteId={c.id} referenti={referenti} ente={ente} />
 
         {c.fonte || c.note ? (
-          <div className="mt-8">
+          <div className="mt-6">
             <TitoloColonna>Note</TitoloColonna>
             {c.fonte ? <p className="text-[0.875rem] text-inchiostro-2">Ci ha conosciuti: {c.fonte}</p> : null}
-            {c.note ? <p className="mt-1.5 whitespace-pre-line text-[0.875rem] text-inchiostro-2">{c.note}</p> : null}
+            {c.note ? <p className="mt-1.5 line-clamp-2 text-[0.875rem] text-inchiostro-2" title={c.note}>{c.note}</p> : null}
           </div>
         ) : null}
       </aside>
@@ -261,10 +288,9 @@ function TitoloColonna({ children, azione }: { children: ReactNode; azione?: Rea
 }
 
 /** Dato con pulsante per copiarlo negli appunti. */
-function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string | null; codice?: boolean }) {
+function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: string; valore: string; codice?: boolean; riga?: boolean; icona?: typeof Mail }) {
   const [copiato, setCopiato] = useState(false);
   async function copia() {
-    if (!valore) return;
     try {
       await navigator.clipboard.writeText(valore);
       setCopiato(true);
@@ -273,31 +299,50 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
       // appunti non disponibili: nessun messaggio, il dato resta selezionabile
     }
   }
+  const pulsante = (
+    <button
+      type="button"
+      onClick={copia}
+      className="grid size-6 shrink-0 place-items-center rounded-full text-tenue opacity-100 transition-opacity hover:text-inchiostro md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+      aria-label={copiato ? `${voce} copiato` : `Copia ${voce}`}
+    >
+      {copiato ? <Check className="size-3.5" strokeWidth={2.2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
+    </button>
+  );
+  const testo = cn(
+    "min-w-0 text-inchiostro [overflow-wrap:anywhere]",
+    // Gli indirizzi email lunghi (PEC degli enti) stanno su una riga con un corpo appena più piccolo
+    valore.includes("@") || codice ? "text-[0.84375rem] leading-6" : "text-[0.9375rem]",
+    codice && "numeri tracking-[0.02em]",
+  );
+  if (Icona) {
+    // Recapito: icona al posto dell'etichetta, su una riga
+    return (
+      <div className="group flex items-start gap-2.5">
+        <dt className="mt-[3px] shrink-0 text-inchiostro-2" title={voce}>
+          <Icona aria-hidden className="size-4" strokeWidth={1.7} />
+          <span className="sr-only">{voce}</span>
+        </dt>
+        <dd className={cn(testo, "flex-1")}>{valore}</dd>
+        {pulsante}
+      </div>
+    );
+  }
+  if (riga) {
+    return (
+      <div className="group flex items-center gap-2">
+        <dt className="w-[5.25rem] shrink-0 text-[0.8125rem] text-inchiostro-2">{voce}</dt>
+        <dd className={cn(testo, "flex-1")}>{valore}</dd>
+        {pulsante}
+      </div>
+    );
+  }
   return (
-    <div className="group">
-      <dt className="text-[0.75rem] text-tenue">{voce}</dt>
+    <div className="group min-w-0">
+      <dt className="text-[0.75rem] text-inchiostro-2">{voce}</dt>
       <dd className="mt-0.5 flex items-start gap-1.5">
-        <span
-          className={cn(
-            "min-w-0 flex-1 text-inchiostro [overflow-wrap:anywhere]",
-            // Gli indirizzi email lunghi (PEC degli enti) stanno su una riga con un corpo appena più piccolo
-            valore?.includes("@") ? "text-[0.8125rem] leading-6" : "text-[0.9375rem]",
-            codice && "numeri tracking-[0.03em]",
-            !valore && "text-tenue",
-          )}
-        >
-          {valore ?? "—"}
-        </span>
-        {valore ? (
-          <button
-            type="button"
-            onClick={copia}
-            className="grid size-6 shrink-0 place-items-center rounded-full text-tenue opacity-100 transition-opacity hover:text-inchiostro md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
-            aria-label={copiato ? `${voce} copiato` : `Copia ${voce}`}
-          >
-            {copiato ? <Check className="size-3.5" strokeWidth={2.2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
-          </button>
-        ) : null}
+        <span className={cn(testo, "flex-1")}>{valore}</span>
+        {pulsante}
       </dd>
     </div>
   );
@@ -557,7 +602,7 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
   );
 
   return (
-    <div className="mt-7">
+    <div className="mt-6">
       <TitoloColonna
         azione={
           aperto === null ? (
@@ -573,31 +618,21 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
       {referenti.length === 0 && aperto !== "nuovo" ? (
         <p className="text-[0.875rem] text-tenue">{ente ? "Aggiungi il RUP o l'ufficio di riferimento." : "Nessun referente oltre al cliente."}</p>
       ) : null}
-      <ul className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-0.5">
         {referenti.map((r) =>
           aperto === r.id ? (
             <li key={r.id}>{modulo}</li>
           ) : (
-            <li key={r.id} className="group -mx-2 flex items-start gap-2.5 rounded-medio px-2 py-2 hover:bg-superficie/70">
-              <span aria-hidden className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border border-linea-forte bg-superficie text-[0.6875rem] text-inchiostro-2">
-                {r.nome
-                  .split(/\s+/)
-                  .filter((p) => p.length > 1 && !/^(ing|arch|geom|dott|avv|sig|sig\.ra)\.?$/i.test(p))
-                  .slice(0, 2)
-                  .map((p) => p.charAt(0))
-                  .join("")
-                  .toUpperCase()}
-              </span>
+            <li key={r.id} className="group -mx-2 flex items-start gap-2 rounded-medio px-2 py-1.5 hover:bg-superficie-2/60">
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 text-[0.875rem]">
                   <span className="truncate font-medium">{r.nome}</span>
+                  {r.ruolo ? <span className="truncate text-inchiostro-2">· {r.ruolo}</span> : null}
                   {r.principale ? <Star aria-label="Referente principale" className="size-3 shrink-0 fill-current text-[color:var(--stato-preventivo)]" strokeWidth={1.5} /> : null}
                 </p>
-                {r.ruolo ? <p className="text-[0.8125rem] text-inchiostro-2">{r.ruolo}</p> : null}
-                <p className="flex flex-col text-[0.8125rem] text-tenue">
+                <p className="flex flex-wrap gap-x-2.5 text-[0.8125rem] text-inchiostro-2" title={r.note ?? undefined}>
                   {r.email ? <a href={`mailto:${r.email}`} className="truncate hover:text-accento">{r.email}</a> : null}
                   {r.telefono ? <a href={`tel:${r.telefono.replace(/\s+/g, "")}`} className="numeri hover:text-accento">{r.telefono}</a> : null}
-                  {r.note ? <span>{r.note}</span> : null}
                 </p>
                 {daEliminare === r.id ? (
                   <p className="mt-1 flex items-center gap-2 text-[0.8125rem]">

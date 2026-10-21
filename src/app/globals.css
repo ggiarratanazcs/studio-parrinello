@@ -670,3 +670,25 @@ html[data-theme="navy"] .carta-scura {
   --accento-hover: #c6ddfb;
 }
 
+
+/* Etichetta della sezione anagrafica, unica nota di colore della scheda */
+.etichetta-anagrafica {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border-radius: 9999px;
+  background: var(--accento-tenue);
+  color: var(--accento);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+/* Colonna che può scorrere senza mostrare la barra */
+.senza-barra {
+  scrollbar-width: none;
+}
+.senza-barra::-webkit-scrollbar {
+  display: none;
+}
