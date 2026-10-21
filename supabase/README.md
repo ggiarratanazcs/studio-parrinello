@@ -16,3 +16,4 @@ Dopo ogni migrazione rigenerare i tipi in `src/lib/database.types.ts`.
 5. `configurazione_studio.sql` — tabella `studio` (nome, claim, logo, dati dei documenti) e spazio `studio` per il logo
 6. `permessi.sql` — ruoli titolare/architetto/collaboratore, tabelle `permessi_ruolo` e `permessi_utente`,
    funzioni `permesso(chiave)` e `vede_commessa(id)`, regole di accesso riscritte sui permessi
+7. `documenti_immobile.sql` — documenti caricati direttamente su un immobile (colonna `immobile_id`, commessa facoltativa)

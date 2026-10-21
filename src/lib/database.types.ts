@@ -411,12 +411,13 @@ export type Database = {
         Row: {
           caricato_da: string | null
           categoria: string
-          commessa_id: string
+          commessa_id: string | null
           created_at: string
           descrizione: string | null
           dimensione_byte: number | null
           fase_id: string | null
           id: string
+          immobile_id: string | null
           latitudine: number | null
           longitudine: number | null
           mime_type: string | null
@@ -429,12 +430,13 @@ export type Database = {
         Insert: {
           caricato_da?: string | null
           categoria?: string
-          commessa_id: string
+          commessa_id?: string | null
           created_at?: string
           descrizione?: string | null
           dimensione_byte?: number | null
           fase_id?: string | null
           id?: string
+          immobile_id?: string | null
           latitudine?: number | null
           longitudine?: number | null
           mime_type?: string | null
@@ -453,6 +455,7 @@ export type Database = {
           dimensione_byte?: number | null
           fase_id?: string | null
           id?: string
+          immobile_id?: string | null
           latitudine?: number | null
           longitudine?: number | null
           mime_type?: string | null

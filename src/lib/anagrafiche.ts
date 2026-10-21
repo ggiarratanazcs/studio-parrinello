@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { senzaImporti, vedeImporti } from "@/lib/permessi";
+import { getPermessi, senzaImporti, vedeImporti } from "@/lib/permessi";
 import type { Tables } from "@/lib/database.types";
 import { statoCommessa } from "@/lib/dominio";
 import { STATI_PREFATTIBILITA, STATI_PREVENTIVO } from "@/lib/preventivo";
@@ -217,7 +217,19 @@ export type Immobile = Tables<"immobili">;
 export type Catasto = Tables<"immobili_catasto">;
 
 export type CommittenteImmobile = { id: string; nome: string; tipo: string; pratiche: number };
-export type DocumentoImmobile = { id: string; titolo: string; categoria: string; data: string; commessa: { id: string; codice: string | null; titolo: string } };
+export type DocumentoImmobile = {
+  id: string;
+  titolo: string;
+  nome_file: string;
+  categoria: string;
+  data: string;
+  storage_path: string;
+  mime_type: string | null;
+  dimensione_byte: number | null;
+  /** Commessa e fase di provenienza; null per i documenti caricati sull'immobile */
+  commessa: { id: string; codice: string | null; titolo: string } | null;
+  fase: { id: string; codice: string | null; nome: string } | null;
+};
 
 export type SchedaImmobileDati = {
   immobile: Immobile;
@@ -228,6 +240,11 @@ export type SchedaImmobileDati = {
   committenti: CommittenteImmobile[];
   documenti: DocumentoImmobile[];
   totaleDocumenti: number;
+  /** Permessi sull'area Documenti: caricare (≥ 2) ed eliminare (3) i documenti dell'immobile */
+  documentiCaricabili: boolean;
+  documentiEliminabili: boolean;
+  /** false finché il database non ha la colonna immobile_id (file supabase/documenti_immobile.sql) */
+  documentiImmobileAttivi: boolean;
 };
 
 export async function leggiImmobile(id: string): Promise<SchedaImmobileDati | null> {
@@ -293,23 +310,32 @@ export async function leggiImmobile(id: string): Promise<SchedaImmobileDati | nu
     return { id: p.id, sigla: p.numero, titolo: p.titolo ?? "Pre-fattibilità", data: p.data_redazione ?? p.created_at, importo: p.onorario, stato: p.stato, statoEtichetta: s.etichetta, colore: s.colore, href: `/prefattibilita/${p.id}`, luogo: p.cliente?.denominazione ?? null };
   });
 
-  // Documenti archiviati sulle commesse di questo immobile (i più recenti)
+  // Documenti delle commesse su questo immobile e documenti caricati direttamente sull'immobile
+  const campi = "id, titolo, nome_file, categoria, created_at, storage_path, mime_type, dimensione_byte, commessa:commesse(id, codice, titolo), fase:commesse_fasi(id, codice, nome)";
   const idCommesse = (commesse.data ?? []).map((c) => c.id);
-  let documenti: DocumentoImmobile[] = [];
-  let totaleDocumenti = 0;
-  if (idCommesse.length) {
-    const { data, count, error } = await supabase
-      .from("documenti")
-      .select("id, titolo, categoria, created_at, commessa:commesse(id, codice, titolo)", { count: "exact" })
-      .in("commessa_id", idCommesse)
-      .order("created_at", { ascending: false })
-      .limit(40);
-    if (error) throw new Error(`Impossibile leggere i documenti dell'immobile: ${error.message}`);
-    totaleDocumenti = count ?? 0;
-    documenti = (data ?? [])
-      .filter((d) => d.commessa)
-      .map((d) => ({ id: d.id, titolo: d.titolo, categoria: d.categoria, data: d.created_at, commessa: { id: d.commessa!.id, codice: d.commessa!.codice, titolo: d.commessa!.titolo } }));
-  }
+  const [daCommesse, propri] = await Promise.all([
+    idCommesse.length
+      ? supabase.from("documenti").select(campi).in("commessa_id", idCommesse).order("created_at", { ascending: false }).limit(1000)
+      : Promise.resolve({ data: [], error: null }),
+    supabase.from("documenti").select(campi).eq("immobile_id", id).is("commessa_id", null).order("created_at", { ascending: false }).limit(1000),
+  ]);
+  if (daCommesse.error) throw new Error(`Impossibile leggere i documenti dell'immobile: ${daCommesse.error.message}`);
+  // Senza la colonna immobile_id (database non ancora aggiornato) i documenti propri restano vuoti
+  const documentiImmobileAttivi = !propri.error;
+  const documenti: DocumentoImmobile[] = [...(propri.data ?? []), ...(daCommesse.data ?? [])].map((d) => ({
+    id: d.id,
+    titolo: d.titolo,
+    nome_file: d.nome_file,
+    categoria: d.categoria,
+    data: d.created_at,
+    storage_path: d.storage_path,
+    mime_type: d.mime_type,
+    dimensione_byte: d.dimensione_byte,
+    commessa: d.commessa ? { id: d.commessa.id, codice: d.commessa.codice, titolo: d.commessa.titolo } : null,
+    fase: d.fase ? { id: d.fase.id, codice: d.fase.codice, nome: d.fase.nome } : null,
+  }));
+  const totaleDocumenti = documenti.length;
+  const permessi = await getPermessi();
 
   const importi = await vedeImporti();
   return {
@@ -321,5 +347,8 @@ export async function leggiImmobile(id: string): Promise<SchedaImmobileDati | nu
     committenti: [...committenti.values()].sort((a, b) => b.pratiche - a.pratiche),
     documenti,
     totaleDocumenti,
+    documentiCaricabili: documentiImmobileAttivi && permessi.liv("documenti") >= 2,
+    documentiEliminabili: permessi.liv("documenti") >= 3,
+    documentiImmobileAttivi,
   };
 }

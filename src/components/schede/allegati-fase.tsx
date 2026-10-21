@@ -70,11 +70,13 @@ function nomeSicuro(nome: string) {
  * Le immagini caricate come elaborato grafico diventano foto. Restituisce un messaggio d'errore o null.
  */
 export async function caricaAllegati(
-  commessaId: string,
+  commessaId: string | null,
   faseId: string | null,
   elenco: File[],
   categoria = "elaborato_grafico",
   progresso?: (fatti: number, totali: number) => void,
+  /** Documento dell'immobile, senza commessa */
+  immobileId?: string,
 ): Promise<string | null> {
   const troppoGrandi = elenco.filter((f) => f.size > MAX_BYTE);
   if (troppoGrandi.length) return `Supera i 100 MB: ${troppoGrandi.map((f) => f.name).join(", ")}`;
@@ -82,7 +84,8 @@ export async function caricaAllegati(
   progresso?.(0, elenco.length);
   const falliti: string[] = [];
   for (const [i, file] of elenco.entries()) {
-    const percorso = `${commessaId}/${faseId ?? "generali"}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
+    const cartella = immobileId && !commessaId ? `immobili/${immobileId}` : `${commessaId}/${faseId ?? "generali"}`;
+    const percorso = `${cartella}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
     const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });
     if (su.error) {
       falliti.push(file.name);
@@ -91,6 +94,7 @@ export async function caricaAllegati(
       const { error } = await supabase.from("documenti").insert({
         commessa_id: commessaId,
         fase_id: faseId,
+        ...(immobileId ? { immobile_id: immobileId } : {}),
         categoria: immagine && categoria === "elaborato_grafico" ? "foto_sopralluogo" : categoria,
         titolo: file.name.replace(/\.[^.]+$/, ""),
         nome_file: file.name,

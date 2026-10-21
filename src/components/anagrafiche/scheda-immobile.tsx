@@ -3,15 +3,15 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, FileText, House, Landmark, Loader2, MapPin, MapPinned, Navigation, Pencil, Plus, Trash2, User, View } from "lucide-react";
+import { Building2, House, Landmark, Loader2, MapPin, MapPinned, Navigation, Pencil, Plus, Trash2, User, View } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
 import { useInFinestra } from "@/components/anagrafiche/finestra-anagrafica";
 import { Chiudi, DatoCopiabile, GruppoPratiche, Indietro, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
-import { CATEGORIE_DOCUMENTO } from "@/components/schede/allegati-fase";
+import { DocumentiImmobile } from "@/components/anagrafiche/documenti-immobile";
 import { TIPI_CLIENTE, VINCOLI } from "@/lib/dominio";
-import { cn, formattaData } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   cercaDoppioniImmobile,
   eliminaCatasto,
@@ -22,7 +22,7 @@ import {
   type DatiImmobile,
   type PossibileDoppioneImmobile,
 } from "@/lib/azioni-anagrafiche";
-import type { Catasto, CommittenteImmobile, DocumentoImmobile, Immobile, SchedaImmobileDati } from "@/lib/anagrafiche";
+import type { Catasto, CommittenteImmobile, Immobile, SchedaImmobileDati } from "@/lib/anagrafiche";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Scheda dell'immobile, stessa impostazione della scheda cliente:
@@ -229,7 +229,13 @@ function VistaImmobile({ scheda, onModifica }: { scheda: SchedaImmobileDati; onM
           ) : vista === "committenti" ? (
             <Committenti committenti={scheda.committenti} />
           ) : (
-            <Documenti documenti={scheda.documenti} totale={scheda.totaleDocumenti} />
+            <DocumentiImmobile
+              immobileId={i.id}
+              documenti={scheda.documenti}
+              caricabili={scheda.documentiCaricabili}
+              eliminabili={scheda.documentiEliminabili}
+              attivi={scheda.documentiImmobileAttivi}
+            />
           )}
         </div>
       </section>
@@ -263,36 +269,6 @@ function Committenti({ committenti }: { committenti: CommittenteImmobile[] }) {
         );
       })}
     </ul>
-  );
-}
-
-function Documenti({ documenti, totale }: { documenti: DocumentoImmobile[]; totale: number }) {
-  if (!totale) {
-    return <p className="text-[0.9375rem] text-inchiostro-2">Nessun documento: si caricano dalla scheda di ogni commessa e compaiono qui raccolti per immobile.</p>;
-  }
-  return (
-    <>
-      <ul className="flex flex-col gap-1.5">
-        {documenti.map((d) => (
-          <li key={d.id}>
-            <Link href={`/commesse/${d.commessa.id}`} className="flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors hover:bg-superficie-2/70">
-              <FileText aria-hidden className="size-[18px] shrink-0 text-inchiostro-2" strokeWidth={1.5} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.9375rem] text-inchiostro">{d.titolo}</span>
-                <span className="block truncate text-[0.8125rem] text-inchiostro-2">
-                  {[CATEGORIE_DOCUMENTO[d.categoria] ?? d.categoria, formattaData(d.data), [d.commessa.codice, d.commessa.titolo].filter(Boolean).join(" · ")].join(" · ")}
-                </span>
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {totale > documenti.length ? (
-        <p className="mt-3 text-[0.8125rem] text-tenue">
-          Sono mostrati gli ultimi {documenti.length} di {totale}: gli altri sono nelle schede delle commesse.
-        </p>
-      ) : null}
-    </>
   );
 }
 
