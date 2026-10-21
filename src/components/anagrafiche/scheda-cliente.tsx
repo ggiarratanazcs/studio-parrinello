@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookUser, Building2, Pencil, Plus, Star, Trash2, X } from "lucide-react";
+import { Check, Copy, Mail, MapPin, Pencil, Phone, Plus, Star, Trash2, X } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
-import { CartaAnagrafica, RigaRegistro, SezioneRegistro, classePillola } from "@/components/anagrafiche/carta";
+import { classePillola } from "@/components/anagrafiche/carta";
 import { useInFinestra } from "@/components/anagrafiche/finestra-anagrafica";
 import { TIPI_CLIENTE } from "@/lib/dominio";
-import { cn, formattaEuro } from "@/lib/utils";
+import { cn, formattaData, formattaEuro } from "@/lib/utils";
 import {
   cercaDoppioniCliente,
   eliminaReferente,
@@ -19,7 +19,14 @@ import {
   type DatiReferente,
   type PossibileDoppione,
 } from "@/lib/azioni-anagrafiche";
-import type { Cliente, ImmobileSeguito, Rapporto, Referente, SchedaClienteDati } from "@/lib/anagrafiche";
+import type { AnalisiCliente, Cliente, PraticaCliente, Referente, SchedaClienteDati } from "@/lib/anagrafiche";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Scheda del cliente, impostazione "profilo con colonna":
+   a sinistra identità, dati da copiare e referenti; a destra le pratiche avute
+   con lo studio (pre-fattibilità, preventivi, commesse) e l'analisi a indicatori.
+   Senza dati (scheda = null) si apre vuota in modifica: è la creazione dal "+".
+   ────────────────────────────────────────────────────────────────────────── */
 
 const vuoto: DatiCliente = {
   tipo: "persona_fisica",
@@ -63,6 +70,13 @@ function daCliente(c: Cliente): DatiCliente {
   };
 }
 
+/** Colore del quadrato con le iniziali, per tipo di cliente */
+const COLORE_TIPO: Record<string, string> = {
+  persona_fisica: "var(--stato-attiva)",
+  azienda: "var(--stato-preventivo)",
+  ente_pubblico: "var(--stato-prefattibilita)",
+};
+
 function iniziali(c: Cliente) {
   const parole =
     c.tipo === "persona_fisica"
@@ -71,172 +85,350 @@ function iniziali(c: Cliente) {
   return (parole.slice(0, 2).map((p) => p!.charAt(0)).join("") || "?").toUpperCase();
 }
 
-/** Pulsante di chiusura: in finestra torna indietro, a pagina intera porta all'elenco. */
+const classeIcona =
+  "grid size-9 shrink-0 place-items-center rounded-full border border-linea-forte bg-superficie text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro";
+
+/** Chiusura: in finestra torna indietro, a pagina intera porta all'elenco. */
 function Chiudi() {
   const inFinestra = useInFinestra();
   const router = useRouter();
-  const classe = "grid size-9 place-items-center rounded-full border border-linea-forte text-tenue transition-colors hover:bg-superficie-2 hover:text-inchiostro";
   return inFinestra ? (
-    <button type="button" onClick={() => router.back()} className={classe} aria-label="Chiudi" data-suggerimento="Chiudi (Esc)" data-suggerimento-lato="sotto">
+    <button type="button" onClick={() => router.back()} className={classeIcona} aria-label="Chiudi" data-suggerimento="Chiudi (Esc)" data-suggerimento-lato="sotto">
       <X className="size-4" strokeWidth={1.8} />
     </button>
   ) : (
-    <Link href="/clienti" className={classe} aria-label="Torna ai clienti">
+    <Link href="/clienti" className={classeIcona} aria-label="Torna ai clienti">
       <X className="size-4" strokeWidth={1.8} />
     </Link>
   );
 }
 
-/**
- * Scheda anagrafica del cliente. Senza dati (`scheda` = null) si apre vuota in modifica:
- * è la creazione di un nuovo cliente dal "+".
- */
 export function SchedaCliente({ scheda }: { scheda: SchedaClienteDati | null }) {
   const [modifica, setModifica] = useState(!scheda);
-
   return (
-    <CartaAnagrafica linguetta={scheda ? "Anagrafica · Cliente" : "Anagrafica · Nuovo cliente"} icona={BookUser}>
+    <article className="scheda-profilo overflow-hidden rounded-piccolo border border-linea-forte bg-superficie">
       {modifica ? (
         <ModuloCliente scheda={scheda} onFatto={() => setModifica(false)} />
       ) : scheda ? (
         <VistaCliente scheda={scheda} onModifica={() => setModifica(true)} />
       ) : null}
-    </CartaAnagrafica>
+    </article>
   );
 }
 
 /* ── Lettura ──────────────────────────────────────────────────────────── */
 
 function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onModifica: () => void }) {
-  const { cliente: c, referenti, rapporti, immobili, sintesi } = scheda;
-  const tipo = TIPI_CLIENTE[c.tipo] ?? c.tipo;
+  const { cliente: c, referenti } = scheda;
+  const [vista, setVista] = useState<"pratiche" | "analisi">("pratiche");
   const ente = c.tipo === "ente_pubblico";
   const localita = [c.cap, c.comune, c.provincia ? `(${c.provincia})` : null].filter(Boolean).join(" ");
   const sede = [c.indirizzo, localita].filter(Boolean).join(", ");
+  const scrivi = c.pec ?? c.email;
+  const totale = scheda.prefattibilita.length + scheda.preventivi.length + scheda.commesse.length;
 
   return (
-    <>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="flex min-w-0 flex-1 items-start gap-4">
-          <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-full border border-linea-forte text-lg tracking-[0.06em] text-inchiostro-2">
+    <div className="grid lg:grid-cols-[21.5rem_minmax(0,1fr)]">
+      {/* ── Colonna dell'identità ── */}
+      <aside className="border-b border-linea bg-superficie-2/45 px-5 py-6 lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
+        <div className="flex items-start justify-between gap-3">
+          <span
+            aria-hidden
+            className="grid size-14 place-items-center rounded-[12px] text-lg font-medium tracking-[0.04em] text-white"
+            style={{ background: COLORE_TIPO[c.tipo] ?? "var(--tenue)" }}
+          >
             {iniziali(c)}
           </span>
-          <div className="min-w-0">
-            <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-tenue">
-              {tipo} · in archivio dal {new Date(c.created_at).getFullYear()}
-            </p>
-            <h1 className="titolo-display mt-1 text-[1.6rem] leading-tight md:text-[2rem]">{c.denominazione ?? "Senza nome"}</h1>
-            {c.comune ? (
-              <p className="mt-1 text-[0.9375rem] text-tenue">
-                {c.comune}
-                {c.provincia ? ` (${c.provincia})` : ""}
-              </p>
-            ) : null}
-          </div>
+          <span className="lg:hidden">
+            <Chiudi />
+          </span>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onModifica} className={classePillola}>
-            <Pencil className="size-3.5" strokeWidth={1.8} />
-            Modifica
-          </button>
-          <Chiudi />
+        <h1 className="titolo-display mt-4 text-[1.5rem] leading-tight">{c.denominazione ?? "Senza nome"}</h1>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <Etichetta>{TIPI_CLIENTE[c.tipo] ?? c.tipo}</Etichetta>
+          {c.comune ? <Etichetta>{c.comune}</Etichetta> : null}
+          <Etichetta>dal {new Date(c.created_at).getFullYear()}</Etichetta>
         </div>
-      </header>
 
-      <div className="mt-8 grid gap-x-12 gap-y-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <div>
-          <SezioneRegistro titolo="Dati fiscali">
-            <RigaRegistro voce="Codice fiscale" valore={c.codice_fiscale} numerico />
-            {c.tipo !== "persona_fisica" ? <RigaRegistro voce="Partita IVA" valore={c.partita_iva} numerico /> : null}
-            {ente ? (
-              <RigaRegistro voce="Codice univoco ufficio (IPA)" valore={c.codice_ipa} numerico />
-            ) : (
-              <RigaRegistro voce="Codice destinatario SDI" valore={c.codice_sdi} numerico />
-            )}
-          </SezioneRegistro>
-
-          <SezioneRegistro titolo="Recapiti">
-            <RigaRegistro voce="PEC" valore={c.pec} href={c.pec ? `mailto:${c.pec}` : undefined} />
-            <RigaRegistro voce="Email" valore={c.email} href={c.email ? `mailto:${c.email}` : undefined} />
-            <RigaRegistro voce="Telefono" valore={c.telefono} href={c.telefono ? `tel:${c.telefono.replace(/\s+/g, "")}` : undefined} numerico />
-            <RigaRegistro voce="Sede" valore={sede} />
-          </SezioneRegistro>
-
-          <Referenti clienteId={c.id} referenti={referenti} ente={ente} />
-
-          {c.fonte || c.note ? (
-            <SezioneRegistro titolo="Note">
-              {c.fonte ? <RigaRegistro voce="Come ci ha conosciuti" valore={c.fonte} /> : null}
-              {c.note ? <p className="mt-2 whitespace-pre-line text-[0.9375rem] text-inchiostro-2">{c.note}</p> : null}
-            </SezioneRegistro>
+        <div className="mt-4 flex gap-2">
+          {scrivi ? (
+            <a href={`mailto:${scrivi}`} className={classeIcona} aria-label={`Scrivi a ${scrivi}`} data-suggerimento={c.pec ? "Scrivi alla PEC" : "Scrivi"} data-suggerimento-lato="sotto">
+              <Mail className="size-4" strokeWidth={1.8} />
+            </a>
           ) : null}
+          {c.telefono ? (
+            <a href={`tel:${c.telefono.replace(/\s+/g, "")}`} className={classeIcona} aria-label={`Chiama ${c.telefono}`} data-suggerimento="Chiama" data-suggerimento-lato="sotto">
+              <Phone className="size-4" strokeWidth={1.8} />
+            </a>
+          ) : null}
+          {sede ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sede)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={classeIcona}
+              aria-label="Apri la sede sulla mappa"
+              data-suggerimento="Sede sulla mappa"
+              data-suggerimento-lato="sotto"
+            >
+              <MapPin className="size-4" strokeWidth={1.8} />
+            </a>
+          ) : null}
+          <button type="button" onClick={onModifica} className={classeIcona} aria-label="Modifica" data-suggerimento="Modifica" data-suggerimento-lato="sotto">
+            <Pencil className="size-4" strokeWidth={1.8} />
+          </button>
         </div>
 
-        <div>
-          <SezioneRegistro titolo="Rapporti con lo studio">
-            <ElencoRapporti rapporti={rapporti} />
-          </SezioneRegistro>
+        <dl className="mt-6 flex flex-col gap-3.5">
+          {c.tipo !== "persona_fisica" ? <DatoCopiabile voce="Partita IVA" valore={c.partita_iva} codice /> : null}
+          <DatoCopiabile voce="Codice fiscale" valore={c.codice_fiscale} codice />
+          {ente ? <DatoCopiabile voce="Codice IPA" valore={c.codice_ipa} codice /> : <DatoCopiabile voce="Codice SDI" valore={c.codice_sdi} codice />}
+          <DatoCopiabile voce="PEC" valore={c.pec} />
+          <DatoCopiabile voce="Email" valore={c.email} />
+          <DatoCopiabile voce="Telefono" valore={c.telefono} />
+          <DatoCopiabile voce="Sede" valore={sede || null} />
+        </dl>
 
-          <SezioneRegistro titolo="Immobili seguiti">
-            <ElencoImmobili immobili={immobili} />
-          </SezioneRegistro>
+        <Referenti clienteId={c.id} referenti={referenti} ente={ente} />
 
-          <SezioneRegistro titolo="In sintesi">
-            <RigaRegistro voce="Commesse" valore={String(sintesi.commesse)} numerico />
-            <RigaRegistro voce="Onorari acquisiti" valore={sintesi.commesse ? formattaEuro(sintesi.onorariAcquisiti) : null} numerico />
-            <RigaRegistro
-              voce="Preventivi accettati"
-              valore={sintesi.preventiviChiusi ? `${sintesi.preventiviAccettati} su ${sintesi.preventiviChiusi}` : null}
-              numerico
-            />
-          </SezioneRegistro>
+        {c.fonte || c.note ? (
+          <div className="mt-7">
+            <TitoloColonna>Note</TitoloColonna>
+            {c.fonte ? <p className="text-[0.875rem] text-inchiostro-2">Ci ha conosciuti: {c.fonte}</p> : null}
+            {c.note ? <p className="mt-1.5 whitespace-pre-line text-[0.875rem] text-inchiostro-2">{c.note}</p> : null}
+          </div>
+        ) : null}
+      </aside>
+
+      {/* ── Pratiche e analisi ── */}
+      <section className="min-w-0 px-5 py-6 lg:px-8 lg:py-7">
+        <div className="flex items-center justify-between gap-3">
+          <div role="tablist" aria-label="Sezioni" className="inline-flex gap-1 rounded-full bg-superficie-2 p-1">
+            {(
+              [
+                ["pratiche", `Pratiche${totale ? ` · ${totale}` : ""}`],
+                ["analisi", "Analisi"],
+              ] as const
+            ).map(([valore, etichetta]) => (
+              <button
+                key={valore}
+                type="button"
+                role="tab"
+                aria-selected={vista === valore}
+                onClick={() => setVista(valore)}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-[0.875rem] transition-colors",
+                  vista === valore ? "bg-superficie text-inchiostro shadow-[0_0_0_1px_var(--linea)]" : "text-tenue hover:text-inchiostro",
+                )}
+              >
+                {etichetta}
+              </button>
+            ))}
+          </div>
+          <span className="hidden lg:block">
+            <Chiudi />
+          </span>
         </div>
-      </div>
-    </>
+
+        {vista === "pratiche" ? (
+          <div className="mt-6 flex flex-col gap-8">
+            <GruppoPratiche titolo="Pre-fattibilità" pratiche={scheda.prefattibilita} vuoto="Nessuna pre-fattibilità per questo cliente." importo="Onorario" />
+            <GruppoPratiche titolo="Preventivi" pratiche={scheda.preventivi} vuoto="Nessun preventivo per questo cliente." importo="Imponibile" />
+            <GruppoPratiche titolo="Commesse" pratiche={scheda.commesse} vuoto="Nessuna commessa per questo cliente." importo="Onorario" />
+          </div>
+        ) : (
+          <Analisi a={scheda.analisi} />
+        )}
+      </section>
+    </div>
   );
 }
 
-function ElencoRapporti({ rapporti }: { rapporti: Rapporto[] }) {
-  if (!rapporti.length) {
-    return <p className="py-1.5 text-[0.9375rem] text-tenue">Nessuna pratica ancora. Le crei dal “+” in home.</p>;
+function Etichetta({ children }: { children: ReactNode }) {
+  return <span className="rounded-full bg-superficie px-2.5 py-0.5 text-[0.75rem] text-inchiostro-2 shadow-[0_0_0_1px_var(--linea)]">{children}</span>;
+}
+
+function TitoloColonna({ children, azione }: { children: ReactNode; azione?: ReactNode }) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <h2 className="text-[0.6875rem] uppercase tracking-[0.14em] text-tenue">{children}</h2>
+      {azione}
+    </div>
+  );
+}
+
+/** Dato con pulsante per copiarlo negli appunti. */
+function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string | null; codice?: boolean }) {
+  const [copiato, setCopiato] = useState(false);
+  async function copia() {
+    if (!valore) return;
+    try {
+      await navigator.clipboard.writeText(valore);
+      setCopiato(true);
+      setTimeout(() => setCopiato(false), 1500);
+    } catch {
+      // appunti non disponibili: nessun messaggio, il dato resta selezionabile
+    }
   }
   return (
-    <ul className="flex flex-col gap-1.5">
-      {rapporti.map((r) => (
-        <li key={`${r.tipo}-${r.id}`}>
-          <Link
-            href={r.href}
-            className="flex items-center justify-between gap-3 rounded-piccolo border border-linea px-3 py-2 text-[0.875rem] transition-colors hover:border-linea-forte hover:bg-superficie-2/50"
+    <div className="group">
+      <dt className="text-[0.75rem] text-tenue">{voce}</dt>
+      <dd className="mt-0.5 flex items-start gap-1.5">
+        <span className={cn("min-w-0 flex-1 text-[0.9375rem] [overflow-wrap:anywhere]", codice && "numeri tracking-[0.02em]", !valore && "text-tenue")}>
+          {valore ?? "—"}
+        </span>
+        {valore ? (
+          <button
+            type="button"
+            onClick={copia}
+            className="grid size-6 shrink-0 place-items-center rounded-full text-tenue opacity-100 transition-opacity hover:text-inchiostro md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+            aria-label={copiato ? `${voce} copiato` : `Copia ${voce}`}
           >
-            <span className="flex min-w-0 items-center gap-2">
-              <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: r.colore }} />
-              <span className="truncate">
-                {r.sigla ? <span className="numeri text-tenue">{r.sigla} · </span> : null}
-                {r.titolo}
-              </span>
-            </span>
-            <span className="shrink-0 text-[0.8125rem] text-tenue">{r.stato}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+            {copiato ? <Check className="size-3.5 text-[color:var(--stato-attiva)]" strokeWidth={2.2} /> : <Copy className="size-3.5" strokeWidth={1.8} />}
+          </button>
+        ) : null}
+      </dd>
+    </div>
   );
 }
 
-function ElencoImmobili({ immobili }: { immobili: ImmobileSeguito[] }) {
-  if (!immobili.length) return <p className="py-1.5 text-[0.9375rem] text-tenue">Nessun immobile collegato alle sue pratiche.</p>;
+function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; pratiche: PraticaCliente[]; vuoto: string; importo: string }) {
   return (
-    <ul className="flex flex-col gap-1.5">
-      {immobili.map((i) => (
-        <li key={i.id} className="flex items-center gap-2.5 rounded-piccolo border border-linea px-3 py-2 text-[0.875rem]">
-          <Building2 aria-hidden className="size-4 shrink-0 text-tenue" strokeWidth={1.7} />
-          <span className="min-w-0 truncate">
-            {i.nome}
-            {i.nome !== i.indirizzo ? <span className="text-tenue"> · {i.indirizzo}</span> : null}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <section>
+      <div className="mb-2 flex items-baseline justify-between gap-3 border-b border-linea pb-2">
+        <h2 className="text-[1rem] font-medium">
+          {titolo}
+          <span className="numeri ml-2 text-[0.875rem] font-normal text-tenue">{pratiche.length}</span>
+        </h2>
+        {pratiche.length ? <span className="text-[0.75rem] text-tenue">{importo}</span> : null}
+      </div>
+      {pratiche.length === 0 ? (
+        <p className="py-2 text-[0.875rem] text-tenue">{vuoto}</p>
+      ) : (
+        <ul>
+          {pratiche.map((p) => (
+            <li key={p.id}>
+              <Link
+                href={p.href}
+                className="-mx-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-0.5 rounded-piccolo px-2 py-2.5 transition-colors hover:bg-superficie-2/60"
+              >
+                <span className="min-w-0">
+                  <span className="flex min-w-0 items-center gap-2 text-[0.9375rem]">
+                    <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: p.colore }} />
+                    <span className="truncate">
+                      {p.sigla ? <span className="numeri text-tenue">{p.sigla} · </span> : null}
+                      {p.titolo}
+                    </span>
+                  </span>
+                  <span className="block truncate pl-3.5 text-[0.8125rem] text-tenue">
+                    {[p.statoEtichetta, p.data ? formattaData(p.data) : null, p.luogo].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+                <span className="numeri text-right text-[0.9375rem]">{p.importo != null ? formattaEuro(p.importo) : <span className="text-tenue">—</span>}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ── Analisi ──────────────────────────────────────────────────────────── */
+
+const percento = new Intl.NumberFormat("it-IT", { style: "percent", maximumFractionDigits: 0 });
+
+function Analisi({ a }: { a: AnalisiCliente }) {
+  const chiusi = a.preventiviAccettati + a.preventiviRifiutati;
+  const tasso = chiusi ? a.preventiviAccettati / chiusi : null;
+  const barra = a.preventiviEmessi || 1;
+
+  return (
+    <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <Indicatore
+        voce="Onorari acquisiti"
+        valore={a.commesse ? formattaEuro(a.onorariAcquisiti) : "—"}
+        nota={a.commesse ? `${a.commesse} ${a.commesse === 1 ? "commessa" : "commesse"}, ${a.commesseInCorso} in corso` : "Nessuna commessa"}
+        evidenza
+      />
+
+      <Indicatore
+        voce="Preventivi accettati"
+        valore={tasso == null ? "—" : percento.format(tasso)}
+        nota={
+          !a.preventiviEmessi
+            ? "Nessun preventivo inviato"
+            : chiusi
+              ? `${a.preventiviAccettati} ${a.preventiviAccettati === 1 ? "accettato" : "accettati"} su ${chiusi} con esito`
+              : "Nessun preventivo ancora con esito"
+        }
+      >
+        {a.preventiviEmessi ? (
+          <>
+            <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-superficie-2" aria-hidden>
+              <span style={{ width: `${(a.preventiviAccettati / barra) * 100}%`, background: "var(--stato-attiva)" }} />
+              <span style={{ width: `${(a.preventiviRifiutati / barra) * 100}%`, background: "var(--stato-sospesa)" }} />
+              <span style={{ width: `${(a.preventiviInAttesa / barra) * 100}%`, background: "var(--stato-preventivo)" }} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.75rem] text-tenue">
+              <Legenda colore="var(--stato-attiva)">Accettati {a.preventiviAccettati}</Legenda>
+              <Legenda colore="var(--stato-sospesa)">Rifiutati {a.preventiviRifiutati}</Legenda>
+              <Legenda colore="var(--stato-preventivo)">In attesa {a.preventiviInAttesa}</Legenda>
+            </div>
+          </>
+        ) : null}
+      </Indicatore>
+
+      <Indicatore
+        voce="Valore preventivato"
+        valore={a.preventiviEmessi ? formattaEuro(a.valorePreventivato) : "—"}
+        nota={a.preventiviEmessi ? `di cui accettato ${formattaEuro(a.valoreAccettato)}` : "Imponibile dei preventivi inviati"}
+      />
+
+      <Indicatore
+        voce="Pre-fattibilità convertite"
+        valore={a.prefattibilita ? `${a.prefattibilitaConvertite} su ${a.prefattibilita}` : "—"}
+        nota={a.prefattibilita ? "diventate preventivo o commessa" : "Nessuna pre-fattibilità"}
+      />
+
+      <Indicatore
+        voce="Integrativi accettati"
+        valore={a.integrativiAccettati ? formattaEuro(a.valoreIntegrativi) : "—"}
+        nota={a.integrativiAccettati ? `${a.integrativiAccettati} ${a.integrativiAccettati === 1 ? "integrativo" : "integrativi"} sulle commesse` : "Nessun integrativo"}
+      />
+
+      <Indicatore
+        voce="Valore medio di un preventivo"
+        valore={a.preventiviEmessi ? formattaEuro(a.valorePreventivato / a.preventiviEmessi) : "—"}
+        nota={a.preventiviEmessi ? `su ${a.preventiviEmessi} ${a.preventiviEmessi === 1 ? "preventivo" : "preventivi"} inviati` : "—"}
+      />
+
+      <p className="text-[0.75rem] text-tenue sm:col-span-2 xl:col-span-3">
+        Esclusi i preventivi in bozza; gli integrativi sono contati a parte. Commesse perse o annullate non rientrano negli onorari.
+      </p>
+    </div>
+  );
+}
+
+function Indicatore({ voce, valore, nota, evidenza, children }: { voce: string; valore: string; nota: string; evidenza?: boolean; children?: ReactNode }) {
+  return (
+    <div className={cn("rounded-medio border border-linea px-4 py-4", evidenza ? "bg-superficie-2/70" : "bg-superficie")}>
+      <p className="text-[0.75rem] text-tenue">{voce}</p>
+      <p className="numeri mt-1.5 text-[1.5rem] font-medium leading-none" style={{ fontVariationSettings: '"wdth" 108' }}>
+        {valore}
+      </p>
+      <p className="mt-2 text-[0.8125rem] text-inchiostro-2">{nota}</p>
+      {children}
+    </div>
+  );
+}
+
+function Legenda({ colore, children }: { colore: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span aria-hidden className="size-1.5 rounded-full" style={{ background: colore }} />
+      {children}
+    </span>
   );
 }
 
@@ -256,7 +448,11 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
   function apri(r?: Referente) {
     setErrore(null);
     setDaEliminare(null);
-    setDati(r ? { nome: r.nome, ruolo: r.ruolo ?? "", email: r.email ?? "", telefono: r.telefono ?? "", note: r.note ?? "", principale: r.principale } : { ...referenteVuoto, principale: referenti.length === 0 });
+    setDati(
+      r
+        ? { nome: r.nome, ruolo: r.ruolo ?? "", email: r.email ?? "", telefono: r.telefono ?? "", note: r.note ?? "", principale: r.principale }
+        : { ...referenteVuoto, principale: referenti.length === 0 },
+    );
     setAperto(r ? r.id : "nuovo");
   }
 
@@ -281,24 +477,20 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
   const set = (campo: keyof Omit<DatiReferente, "principale">) => (e: { target: { value: string } }) => setDati({ ...dati, [campo]: e.target.value });
 
   const modulo = (
-    <div className="mt-2 flex flex-col gap-4 rounded-piccolo border border-linea bg-sfondo/60 p-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Campo etichetta="Nome e cognome" id="r-nome" obbligatorio value={dati.nome} onChange={set("nome")} autoComplete="off" autoFocus />
-        <Campo etichetta="Ruolo" id="r-ruolo" value={dati.ruolo} onChange={set("ruolo")} placeholder={ente ? "RUP" : "Amministratore di condominio"} />
-        <Campo etichetta="Email" id="r-email" type="email" value={dati.email} onChange={set("email")} />
-        <Campo etichetta="Telefono" id="r-tel" type="tel" value={dati.telefono} onChange={set("telefono")} />
-        <div className="md:col-span-2">
-          <Campo etichetta="Note" id="r-note" value={dati.note} onChange={set("note")} placeholder="Reperibile al mattino" />
-        </div>
-      </div>
-      <label className="flex w-fit cursor-pointer items-center gap-2 text-[0.9375rem]">
+    <div className="mt-2 flex flex-col gap-3.5 rounded-medio border border-linea bg-superficie p-3.5">
+      <Campo etichetta="Nome e cognome" id="r-nome" obbligatorio value={dati.nome} onChange={set("nome")} autoComplete="off" autoFocus />
+      <Campo etichetta="Ruolo" id="r-ruolo" value={dati.ruolo} onChange={set("ruolo")} placeholder={ente ? "RUP" : "Amministratore di condominio"} />
+      <Campo etichetta="Email" id="r-email" type="email" value={dati.email} onChange={set("email")} />
+      <Campo etichetta="Telefono" id="r-tel" type="tel" value={dati.telefono} onChange={set("telefono")} />
+      <Campo etichetta="Note" id="r-note" value={dati.note} onChange={set("note")} placeholder="Reperibile al mattino" />
+      <label className="flex w-fit cursor-pointer items-center gap-2 text-[0.875rem]">
         <input type="checkbox" checked={dati.principale} onChange={(e) => setDati({ ...dati, principale: e.target.checked })} className="size-4 accent-[var(--accento)]" />
         Referente principale
       </label>
       {errore ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={salva} disabled={inCorso} className={cn(classePillola, "border-inchiostro bg-inchiostro text-superficie hover:bg-inchiostro/90")}>
-          {inCorso ? "Salvataggio…" : aperto === "nuovo" ? "Aggiungi referente" : "Salva referente"}
+          {inCorso ? "Salvataggio…" : aperto === "nuovo" ? "Aggiungi" : "Salva"}
         </button>
         <button type="button" onClick={() => setAperto(null)} disabled={inCorso} className={classePillola}>
           Annulla
@@ -308,56 +500,74 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
   );
 
   return (
-    <SezioneRegistro
-      titolo="Referenti"
-      azione={
-        aperto === null ? (
-          <button type="button" onClick={() => apri()} className="inline-flex items-center gap-1 text-[0.8125rem] text-accento hover:underline">
-            <Plus className="size-3.5" strokeWidth={2} />
-            Aggiungi
-          </button>
-        ) : null
-      }
-    >
+    <div className="mt-7">
+      <TitoloColonna
+        azione={
+          aperto === null ? (
+            <button type="button" onClick={() => apri()} className="inline-flex items-center gap-1 text-[0.8125rem] text-accento hover:underline">
+              <Plus className="size-3.5" strokeWidth={2} />
+              Aggiungi
+            </button>
+          ) : null
+        }
+      >
+        Referenti
+      </TitoloColonna>
       {referenti.length === 0 && aperto !== "nuovo" ? (
-        <p className="py-1.5 text-[0.9375rem] text-tenue">
-          {ente ? "Nessun referente: aggiungi il RUP o l'ufficio di riferimento." : "Nessun referente oltre al cliente."}
-        </p>
+        <p className="text-[0.875rem] text-tenue">{ente ? "Aggiungi il RUP o l'ufficio di riferimento." : "Nessun referente oltre al cliente."}</p>
       ) : null}
-      <ul>
+      <ul className="flex flex-col gap-1">
         {referenti.map((r) =>
           aperto === r.id ? (
             <li key={r.id}>{modulo}</li>
           ) : (
-            <li key={r.id} className="group flex items-start gap-3 border-b border-linea py-2.5 last:border-b-0">
+            <li key={r.id} className="group -mx-2 flex items-start gap-2.5 rounded-medio px-2 py-2 hover:bg-superficie/70">
+              <span aria-hidden className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full border border-linea-forte bg-superficie text-[0.6875rem] text-inchiostro-2">
+                {r.nome
+                  .split(/\s+/)
+                  .filter((p) => p.length > 1 && !/^(ing|arch|geom|dott|avv|sig|sig\.ra)\.?$/i.test(p))
+                  .slice(0, 2)
+                  .map((p) => p.charAt(0))
+                  .join("")
+                  .toUpperCase()}
+              </span>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-[0.9375rem]">
-                  <span className="font-medium">{r.nome}</span>
-                  {r.ruolo ? <span className="text-inchiostro-2">· {r.ruolo}</span> : null}
-                  {r.principale ? <Star aria-label="Referente principale" className="size-3.5 fill-current text-[color:var(--stato-preventivo)]" strokeWidth={1.5} /> : null}
+                <p className="flex items-center gap-1.5 text-[0.875rem]">
+                  <span className="truncate font-medium">{r.nome}</span>
+                  {r.principale ? <Star aria-label="Referente principale" className="size-3 shrink-0 fill-current text-[color:var(--stato-preventivo)]" strokeWidth={1.5} /> : null}
                 </p>
-                <p className="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-tenue">
-                  {r.email ? <a href={`mailto:${r.email}`} className="hover:text-accento">{r.email}</a> : null}
+                {r.ruolo ? <p className="text-[0.8125rem] text-inchiostro-2">{r.ruolo}</p> : null}
+                <p className="flex flex-col text-[0.8125rem] text-tenue">
+                  {r.email ? <a href={`mailto:${r.email}`} className="truncate hover:text-accento">{r.email}</a> : null}
                   {r.telefono ? <a href={`tel:${r.telefono.replace(/\s+/g, "")}`} className="numeri hover:text-accento">{r.telefono}</a> : null}
                   {r.note ? <span>{r.note}</span> : null}
                 </p>
+                {daEliminare === r.id ? (
+                  <p className="mt-1 flex items-center gap-2 text-[0.8125rem]">
+                    Eliminare?
+                    <button type="button" onClick={() => elimina(r.id)} disabled={inCorso} className="text-[color:var(--stato-sospesa)] hover:underline">
+                      Sì
+                    </button>
+                    <button type="button" onClick={() => setDaEliminare(null)} className="text-tenue hover:underline">
+                      No
+                    </button>
+                  </p>
+                ) : null}
               </div>
-              {daEliminare === r.id ? (
-                <span className="flex shrink-0 items-center gap-2 text-[0.8125rem]">
-                  Eliminare?
-                  <button type="button" onClick={() => elimina(r.id)} disabled={inCorso} className="text-[color:var(--stato-sospesa)] hover:underline">
-                    Sì
-                  </button>
-                  <button type="button" onClick={() => setDaEliminare(null)} className="text-tenue hover:underline">
-                    No
-                  </button>
-                </span>
-              ) : aperto === null ? (
-                <span className="flex shrink-0 gap-1 opacity-100 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
-                  <button type="button" onClick={() => apri(r)} className="grid size-8 place-items-center rounded-full text-tenue hover:bg-superficie-2 hover:text-inchiostro" aria-label={`Modifica ${r.nome}`}>
+              {aperto === null && daEliminare !== r.id ? (
+                <span className="flex shrink-0 opacity-100 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+                  <button type="button" onClick={() => apri(r)} className="grid size-7 place-items-center rounded-full text-tenue hover:bg-superficie-2 hover:text-inchiostro" aria-label={`Modifica ${r.nome}`}>
                     <Pencil className="size-3.5" strokeWidth={1.8} />
                   </button>
-                  <button type="button" onClick={() => { setErrore(null); setDaEliminare(r.id); }} className="grid size-8 place-items-center rounded-full text-tenue hover:bg-superficie-2 hover:text-[color:var(--stato-sospesa)]" aria-label={`Elimina ${r.nome}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrore(null);
+                      setDaEliminare(r.id);
+                    }}
+                    className="grid size-7 place-items-center rounded-full text-tenue hover:bg-superficie-2 hover:text-[color:var(--stato-sospesa)]"
+                    aria-label={`Elimina ${r.nome}`}
+                  >
                     <Trash2 className="size-3.5" strokeWidth={1.8} />
                   </button>
                 </span>
@@ -367,12 +577,25 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
         )}
       </ul>
       {aperto === "nuovo" ? modulo : null}
-      {errore && aperto === null ? <div className="mt-2"><Messaggio tipo="errore">{errore}</Messaggio></div> : null}
-    </SezioneRegistro>
+      {errore && aperto === null ? (
+        <div className="mt-2">
+          <Messaggio tipo="errore">{errore}</Messaggio>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 /* ── Modifica e creazione ─────────────────────────────────────────────── */
+
+function SezioneModulo({ titolo, children }: { titolo: string; children: ReactNode }) {
+  return (
+    <section>
+      <h2 className="mb-3 text-[0.6875rem] uppercase tracking-[0.14em] text-tenue">{titolo}</h2>
+      {children}
+    </section>
+  );
+}
 
 function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; onFatto: () => void }) {
   const router = useRouter();
@@ -432,11 +655,12 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
         salva(false);
       }}
       noValidate
+      className="px-5 py-6 md:px-8 md:py-7"
     >
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-tenue">{id ? "Modifica anagrafica" : "Nuova anagrafica"}</p>
-          <h1 className="titolo-display mt-1 text-[1.6rem] leading-tight md:text-[2rem]">
+          <p className="text-[0.6875rem] uppercase tracking-[0.12em] text-tenue">{id ? "Modifica cliente" : "Nuovo cliente"}</p>
+          <h1 className="titolo-display mt-1 text-[1.5rem] leading-tight md:text-[1.875rem]">
             {(privato ? [d.cognome, d.nome].filter(Boolean).join(" ") : d.ragione_sociale) || (id ? "Cliente" : "Nuovo cliente")}
           </h1>
         </div>
@@ -459,8 +683,8 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
           }}
         />
 
-        <SezioneRegistro titolo={privato ? "Persona" : ente ? "Ente" : "Società"}>
-          <div className="mt-2 grid gap-5 md:grid-cols-2">
+        <SezioneModulo titolo={privato ? "Persona" : ente ? "Ente" : "Società"}>
+          <div className="grid gap-5 md:grid-cols-2">
             {privato ? (
               <>
                 <Campo etichetta="Cognome" id="c-cognome" obbligatorio value={d.cognome} onChange={set("cognome")} errore={errori.cognome} autoComplete="off" autoFocus={!id} />
@@ -481,22 +705,22 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
               </div>
             )}
           </div>
-        </SezioneRegistro>
+        </SezioneModulo>
 
-        <SezioneRegistro titolo="Dati fiscali">
-          <div className="mt-2 grid gap-5 md:grid-cols-2">
-            <Campo etichetta="Codice fiscale" id="c-cf" value={d.codice_fiscale} onChange={set("codice_fiscale")} className="uppercase" autoComplete="off" />
+        <SezioneModulo titolo="Dati fiscali">
+          <div className="grid gap-5 md:grid-cols-2">
             {!privato ? <Campo etichetta="Partita IVA" id="c-piva" value={d.partita_iva} onChange={set("partita_iva")} inputMode="numeric" autoComplete="off" /> : null}
+            <Campo etichetta="Codice fiscale" id="c-cf" value={d.codice_fiscale} onChange={set("codice_fiscale")} className="uppercase" autoComplete="off" />
             {ente ? (
               <Campo etichetta="Codice univoco ufficio (IPA)" id="c-ipa" value={d.codice_ipa} onChange={set("codice_ipa")} className="uppercase" aiuto="Per la fattura elettronica alla pubblica amministrazione." />
             ) : (
               <Campo etichetta="Codice destinatario SDI" id="c-sdi" value={d.codice_sdi} onChange={set("codice_sdi")} className="uppercase" />
             )}
           </div>
-        </SezioneRegistro>
+        </SezioneModulo>
 
-        <SezioneRegistro titolo="Recapiti e sede">
-          <div className="mt-2 grid gap-5 md:grid-cols-2">
+        <SezioneModulo titolo="Recapiti e sede">
+          <div className="grid gap-5 md:grid-cols-2">
             <Campo etichetta="PEC" id="c-pec" type="email" value={d.pec} onChange={set("pec")} errore={errori.pec} />
             <Campo etichetta="Email" id="c-email" type="email" value={d.email} onChange={set("email")} errore={errori.email} />
             <Campo etichetta="Telefono" id="c-tel" type="tel" value={d.telefono} onChange={set("telefono")} />
@@ -508,21 +732,21 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
               onCambia={(v) => setD({ ...d, provincia: v.provincia, comune: v.comune, cap: v.cap })}
             />
           </div>
-        </SezioneRegistro>
+        </SezioneModulo>
 
-        <SezioneRegistro titolo="Note">
-          <div className="mt-2 grid gap-5 md:grid-cols-2">
+        <SezioneModulo titolo="Note">
+          <div className="grid gap-5 md:grid-cols-2">
             <Campo etichetta="Come ci ha conosciuti" id="c-fonte" value={d.fonte} onChange={set("fonte")} placeholder="Passaparola, sito, bando…" />
             <div className="md:col-span-2">
               <AreaTesto etichetta="Note" id="c-note" value={d.note} onChange={set("note")} />
             </div>
           </div>
-        </SezioneRegistro>
+        </SezioneModulo>
 
         {!id ? <p className="text-sm text-tenue">I referenti (RUP, amministratore, ufficio tecnico…) si aggiungono dalla scheda, dopo il salvataggio.</p> : null}
 
         {doppioni?.length ? (
-          <div role="alert" className="rounded-piccolo border border-[color:var(--stato-preventivo)]/40 bg-[color:var(--stato-preventivo)]/8 p-4">
+          <div role="alert" className="rounded-medio border border-[color:var(--stato-preventivo)]/40 bg-[color:var(--stato-preventivo)]/8 p-4">
             <p className="text-[0.9375rem] font-medium">Potrebbe essere già in archivio</p>
             <ul className="mt-2 flex flex-col gap-1 text-[0.9375rem]">
               {doppioni.map((x) => (

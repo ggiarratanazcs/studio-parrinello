@@ -631,3 +631,8 @@ html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
   z-index: 1;
   box-shadow: 0 1px 0 0 var(--superficie);
 }
+
+/* Scheda anagrafica "profilo con colonna" */
+.scheda-profilo {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 24px 48px -30px rgba(43, 42, 40, 0.35);
+}

@@ -1,28 +1,22 @@
-import { BookUser } from "lucide-react";
-import { CartaAnagrafica } from "@/components/anagrafiche/carta";
 import { Scheletro } from "@/components/ui";
 
-export function SegnapostoAnagrafica({ linguetta = "Anagrafica" }: { linguetta?: string }) {
+/** Segnaposto della scheda anagrafica (profilo con colonna) durante il caricamento. */
+export function SegnapostoAnagrafica() {
   return (
-    <CartaAnagrafica linguetta={linguetta} icona={BookUser}>
-      <div className="flex items-start gap-4">
-        <Scheletro className="size-14 rounded-full" />
-        <div className="flex-1">
-          <Scheletro className="h-3 w-40" />
-          <Scheletro className="mt-3 h-8 w-2/3" />
-        </div>
+    <div className="scheda-profilo grid overflow-hidden rounded-piccolo border border-linea-forte bg-superficie lg:grid-cols-[21.5rem_minmax(0,1fr)]">
+      <div className="space-y-4 border-b border-linea bg-superficie-2/45 px-6 py-7 lg:border-b-0 lg:border-r">
+        <Scheletro className="size-14 rounded-[12px]" />
+        <Scheletro className="h-7 w-3/4" />
+        <Scheletro className="h-4 w-1/2" />
+        <Scheletro className="mt-6 h-4 w-full" />
+        <Scheletro className="h-4 w-5/6" />
       </div>
-      <div className="mt-10 grid gap-10 lg:grid-cols-2">
-        <div className="space-y-4">
-          <Scheletro className="h-4 w-full" />
-          <Scheletro className="h-4 w-5/6" />
-          <Scheletro className="h-4 w-4/6" />
-        </div>
-        <div className="space-y-3">
-          <Scheletro className="h-9 w-full" />
-          <Scheletro className="h-9 w-full" />
-        </div>
+      <div className="space-y-3 px-8 py-7">
+        <Scheletro className="h-9 w-48 rounded-full" />
+        <Scheletro className="mt-6 h-12 w-full" />
+        <Scheletro className="h-12 w-full" />
+        <Scheletro className="h-12 w-full" />
       </div>
-    </CartaAnagrafica>
+    </div>
   );
 }
