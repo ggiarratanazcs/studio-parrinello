@@ -114,6 +114,11 @@ export async function aggiornaUtente(id: string, modifica: { ruolo?: string; att
 export type DatiNuovoUtente = { nome: string; cognome: string; email: string; ruolo: string };
 export type EsitoNuovoUtente = { ok: true; email: string; password: string } | { ok: false; errore: string };
 
+/** Toglie da un messaggio d'errore qualsiasi chiave o token, perché non finisca a schermo. */
+function senzaChiavi(testo: string) {
+  return testo.replace(/Bearer\s+[^"']+/gi, "Bearer [nascosta]").replace(/sb_(secret|publishable)_\S+/gi, "sb_$1_[nascosta]").replace(/eyJ[\w.-]+/g, "[token nascosto]");
+}
+
 /** Password provvisoria leggibile (niente caratteri ambigui come 0/O, 1/l). */
 function passwordProvvisoria() {
   const lettere = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -158,7 +163,7 @@ export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> 
     });
   } catch (e) {
     console.error("creaUtente: richiesta non partita", e);
-    return { ok: false, errore: `Non è stato possibile contattare Supabase (chiave: ${forma}). Dettaglio: ${e instanceof Error ? e.message : String(e)}` };
+    return { ok: false, errore: `Non è stato possibile contattare Supabase (chiave: ${forma}). Dettaglio: ${senzaChiavi(e instanceof Error ? e.message : String(e))}` };
   }
   const { data, error } = esito;
   if (error || !data.user) {
@@ -169,7 +174,7 @@ export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> 
     if (chiaveRifiutata) {
       return { ok: false, errore: "Supabase ha rifiutato la chiave segreta: probabilmente su Vercel c'è ancora quella vecchia, revocata. Copia la nuova chiave sb_secret_… e rifai il Redeploy." };
     }
-    return { ok: false, errore: `Non è stato possibile creare l'utente (chiave: ${forma}). Dettaglio: ${error?.status ?? ""} ${error?.message ?? "nessuna risposta"}`.trim() };
+    return { ok: false, errore: `Non è stato possibile creare l'utente (chiave: ${forma}). Dettaglio: ${error?.status ?? ""} ${senzaChiavi(error?.message ?? "nessuna risposta")}`.trim() };
   }
 
   // Il profilo nasce da solo (trigger sul database): qui si completano ruolo e stato

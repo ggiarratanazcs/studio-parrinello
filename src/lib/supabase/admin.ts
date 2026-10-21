@@ -9,7 +9,8 @@ import { SUPABASE_URL } from "@/lib/supabase/config";
  */
 function chiaveSegreta() {
   const grezza = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  return grezza.trim().replace(/^["']|["']$/g, "").replace(/^SUPABASE_SECRET_KEY\s*=\s*/, "").trim();
+  // Le chiavi non contengono mai spazi: si tolgono anche quelli interni (a capo, tabulazioni)
+  return grezza.trim().replace(/^SUPABASE_SECRET_KEY\s*=\s*/, "").replace(/["'\s]/g, "");
 }
 
 /** Controllo leggero sulla forma della chiave (mai il valore): per messaggi chiari. */
