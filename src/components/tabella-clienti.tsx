@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BarraRegistro, FiltroGruppi, Intestazione, PiedeRegistro, filtroGruppi, useRegistro, type GruppoFiltro } from "@/components/registro";
 
 export type ClienteRiga = {
@@ -38,6 +40,7 @@ const filtro = (c: ClienteRiga, scelto: string) => perGruppo(c.tipo, scelto);
 
 /** Anagrafica clienti in forma di registro: ricerca, schede per tipo, colonne ordinabili. */
 export function TabellaClienti({ clienti }: { clienti: ClienteRiga[] }) {
+  const router = useRouter();
   const r = useRegistro<ClienteRiga, Chiave>({ righe: clienti, testo, valore, filtro, iniziale: { chiave: "nome", verso: "asc" }, filtroIniziale: "tutti|" });
   const intestazione = (chiave: Chiave, nome: string) => (
     <Intestazione chiave={chiave} ordine={r.ordine} onOrdina={r.ordina}>
@@ -62,9 +65,20 @@ export function TabellaClienti({ clienti }: { clienti: ClienteRiga[] }) {
           {r.visibili.map((c) => {
             const t = info(c.tipo);
             return (
-              <div key={c.id} role="row" className={`grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 md:items-center md:px-6 ${COLONNE}`}>
+              <div
+                key={c.id}
+                role="row"
+                // Clic sulla riga: apre la scheda (i collegamenti email e telefono restano cliccabili da soli)
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).closest("a")) return;
+                  router.push(`/clienti/${c.id}`);
+                }}
+                className={`grid cursor-pointer grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-5 py-4 transition-colors hover:bg-superficie-2/50 md:items-center md:px-6 ${COLONNE}`}
+              >
                 <span role="cell" className="min-w-0">
-                  <span className="block truncate font-medium">{c.denominazione ?? "Senza nome"}</span>
+                  <Link href={`/clienti/${c.id}`} className="block truncate font-medium hover:underline">
+                    {c.denominazione ?? "Senza nome"}
+                  </Link>
                   <span className="block truncate text-sm text-tenue md:hidden">
                     {[c.comune, c.email ?? c.telefono].filter(Boolean).join(", ") || "Recapiti da completare"}
                   </span>

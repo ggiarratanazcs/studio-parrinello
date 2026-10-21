@@ -37,7 +37,7 @@ const VOCI: VoceCrea[] = [
   { etichetta: "Pre-fattibilità", descrizione: "Studio iniziale dell'intervento", icona: LandPlot, tipo: "prefattibilita", gruppo: "Lavoro", href: "/nuova/prefattibilita" },
   { etichetta: "Preventivo", descrizione: "Offerta con fasi e onorario", icona: ReceiptText, tipo: "preventivo", gruppo: "Lavoro", href: "/nuova/preventivo" },
   { etichetta: "Commessa", descrizione: "Incarico da avviare", icona: DraftingCompass, tipo: "commessa", gruppo: "Lavoro", href: "/nuova/commessa" },
-  { etichetta: "Cliente", descrizione: "Privato, azienda o ente", icona: Users, tipo: "studio", gruppo: "Anagrafiche e file" },
+  { etichetta: "Cliente", descrizione: "Privato, azienda o ente", icona: Users, tipo: "studio", gruppo: "Anagrafiche e file", href: "/clienti/nuovo" },
   { etichetta: "Immobile", descrizione: "Indirizzo e dati catastali", icona: Building2, tipo: "studio", gruppo: "Anagrafiche e file" },
   { etichetta: "Documento", descrizione: "Carica e collega a una commessa", icona: FileUp, tipo: "studio", gruppo: "Anagrafiche e file" },
 ];

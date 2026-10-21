@@ -35,12 +35,15 @@ export function SceltaLocalita({
   errore,
   mostraCap = true,
   prefisso,
+  comuneObbligatorio = true,
 }: {
   valore: { provincia: string; comune: string; cap?: string };
   onCambia: (v: { provincia: string; comune: string; cap: string }) => void;
   errore?: string;
   mostraCap?: boolean;
   prefisso: string;
+  /** Il comune è obbligatorio (immobili e pratiche); per la sede di un cliente no */
+  comuneObbligatorio?: boolean;
 }) {
   const [dati, setDati] = useState<Dati | null>(null);
   const [aperto, setAperto] = useState(false);
@@ -121,7 +124,7 @@ export function SceltaLocalita({
         <Campo
           etichetta="Comune"
           id={`${prefisso}-comune`}
-          obbligatorio
+          obbligatorio={comuneObbligatorio}
           value={valore.comune}
           errore={errore}
           placeholder="Inizia a scrivere…"
