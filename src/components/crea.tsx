@@ -62,6 +62,21 @@ export function Crea() {
   const [ricerca, setRicerca] = useState("");
   const [scelta, setScelta] = useState(0);
   const campo = useRef<HTMLInputElement>(null);
+  const zonaDesktop = useRef<HTMLDivElement>(null);
+  const zonaMobile = useRef<HTMLDivElement>(null);
+
+  // Clic o tocco fuori dal pulsante e dal menu: si chiude
+  useEffect(() => {
+    if (!aperto) return;
+    function fuori(e: PointerEvent) {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (zonaDesktop.current?.contains(t) || zonaMobile.current?.contains(t)) return;
+      setAperto(false);
+    }
+    document.addEventListener("pointerdown", fuori, true);
+    return () => document.removeEventListener("pointerdown", fuori, true);
+  }, [aperto]);
 
   const filtrate = useMemo(() => {
     const q = normalizza(ricerca.trim());
@@ -141,7 +156,7 @@ export function Crea() {
       />
 
       {/* ── Schermi grandi: pallino sul bordo della testata + pannello a lista ── */}
-      <div className="relative z-50 hidden items-end gap-3 lg:flex">
+      <div ref={zonaDesktop} className="relative z-50 hidden w-fit items-end gap-3 lg:flex">
         <button
           type="button"
           onClick={() => (aperto ? chiudi() : apri())}
@@ -149,8 +164,6 @@ export function Crea() {
           aria-haspopup="dialog"
           aria-label={aperto ? "Chiudi" : "Crea"}
           aria-keyshortcuts="N"
-          data-suggerimento={aperto ? undefined : "Crea · tasto N"}
-          data-suggerimento-lato="destra"
           className="pulsante-crea grid size-14 shrink-0 place-items-center rounded-full"
           style={stileTinta("studio")}
         >
@@ -234,7 +247,7 @@ export function Crea() {
 
       {/* ── Telefono e tablet: pallino in basso al centro, ventaglio verso l'alto ── */}
       <div className="lg:hidden">
-        <div className="crea-mobile fixed left-1/2 z-50 -translate-x-1/2">
+        <div ref={zonaMobile} className="crea-mobile fixed left-1/2 z-50 -translate-x-1/2">
           {VOCI.map((v, i) => {
             // Due archi verso l'alto: "Lavoro" vicino al pollice, anagrafiche e file più in alto
             const n = VOCI.length;
