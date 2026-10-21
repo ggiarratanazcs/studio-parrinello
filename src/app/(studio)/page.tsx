@@ -86,7 +86,7 @@ async function PanoramicaContenuto() {
           {imbuto.map((v) => (
             <li key={v.etichetta} className="min-w-0">
               <Link href={v.href} className="group block">
-                <span className="block h-16 overflow-hidden rounded-s bg-superficie-2 md:h-20">
+                <span className="block h-16 overflow-hidden rounded-piccolo bg-superficie-2 md:h-20">
                   <span
                     className="block h-full origin-left transition-transform duration-700"
                     style={{ background: v.colore, transform: `scaleX(${v.valore ? Math.max(v.valore / massimo, 0.06) : 0})` }}

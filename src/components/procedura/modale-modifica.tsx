@@ -72,7 +72,7 @@ export function ModaleModifica({ tipo, id, onChiudi }: { tipo: "preventivo" | "p
         aria-modal="true"
         aria-label={etichetta}
         tabIndex={-1}
-        className="relative flex h-full w-full max-w-[1280px] flex-col overflow-hidden bg-sfondo outline-none md:rounded-l md:shadow-[0_40px_90px_-24px_rgba(43,42,40,0.65)]"
+        className="relative flex h-full w-full max-w-[1280px] flex-col overflow-hidden bg-sfondo outline-none md:rounded-grande md:shadow-[0_40px_90px_-24px_rgba(43,42,40,0.65)]"
       >
         <TestataModale etichetta={etichetta} tipo={tipo}>
           <button

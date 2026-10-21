@@ -34,7 +34,7 @@
 
   --raggio-s: 4px;
   --raggio-m: 8px;
-  --raggio-l: 14px;
+  --raggio-l: 4px;
 
   --font-corpo: var(--font-manrope);
 
@@ -57,7 +57,7 @@
 [data-impaginazione="materia"] {
   --sfondo: #e9e1d3;
   --superficie: #f5f0e7;
-  --raggio-l: 18px;
+  --raggio-l: 4px;
   --font-corpo: var(--font-manrope);
 }
 
@@ -127,9 +127,9 @@
 
   --font-sans: var(--font-corpo), ui-sans-serif, system-ui, sans-serif;
 
-  --radius-s: var(--raggio-s);
-  --radius-m: var(--raggio-m);
-  --radius-l: var(--raggio-l);
+  --radius-piccolo: var(--raggio-s);
+  --radius-medio: var(--raggio-m);
+  --radius-grande: var(--raggio-l);
 }
 
 /* =====================================================================

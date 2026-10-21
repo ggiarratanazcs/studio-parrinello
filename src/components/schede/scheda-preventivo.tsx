@@ -48,7 +48,7 @@ export async function SchedaPreventivo({ id }: { id: string }) {
       />
 
       {p.commessa ? (
-        <p className="mb-6 rounded-m bg-accento-tenue px-4 py-3 text-[0.9375rem]">
+        <p className="mb-6 rounded-medio bg-accento-tenue px-4 py-3 text-[0.9375rem]">
           {p.integrativo ? "Preventivo integrativo della commessa" : "Trasformato in commessa"}{" "}
           <Link href={`/commesse/${p.commessa.id}`} className="font-medium text-accento hover:underline">
             {p.commessa.codice}

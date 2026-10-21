@@ -105,7 +105,7 @@ export function Espandibile({ children, className }: { children: ReactNode; clas
           className,
         )}
       >
-        <div className={cn(espanso && "pannello min-h-full overflow-hidden rounded-l border border-linea bg-superficie shadow-[0_24px_60px_-30px_rgba(43,42,40,0.5)]")}>
+        <div className={cn(espanso && "pannello min-h-full overflow-hidden rounded-grande border border-linea bg-superficie shadow-[0_24px_60px_-30px_rgba(43,42,40,0.5)]")}>
           {children}
         </div>
       </div>

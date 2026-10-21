@@ -39,7 +39,7 @@ export function SceltaFasi({
             <li key={f.id}>
               <label
                 className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-m px-3 py-2.5 transition-colors",
+                  "flex cursor-pointer items-start gap-3 rounded-medio px-3 py-2.5 transition-colors",
                   scelta ? "bg-accento-tenue" : "hover:bg-superficie-2/60",
                 )}
               >

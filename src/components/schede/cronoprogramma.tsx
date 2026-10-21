@@ -82,7 +82,7 @@ export function Cronoprogramma({
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-m border border-linea">
+      <div className="overflow-x-auto rounded-medio border border-linea">
         <div className="grid grid-cols-[11rem_1fr] md:grid-cols-[15rem_1fr]" style={{ minWidth: `calc(15rem + ${larghezzaMinima})` }}>
           {/* Intestazione: mesi */}
           <div className="etichetta sticky left-0 z-20 border-b border-r border-linea bg-superficie px-3 py-2.5 text-[0.6875rem] uppercase tracking-[0.12em]">

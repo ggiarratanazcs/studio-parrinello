@@ -100,7 +100,7 @@ export function UtenteSegnaposto({ compatto = false }: { compatto?: boolean }) {
   ) : (
     <div className="flex items-center gap-3 p-1">
       <span className="size-9 rounded-full bg-pietra/70" />
-      <span className="solo-barra-aperta h-3 w-24 rounded-s bg-pietra/70" />
+      <span className="solo-barra-aperta h-3 w-24 rounded-piccolo bg-pietra/70" />
     </div>
   );
 }

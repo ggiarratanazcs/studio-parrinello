@@ -258,13 +258,13 @@ function SceltaDaElenco({
           onChange={(e) => onCerca(e.target.value)}
           placeholder={segnaposto}
           aria-label={segnaposto}
-          className="h-11 w-full rounded-m border border-linea-forte bg-superficie pl-9 pr-3 text-base outline-none focus:border-accento focus:ring-2 focus:ring-accento/20"
+          className="h-11 w-full rounded-medio border border-linea-forte bg-superficie pl-9 pr-3 text-base outline-none focus:border-accento focus:ring-2 focus:ring-accento/20"
         />
       </div>
       {voci.length === 0 ? (
         <p className="text-[0.9375rem] text-tenue">{vuoto}</p>
       ) : (
-        <ul role="radiogroup" className="max-h-72 divide-y divide-linea overflow-y-auto rounded-m border border-linea">
+        <ul role="radiogroup" className="max-h-72 divide-y divide-linea overflow-y-auto rounded-medio border border-linea">
           {voci.map((v) => (
             <li key={v.id}>
               <button

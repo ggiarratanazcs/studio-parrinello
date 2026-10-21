@@ -38,7 +38,7 @@ export async function SchedaPrefattibilita({ id }: { id: string }) {
       />
 
       {f.commessa || f.preventivo ? (
-        <p className="mb-6 rounded-m bg-accento-tenue px-4 py-3 text-[0.9375rem]">
+        <p className="mb-6 rounded-medio bg-accento-tenue px-4 py-3 text-[0.9375rem]">
           {f.preventivo ? (
             <>
               Ha generato il preventivo{" "}

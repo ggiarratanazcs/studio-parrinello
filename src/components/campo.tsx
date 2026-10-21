@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const stileControllo =
-  "w-full rounded-m border border-linea-forte bg-superficie px-3 text-base text-inchiostro outline-none transition-colors placeholder:text-tenue/70 focus:border-accento focus:ring-2 focus:ring-accento/20 aria-[invalid=true]:border-[color:var(--stato-sospesa)]";
+  "w-full rounded-medio border border-linea-forte bg-superficie px-3 text-base text-inchiostro outline-none transition-colors placeholder:text-tenue/70 focus:border-accento focus:ring-2 focus:ring-accento/20 aria-[invalid=true]:border-[color:var(--stato-sospesa)]";
 
 function Etichetta({ id, etichetta, obbligatorio }: { id: string; etichetta: string; obbligatorio?: boolean }) {
   return (
@@ -89,7 +89,7 @@ export function Segmenti<T extends string>({
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-sm font-medium text-inchiostro-2">{etichetta}</span>
-      <div role="radiogroup" aria-label={etichetta} className="inline-flex w-fit flex-wrap gap-1 rounded-m bg-superficie-2 p-1">
+      <div role="radiogroup" aria-label={etichetta} className="inline-flex w-fit flex-wrap gap-1 rounded-medio bg-superficie-2 p-1">
         {opzioni.map((o) => (
           <button
             key={o.valore}
@@ -98,7 +98,7 @@ export function Segmenti<T extends string>({
             aria-checked={o.valore === valore}
             onClick={() => onCambia(o.valore)}
             className={cn(
-              "rounded-s px-3 py-1.5 text-sm transition-colors",
+              "rounded-piccolo px-3 py-1.5 text-sm transition-colors",
               o.valore === valore ? "bg-superficie text-inchiostro shadow-[0_0_0_1px_var(--linea)]" : "text-tenue hover:text-inchiostro",
             )}
           >
@@ -115,7 +115,7 @@ export function Messaggio({ tipo, children }: { tipo: "errore" | "ok"; children:
     <p
       role={tipo === "errore" ? "alert" : "status"}
       className={cn(
-        "rounded-m border px-3 py-2.5 text-sm",
+        "rounded-medio border px-3 py-2.5 text-sm",
         tipo === "errore"
           ? "border-[color:var(--stato-sospesa)]/30 bg-[color:var(--stato-sospesa)]/8 text-[color:var(--stato-sospesa)]"
           : "border-[color:var(--stato-attiva)]/30 bg-[color:var(--stato-attiva)]/8 text-[color:var(--stato-attiva)]",

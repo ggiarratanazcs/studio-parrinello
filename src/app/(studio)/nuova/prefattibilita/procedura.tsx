@@ -220,7 +220,7 @@ export function ProceduraNuovaPrefattibilita({
             <Campo etichetta="Costo parametrico (€/mq)" id="costo-mq" type="number" inputMode="decimal" min={0} step="any" value={a.costo_parametrico_mq} onChange={(e) => setA({ ...a, costo_parametrico_mq: e.target.value })} />
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-inchiostro-2">Costo opere stimato</span>
-              <span className="numeri flex h-11 items-center rounded-m bg-superficie-2/60 px-3 text-base">{costoOpere ? formattaEuro(costoOpere) : "—"}</span>
+              <span className="numeri flex h-11 items-center rounded-medio bg-superficie-2/60 px-3 text-base">{costoOpere ? formattaEuro(costoOpere) : "—"}</span>
             </div>
             <Campo etichetta="Durata stimata (mesi)" id="durata" type="number" min={0} value={a.durata_stimata_mesi} onChange={(e) => setA({ ...a, durata_stimata_mesi: e.target.value })} />
             <Campo etichetta="Onorario della pre-fattibilità (€)" id="onorario" type="number" inputMode="decimal" min={0} step="any" value={a.onorario} onChange={(e) => setA({ ...a, onorario: e.target.value })} aiuto="Se la pre-fattibilità è a pagamento." />
@@ -251,7 +251,7 @@ function Gruppo({ titolo, children }: { titolo: string; children: React.ReactNod
 
 function Spunta({ etichetta, valore, onCambia }: { etichetta: string; valore: boolean; onCambia: (v: boolean) => void }) {
   return (
-    <label className={cn("flex cursor-pointer items-center gap-3 rounded-m px-3 py-2.5 transition-colors", valore ? "bg-accento-tenue" : "hover:bg-superficie-2/60")}>
+    <label className={cn("flex cursor-pointer items-center gap-3 rounded-medio px-3 py-2.5 transition-colors", valore ? "bg-accento-tenue" : "hover:bg-superficie-2/60")}>
       <input type="checkbox" className="size-4 accent-[color:var(--accento)]" checked={valore} onChange={(e) => onCambia(e.target.checked)} />
       <span className="text-[0.9375rem]">{etichetta}</span>
     </label>

@@ -90,7 +90,7 @@ export function TeamCommessa({ commessaId, team, profili }: { commessaId: string
       </ul>
 
       {aperto ? (
-        <div className="grid gap-3 rounded-m bg-superficie-2/70 p-3">
+        <div className="grid gap-3 rounded-medio bg-superficie-2/70 p-3">
           <Selezione etichetta="Persona" id={`team-p-${commessaId}`} value={persona} onChange={(e) => setPersona(e.target.value)}>
             <option value="">Scegli…</option>
             {liberi.map((p) => (

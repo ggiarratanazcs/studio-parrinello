@@ -12,7 +12,7 @@ const stiliPulsante = {
 type VariantePulsante = keyof typeof stiliPulsante;
 
 const basePulsante =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-m px-4 text-[0.9375rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center gap-2 rounded-medio px-4 text-[0.9375rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Pulsante({
   variante = "primario",
@@ -32,7 +32,7 @@ export function LinkPulsante({
 
 /** Riquadro con bordo sottile, senza ombra. */
 export function Pannello({ className, ...props }: ComponentProps<"section">) {
-  return <section className={cn("pannello rounded-l border border-linea bg-superficie", className)} {...props} />;
+  return <section className={cn("pannello rounded-grande border border-linea bg-superficie", className)} {...props} />;
 }
 
 export function StatoBadge({ stato }: { stato: string | null }) {
@@ -72,7 +72,7 @@ export function Vuoto({
 }
 
 export function Scheletro({ className }: { className?: string }) {
-  return <span aria-hidden className={cn("block animate-pulse rounded-s bg-pietra/60", className)} />;
+  return <span aria-hidden className={cn("block animate-pulse rounded-piccolo bg-pietra/60", className)} />;
 }
 
 /** Barra a segmenti con le fasi completate sul totale (mostrata in impaginazione Materia). */

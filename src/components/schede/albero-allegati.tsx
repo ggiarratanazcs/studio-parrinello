@@ -38,7 +38,7 @@ function Cartella({
         onClick={() => !vuota && onAlterna(id)}
         aria-expanded={vuota ? undefined : aperta}
         className={cn(
-          "flex w-full items-center gap-2 rounded-s py-1.5 pr-2 text-left text-[0.9375rem] transition-colors",
+          "flex w-full items-center gap-2 rounded-piccolo py-1.5 pr-2 text-left text-[0.9375rem] transition-colors",
           vuota ? "cursor-default text-tenue" : "hover:bg-superficie-2",
         )}
         style={{ paddingLeft: `${livello * 1.25 + 0.25}rem` }}
@@ -68,7 +68,7 @@ function File({ d, livello, onApri }: { d: Documento; livello: number; onApri: (
       <button
         type="button"
         onClick={() => onApri(d)}
-        className="flex w-full items-center gap-2 rounded-s py-1.5 pr-2 text-left transition-colors hover:bg-superficie-2"
+        className="flex w-full items-center gap-2 rounded-piccolo py-1.5 pr-2 text-left transition-colors hover:bg-superficie-2"
         style={{ paddingLeft: `${livello * 1.25 + 1.15}rem` }}
         data-suggerimento="Apri il file"
       >

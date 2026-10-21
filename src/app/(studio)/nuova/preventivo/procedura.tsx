@@ -316,17 +316,17 @@ export function ProceduraNuovoPreventivo({
             </div>
             <ul className="flex flex-col gap-3 md:gap-2">
               {righe.map((v) => (
-                <li key={v.chiave} className="grid grid-cols-[minmax(0,1fr)_2.5rem] gap-2 rounded-m border border-linea p-2 md:grid-cols-[minmax(0,1fr)_8rem_5.5rem_2.5rem] md:border-0 md:p-0">
+                <li key={v.chiave} className="grid grid-cols-[minmax(0,1fr)_2.5rem] gap-2 rounded-medio border border-linea p-2 md:grid-cols-[minmax(0,1fr)_8rem_5.5rem_2.5rem] md:border-0 md:p-0">
                   <input
                     aria-label="Descrizione della voce"
                     value={v.descrizione}
                     onChange={(e) => aggiornaVoce(v.chiave, "descrizione", e.target.value)}
-                    className="h-10 min-w-0 rounded-m border border-linea-forte bg-superficie px-3 text-[0.9375rem] outline-none focus:border-accento"
+                    className="h-10 min-w-0 rounded-medio border border-linea-forte bg-superficie px-3 text-[0.9375rem] outline-none focus:border-accento"
                   />
                   <button
                     type="button"
                     onClick={() => setVoci(righe.filter((x) => x.chiave !== v.chiave))}
-                    className="grid size-10 place-items-center rounded-m text-tenue hover:bg-superficie-2 hover:text-inchiostro md:order-last"
+                    className="grid size-10 place-items-center rounded-medio text-tenue hover:bg-superficie-2 hover:text-inchiostro md:order-last"
                     aria-label={`Togli ${v.descrizione || "voce"}`}
                     data-suggerimento="Togli la voce"
                   >
@@ -341,7 +341,7 @@ export function ProceduraNuovoPreventivo({
                     placeholder="Importo €"
                     value={v.prezzo}
                     onChange={(e) => aggiornaVoce(v.chiave, "prezzo", e.target.value)}
-                    className="numeri h-10 rounded-m border border-linea-forte bg-superficie px-3 text-right text-[0.9375rem] outline-none focus:border-accento"
+                    className="numeri h-10 rounded-medio border border-linea-forte bg-superficie px-3 text-right text-[0.9375rem] outline-none focus:border-accento"
                   />
                   <input
                     aria-label="Ore stimate"
@@ -352,7 +352,7 @@ export function ProceduraNuovoPreventivo({
                     placeholder="Ore"
                     value={v.ore}
                     onChange={(e) => aggiornaVoce(v.chiave, "ore", e.target.value)}
-                    className="numeri h-10 rounded-m border border-linea-forte bg-superficie px-3 text-right text-[0.9375rem] outline-none focus:border-accento"
+                    className="numeri h-10 rounded-medio border border-linea-forte bg-superficie px-3 text-right text-[0.9375rem] outline-none focus:border-accento"
                   />
                 </li>
               ))}
@@ -388,7 +388,7 @@ export function ProceduraNuovoPreventivo({
           <AreaTesto etichetta="Condizioni di pagamento" id="condizioni" value={condizioni.condizioni_pagamento} onChange={(e) => setCondizioni({ ...condizioni, condizioni_pagamento: e.target.value })} className="min-h-20" />
           <AreaTesto etichetta="Note" id="note" value={condizioni.note} onChange={(e) => setCondizioni({ ...condizioni, note: e.target.value })} className="min-h-20" />
 
-          <dl className="numeri ml-auto grid w-full max-w-sm grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-m bg-superficie-2/60 p-4 text-[0.9375rem]">
+          <dl className="numeri ml-auto grid w-full max-w-sm grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 rounded-medio bg-superficie-2/60 p-4 text-[0.9375rem]">
             <dt className="text-tenue">Subtotale voci</dt><dd className="text-right">{formattaEuro(totali.subtotale)}</dd>
             {totali.sconto ? (<><dt className="text-tenue">Sconto</dt><dd className="text-right">− {formattaEuro(totali.sconto)}</dd></>) : null}
             {totali.spese ? (<><dt className="text-tenue">Spese</dt><dd className="text-right">{formattaEuro(totali.spese)}</dd></>) : null}

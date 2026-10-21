@@ -152,7 +152,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
       </div>
 
       {documenti.length ? (
-        <ul className="divide-y divide-linea rounded-m border border-linea bg-superficie">
+        <ul className="divide-y divide-linea rounded-medio border border-linea bg-superficie">
           {documenti.map((d) => {
             const Icona = d.mime_type?.startsWith("image/") ? FileImage : FileText;
             return (
@@ -197,7 +197,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
           aria-label="Categoria dei file"
           value={categoria}
           onChange={(e) => setCategoria(e.target.value)}
-          className="h-10 rounded-m border border-linea-forte bg-superficie px-3 text-sm"
+          className="h-10 rounded-medio border border-linea-forte bg-superficie px-3 text-sm"
         >
           {Object.entries(CATEGORIE_DOCUMENTO).map(([k, v]) => (
             <option key={k} value={k}>
@@ -209,7 +209,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
         <label
           htmlFor={`file-${faseId}`}
           className={cn(
-            "inline-flex h-10 cursor-pointer items-center gap-2 rounded-m border border-linea-forte bg-superficie px-4 text-[0.9375rem] font-medium transition-colors hover:bg-superficie-2",
+            "inline-flex h-10 cursor-pointer items-center gap-2 rounded-medio border border-linea-forte bg-superficie px-4 text-[0.9375rem] font-medium transition-colors hover:bg-superficie-2",
             caricamento && "pointer-events-none opacity-60",
           )}
         >
@@ -218,7 +218,7 @@ export function AllegatiFase({ commessaId, faseId, documenti }: { commessaId: st
         </label>
       </div>
       {caricamento ? (
-        <div className="flex items-center gap-4 rounded-m bg-superficie-2/60 px-4 py-2">
+        <div className="flex items-center gap-4 rounded-medio bg-superficie-2/60 px-4 py-2">
           <Compasso className="w-16 shrink-0" didascalia={null} />
           <span className="text-[0.9375rem] text-inchiostro-2">
             Carico {caricamento.totali === 1 ? "il file" : `${Math.min(caricamento.fatti + 1, caricamento.totali)} di ${caricamento.totali} file`}…

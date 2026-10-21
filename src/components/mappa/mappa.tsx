@@ -206,7 +206,7 @@ export function SceltaPosizione({
 
   return (
     <div className="flex flex-col gap-2">
-      <div ref={contenitore} className="mappa-studio h-[280px] w-full overflow-hidden rounded-m border border-linea" />
+      <div ref={contenitore} className="mappa-studio h-[280px] w-full overflow-hidden rounded-medio border border-linea" />
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <button type="button" onClick={cerca} disabled={cercando} className="rounded-full border border-linea-forte bg-superficie px-3 py-1.5 hover:bg-superficie-2">
           {cercando ? "Cerco…" : "Cerca l'indirizzo"}

@@ -157,7 +157,7 @@ export function SceltaLocalita({
           <ul
             id={listaId}
             role="listbox"
-            className="absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-auto rounded-m border border-linea bg-superficie py-1 shadow-[0_18px_40px_-18px_rgba(43,42,40,0.5)]"
+            className="absolute inset-x-0 top-full z-30 mt-1 max-h-72 overflow-auto rounded-medio border border-linea bg-superficie py-1 shadow-[0_18px_40px_-18px_rgba(43,42,40,0.5)]"
           >
             {suggerimenti.map((c, i) => (
               <li key={`${c.nome}-${c.sigla}`} role="option" aria-selected={i === evidenziato}>
