@@ -22,7 +22,7 @@ const icona = "size-[18px]";
 export default function PaginaImpostazioni() {
   return (
     <>
-      <Cartiglio titolo="Impostazioni" />
+      <Cartiglio titolo="Impostazioni" disegno={null} />
 
       <div className="mx-auto flex max-w-4xl flex-col gap-3">
         <Suspense fallback={<SezioneSegnaposto />}>

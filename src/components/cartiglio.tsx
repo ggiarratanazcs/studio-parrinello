@@ -33,8 +33,8 @@ export async function Cartiglio({
   sopratitolo?: string;
   /** Al posto del titolo scritto (es. la casa per la home): il titolo resta per gli screen reader. */
   icona?: ComponentType<LucideProps>;
-  /** Disegno di sfondo diverso da quello della sezione (es. la home) */
-  disegno?: string;
+  /** Disegno di sfondo diverso da quello della sezione (es. la home); null = nessun disegno (Impostazioni) */
+  disegno?: string | null;
   /** Non più necessario: ora tutti i titoli sono piccoli e delicati (resta per compatibilità) */
   discreto?: boolean;
 }) {
@@ -47,11 +47,13 @@ export async function Cartiglio({
         style={{ background: f.base }}
       >
         {/* Disegno della sezione */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-50 md:bg-[position:right_center]"
-          style={{ backgroundImage: `url(${disegno ?? f.disegno})` }}
-        />
+        {disegno !== null ? (
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-50 md:bg-[position:right_center]"
+            style={{ backgroundImage: `url(${disegno ?? f.disegno})` }}
+          />
+        ) : null}
         {/* Velatura: piena a sinistra per il testo, si apre sul disegno a destra */}
         <div
           aria-hidden
