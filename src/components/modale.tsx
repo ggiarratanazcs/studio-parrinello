@@ -85,18 +85,18 @@ export function Modale({
 }
 
 /**
- * Testata: fondo colorato per tipo di scheda con il prospetto di una villa disegnato a linee chiare,
- * velatura in bronzo verso sinistra per la leggibilità, monogramma grande in trasparenza.
+ * Testata: fondo colorato per tipo di scheda con lo stesso disegno della testata della sua sezione
+ * (attenuato come nelle pagine), velatura verso sinistra per la leggibilità, monogramma leggero in trasparenza.
  */
 export function TestataModale({ etichetta, tipo, children }: { etichetta: string; tipo: TipoScheda; children: ReactNode }) {
   const f = FONDI[tipo];
   return (
     <div className="pt-sicuro relative shrink-0 overflow-hidden text-[#f3ece0]" style={{ background: f.base }}>
-      {/* Prospetto architettonico */}
+      {/* Disegno della sezione (lo stesso della testata di pagina) */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-cover bg-[position:center_78%] opacity-80"
-        style={{ backgroundImage: "url(/brand/prospetto.svg)" }}
+        className="absolute inset-0 bg-cover bg-[position:62%_center] opacity-50 md:bg-[position:right_center]"
+        style={{ backgroundImage: `url(${f.disegno})` }}
       />
       {/* Velatura per far emergere marchio e testo */}
       <div
@@ -104,13 +104,13 @@ export function TestataModale({ etichetta, tipo, children }: { etichetta: string
         className="absolute inset-0"
         style={{
           background:
-            `linear-gradient(90deg, rgba(${f.rgb},0.95) 0%, rgba(${f.rgb},0.7) 32%, rgba(${f.rgb},0.12) 70%, rgba(${f.riflesso},0.22) 100%)`,
+            `linear-gradient(90deg, rgba(${f.rgb},0.95) 0%, rgba(${f.rgb},0.8) 32%, rgba(${f.rgb},0.5) 70%, rgba(${f.rgb},0.42) 100%)`,
         }}
       />
       {/* Monogramma in trasparenza */}
       <Monogramma
         titolo=""
-        className="pointer-events-none absolute -bottom-[45%] right-[6%] h-[210%] text-[#f3ece0] opacity-[0.09]"
+        className="pointer-events-none absolute -bottom-[18%] right-[14%] hidden h-[115%] text-[#f3ece0] opacity-[0.045] md:block"
       />
 
       <div className="relative flex h-24 items-center justify-between gap-4 px-4 md:h-32 md:px-8">
