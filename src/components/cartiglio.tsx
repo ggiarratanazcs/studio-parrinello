@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 import type { LucideProps } from "lucide-react";
-import { Monogramma } from "@/components/monogramma";
+import { LogoImmagine } from "@/components/studio-contesto";
+import { leggiStudio } from "@/lib/studio";
 import { Tessere, type Cella } from "@/components/tessere";
 import { FONDI, type TipoFondo } from "@/lib/fondi";
 
@@ -11,14 +12,14 @@ export type { Cella };
  * a linee chiare (colore per sezione, come le modali), titolo e sottotitolo in chiaro;
  * sotto, le azioni a sinistra e i riquadri informativi a destra, sollevati sul bordo della testata.
  */
-export function Cartiglio({
+export async function Cartiglio({
   titolo,
   sottotitolo,
   celle = [],
   azioni,
   crea,
   tipo = "studio",
-  sopratitolo = "Studio Parrinello",
+  sopratitolo,
   icona: IconaTitolo,
   disegno,
 }: {
@@ -37,6 +38,7 @@ export function Cartiglio({
   /** Non più necessario: ora tutti i titoli sono piccoli e delicati (resta per compatibilità) */
   discreto?: boolean;
 }) {
+  const studio = await leggiStudio();
   const f = FONDI[tipo];
   return (
     <header className="mb-8 md:mb-10">
@@ -62,8 +64,8 @@ export function Cartiglio({
         <div aria-hidden className="absolute inset-0 md:hidden" style={{ background: `rgba(${f.rgb},0.55)` }} />
         <div className="testata-contenuto relative flex min-h-44 flex-col justify-start px-6 pb-7 pt-10 md:min-h-56 md:px-10 md:pb-10 md:pt-14">
           <p className="flex items-center gap-2.5 text-[0.75rem] uppercase tracking-[0.22em] text-[#f3ece0]/60">
-            <Monogramma titolo="" className="h-4 text-[#f3ece0]/70" />
-            {sopratitolo}
+            <LogoImmagine logoUrl={studio.logoUrl} nome={studio.nome} titolo="" className="h-4 text-[#f3ece0]/70" chiaro />
+            {sopratitolo ?? studio.nome}
           </p>
           {IconaTitolo ? (
             <h1 className="mt-3">

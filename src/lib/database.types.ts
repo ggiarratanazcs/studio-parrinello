@@ -1087,6 +1087,45 @@ export type Database = {
         }
         Relationships: []
       }
+      studio: {
+        Row: {
+          claim: string | null
+          email: string | null
+          id: number
+          indirizzo: string | null
+          logo_path: string | null
+          nome: string
+          partita_iva: string | null
+          sito: string | null
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          claim?: string | null
+          email?: string | null
+          id?: number
+          indirizzo?: string | null
+          logo_path?: string | null
+          nome: string
+          partita_iva?: string | null
+          sito?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          claim?: string | null
+          email?: string | null
+          id?: number
+          indirizzo?: string | null
+          logo_path?: string | null
+          nome?: string
+          partita_iva?: string | null
+          sito?: string | null
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_pratiche: {

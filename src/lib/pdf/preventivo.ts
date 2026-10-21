@@ -3,7 +3,10 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf
 import type { leggiPreventivo } from "@/lib/dati";
 import { MONOGRAMMA_TRACCIATO, MONOGRAMMA_VIEWBOX } from "@/lib/monogramma-tracciato";
 import { calcolaTotali, METODI_CALCOLO } from "@/lib/preventivo";
-import { STUDIO } from "@/lib/studio";
+import { STUDIO_PREDEFINITO, leggiStudio, type DatiStudio } from "@/lib/studio";
+
+/** Dati dello studio dalla configurazione (Impostazioni → Studio), letti a ogni PDF. */
+let STUDIO: DatiStudio = STUDIO_PREDEFINITO;
 
 type Preventivo = NonNullable<Awaited<ReturnType<typeof leggiPreventivo>>>;
 
@@ -30,6 +33,7 @@ const data = new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "long", y
  * intestazione dello studio, committente, oggetto, voci, totali, condizioni e firma.
  */
 export async function pdfPreventivo(p: Preventivo): Promise<Uint8Array> {
+  STUDIO = await leggiStudio();
   const doc = await PDFDocument.create();
   doc.setTitle(`Preventivo ${p.numero ?? ""} — ${p.titolo ?? ""}`);
   doc.setAuthor(STUDIO.nome);
@@ -117,7 +121,7 @@ export async function pdfPreventivo(p: Preventivo): Promise<Uint8Array> {
     color: INCHIOSTRO,
   });
   pagina.drawText(STUDIO.nome, { x: M.sx + 38, y: y - 16, size: 14, font: grassetto, color: INCHIOSTRO });
-  pagina.drawText(STUDIO.sottotitolo, { x: M.sx + 38, y: y - 30, size: 8.5, font: normale, color: TENUE });
+  pagina.drawText(STUDIO.claim, { x: M.sx + 38, y: y - 30, size: 8.5, font: normale, color: TENUE });
   const contatti = [STUDIO.indirizzo, `${STUDIO.telefono}  ·  ${STUDIO.email}`, STUDIO.sito, STUDIO.partitaIva ? `P.IVA ${STUDIO.partitaIva}` : ""].filter(Boolean);
   contatti.forEach((c, i) => aDestra(c, A4.l - M.dx, y - 10 - i * 11, 8, normale, TENUE));
   y -= 58;

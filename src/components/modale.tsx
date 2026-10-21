@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Maximize2, X } from "lucide-react";
 import { Monogramma } from "@/components/monogramma";
+import { LogoStudio, useStudio } from "@/components/studio-contesto";
 import { FONDI, type TipoFondo } from "@/lib/fondi";
 
 /**
@@ -90,6 +91,7 @@ export function Modale({
  */
 export function TestataModale({ etichetta, tipo, children }: { etichetta: string; tipo: TipoScheda; children: ReactNode }) {
   const f = FONDI[tipo];
+  const studio = useStudio();
   return (
     <div className="pt-sicuro relative shrink-0 overflow-hidden text-[#f3ece0]" style={{ background: f.base }}>
       {/* Disegno della sezione (lo stesso della testata di pagina) */}
@@ -107,18 +109,20 @@ export function TestataModale({ etichetta, tipo, children }: { etichetta: string
             `linear-gradient(90deg, rgba(${f.rgb},0.95) 0%, rgba(${f.rgb},0.8) 32%, rgba(${f.rgb},0.5) 70%, rgba(${f.rgb},0.42) 100%)`,
         }}
       />
-      {/* Monogramma in trasparenza */}
-      <Monogramma
-        titolo=""
-        className="pointer-events-none absolute -bottom-[18%] right-[14%] hidden h-[115%] text-[#f3ece0] opacity-[0.045] md:block"
-      />
+      {/* Monogramma in trasparenza (solo senza logo caricato) */}
+      {studio.logoUrl ? null : (
+        <Monogramma
+          titolo=""
+          className="pointer-events-none absolute -bottom-[18%] right-[14%] hidden h-[115%] text-[#f3ece0] opacity-[0.045] md:block"
+        />
+      )}
 
       <div className="relative flex h-24 items-center justify-between gap-4 px-4 md:h-32 md:px-8">
         <div className="flex min-w-0 items-center gap-3 md:gap-4">
-          <Monogramma className="h-9 shrink-0 text-[#f3ece0] md:h-11" />
+          <LogoStudio className="h-9 shrink-0 text-[#f3ece0] md:h-11" chiaro />
           <div className="min-w-0 border-l border-white/20 pl-3 md:pl-4">
             <p className="truncate text-[0.9375rem] font-medium md:text-base" style={{ fontVariationSettings: '"wdth" 112' }}>
-              Studio Parrinello
+              {studio.nome}
             </p>
             <p className="truncate text-[0.8125rem] text-[#f3ece0]/65">{etichetta}</p>
           </div>

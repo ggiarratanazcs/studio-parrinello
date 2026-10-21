@@ -692,3 +692,9 @@ html[data-theme="navy"] .carta-scura {
 .senza-barra::-webkit-scrollbar {
   display: none;
 }
+
+/* Logo caricato dal titolare: su fondo scuro diventa una sagoma chiara, come il monogramma */
+.logo-chiaro,
+html[data-theme="navy"] :is(.barra-laterale, .barra-materia) img.logo-studio {
+  filter: brightness(0) invert(0.94);
+}

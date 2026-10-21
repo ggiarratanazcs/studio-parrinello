@@ -1,3 +1,4 @@
+import { leggiStudio } from "@/lib/studio";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { TEMA_PREDEFINITO } from "@/lib/temi";
@@ -35,21 +36,25 @@ const manrope = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
+/** Titolo e nome dell'app dalla configurazione dello studio (Impostazioni → Studio). */
+export async function generateMetadata(): Promise<Metadata> {
+  const studio = await leggiStudio();
+  return {
   title: {
-    default: "Studio Parrinello",
-    template: "%s · Studio Parrinello",
+    default: studio.nome,
+    template: `%s · ${studio.nome}`,
   },
-  description: "Gestione commesse dello Studio Parrinello, architettura e design a Siracusa.",
-  applicationName: "Studio Parrinello",
+  description: `Gestione commesse · ${[studio.nome, studio.claim].filter(Boolean).join(", ")}`,
+  applicationName: studio.nome,
   appleWebApp: {
     capable: true,
-    title: "Parrinello",
+    title: studio.nome,
     statusBarStyle: "default",
   },
   formatDetection: { telephone: false },
   robots: { index: false, follow: false },
 };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ede8df",

@@ -5,13 +5,17 @@ import { Crea } from "@/components/crea";
 import { DaFare } from "@/components/da-fare";
 import { getProfilo } from "@/lib/auth";
 import { DISEGNO_HOME } from "@/lib/fondi";
+import { leggiStudio } from "@/lib/studio";
 import { leggiDaFare, ultimeAttivita } from "@/lib/da-fare";
 import { istanteAttuale, oggiIso } from "@/lib/utils";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
 import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
 
-export const metadata = { title: { absolute: "Studio Parrinello" } };
+export async function generateMetadata() {
+  const studio = await leggiStudio();
+  return { title: { absolute: studio.nome } };
+}
 
 const STATI_APERTI = ["contatto", "prefattibilita", "preventivo", "attiva", "sospesa"];
 
@@ -24,6 +28,7 @@ export default function HomePage() {
 }
 
 async function PanoramicaContenuto() {
+  const studio = await leggiStudio();
   await connection();
   const oggi = oggiIso();
   const adesso = istanteAttuale();
@@ -64,7 +69,7 @@ async function PanoramicaContenuto() {
 
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" disegno={DISEGNO_HOME} crea={<Crea />} />
+      <Cartiglio titolo={studio.claim || studio.nome} disegno={DISEGNO_HOME} crea={<Crea />} />
 
       <DaFare
         voci={daFare}
@@ -144,10 +149,11 @@ function RigaCommessa({ c }: { c: CommessaSintesi }) {
   );
 }
 
-function PanoramicaSegnaposto() {
+async function PanoramicaSegnaposto() {
+  const studio = await leggiStudio();
   return (
     <>
-      <Cartiglio titolo="Architettura e Design" disegno={DISEGNO_HOME} crea={<Crea />} />
+      <Cartiglio titolo={studio.claim || studio.nome} disegno={DISEGNO_HOME} crea={<Crea />} />
       <Pannello className="px-6 py-6">
         <Scheletro className="h-4 w-48" />
         <Scheletro className="mt-6 h-20 w-full" />

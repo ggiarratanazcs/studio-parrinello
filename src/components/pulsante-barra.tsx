@@ -2,7 +2,7 @@
 
 import { useRef, useSyncExternalStore } from "react";
 import { ChevronsLeft } from "lucide-react";
-import { Monogramma } from "@/components/monogramma";
+import { LogoStudio } from "@/components/studio-contesto";
 import { CHIAVE_BARRA } from "@/lib/impaginazione";
 import { cn } from "@/lib/utils";
 
@@ -87,7 +87,7 @@ export function LogoBarra({
       className={cn("logo-barra flex items-center gap-3 rounded-[12px] text-left", className)}
     >
       <span ref={logo} className="inline-flex shrink-0">
-        <Monogramma className={classeLogo} titolo="" />
+        <LogoStudio className={classeLogo} titolo="" />
       </span>
       {children}
     </button>

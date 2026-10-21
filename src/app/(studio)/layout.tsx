@@ -6,13 +6,18 @@ import { SalutoUtente, UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/
 import { LogoBarra, PulsanteBarra } from "@/components/pulsante-barra";
 import { Benvenuto } from "@/components/benvenuto";
 import { CursoreCompasso } from "@/components/cursore-compasso";
+import { LogoImmagine, StudioProvider } from "@/components/studio-contesto";
+import { leggiStudio } from "@/lib/studio";
 
 /**
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
  * in Impostazioni (attributo data-impaginazione su <html>).
  */
-export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
+export default async function LayoutStudio({ children, modale }: LayoutProps<"/">) {
+  // Nome, claim e logo dalla configurazione dello studio (in memoria, si aggiorna al salvataggio)
+  const studio = await leggiStudio();
   return (
+    <StudioProvider valore={{ nome: studio.nome, claim: studio.claim, logoUrl: studio.logoUrl }}>
     <div className="relative min-h-dvh lg:flex">
       <Benvenuto />
       <Suspense fallback={null}>
@@ -26,9 +31,9 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
           <LogoBarra className="mb-8 px-1.5">
             <span className="solo-barra-aperta leading-tight">
               <span className="block whitespace-nowrap text-[1.0625rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>
-                Studio Parrinello
+                {studio.nome}
               </span>
-              <span className="etichetta block whitespace-nowrap">Architettura e design</span>
+              {studio.claim ? <span className="etichetta block whitespace-nowrap">{studio.claim}</span> : null}
             </span>
           </LogoBarra>
 
@@ -42,20 +47,22 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
         </div>
       </aside>
 
-      {/* ── Impaginazione "materia": monogramma come segno di sfondo ── */}
-      <Monogramma
-        titolo=""
-        className="solo-materia pointer-events-none fixed -right-16 -top-10 h-[26rem] text-inchiostro opacity-[0.07] md:h-[38rem]"
-      />
+      {/* ── Impaginazione "materia": monogramma come segno di sfondo (solo senza logo caricato) ── */}
+      {studio.logoUrl ? null : (
+        <Monogramma
+          titolo=""
+          className="solo-materia pointer-events-none fixed -right-16 -top-10 h-[26rem] text-inchiostro opacity-[0.07] md:h-[38rem]"
+        />
+      )}
 
       <div className="relative min-w-0 flex-1">
         {/* Barra in alto — telefono (entrambe le impaginazioni) */}
         <header className="pt-sicuro sticky top-0 z-30 border-b border-linea bg-sfondo/90 backdrop-blur-md lg:hidden">
           <div className="flex h-14 items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2.5">
-              <Monogramma className="h-7" />
+              <LogoImmagine logoUrl={studio.logoUrl} nome={studio.nome} className="h-7" />
               <span className="text-[0.9375rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>
-                Studio Parrinello
+                {studio.nome}
               </span>
             </Link>
             <Suspense fallback={<UtenteSegnaposto compatto />}>
@@ -90,5 +97,6 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
       <NavMobile />
       {modale}
     </div>
+    </StudioProvider>
   );
 }

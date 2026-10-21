@@ -6,6 +6,9 @@ import { getProfilo } from "@/lib/auth";
 import { RUOLI } from "@/lib/dominio";
 import { SceltaImpaginazione } from "@/components/scelta-impaginazione";
 import { SceltaTema } from "@/components/scelta-tema";
+import { ImpostazioniStudio, UtentiStudio } from "@/components/impostazioni-studio";
+import { createClient } from "@/lib/supabase/server";
+import { leggiStudio } from "@/lib/studio";
 
 export const metadata = { title: "Impostazioni" };
 
@@ -38,6 +41,11 @@ export default function PaginaImpostazioni() {
           <h2 className="border-b border-linea px-5 py-4 text-base font-medium md:px-6">Tema</h2>
           <SceltaTema />
         </Pannello>
+
+        {/* Configurazione generale dello studio e utenti: solo per il titolare */}
+        <Suspense fallback={null}>
+          <SezioniTitolare />
+        </Suspense>
       </div>
     </>
   );
@@ -68,5 +76,40 @@ async function Profilo() {
         Cambia password
       </LinkPulsante>
     </div>
+  );
+}
+
+async function SezioniTitolare() {
+  const io = await getProfilo();
+  if (io.ruolo !== "titolare") return null;
+  const supabase = await createClient();
+  const [studio, { data: profili }] = await Promise.all([
+    leggiStudio(),
+    supabase.from("profili").select("id, nome, cognome, email, ruolo, attivo").order("attivo", { ascending: false }).order("cognome"),
+  ]);
+  const utenti = (profili ?? []).map((u) => ({
+    id: u.id,
+    nome: [u.nome, u.cognome].filter(Boolean).join(" ") || u.email,
+    email: u.email,
+    ruolo: u.ruolo,
+    attivo: u.attivo,
+  }));
+  return (
+    <>
+      <Pannello className="lg:col-span-2">
+        <div className="flex items-baseline justify-between gap-3 border-b border-linea px-5 py-4 md:px-6">
+          <h2 className="text-base font-medium">Studio</h2>
+          <span className="text-[0.8125rem] text-tenue">Visibile solo al titolare</span>
+        </div>
+        <ImpostazioniStudio studio={studio} />
+      </Pannello>
+      <Pannello className="lg:col-span-2">
+        <div className="flex items-baseline justify-between gap-3 border-b border-linea px-5 py-4 md:px-6">
+          <h2 className="text-base font-medium">Utenti dello studio</h2>
+          <span className="numeri text-[0.8125rem] text-tenue">{utenti.filter((u) => u.attivo).length} attivi</span>
+        </div>
+        <UtentiStudio utenti={utenti} ioId={io.id} />
+      </Pannello>
+    </>
   );
 }

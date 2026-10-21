@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
+import { leggiStudio } from "@/lib/studio";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const studio = await leggiStudio();
   return {
-    name: "Studio Parrinello — Commesse",
-    short_name: "Parrinello",
-    description: "Gestione commesse dello Studio Parrinello",
+    name: `${studio.nome} — Commesse`,
+    short_name: studio.nome,
+    description: `Gestione commesse · ${studio.nome}`,
     lang: "it",
     start_url: "/",
     scope: "/",

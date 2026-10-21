@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Compasso, DURATA_BENVENUTO } from "@/components/compasso";
 import { CHIAVE_BENVENUTO } from "@/lib/impaginazione";
+import { useStudio } from "@/components/studio-contesto";
 
 /**
  * Schermata d'ingresso: una volta per sessione il monogramma diventa compasso e traccia il cerchio,
@@ -10,6 +11,7 @@ import { CHIAVE_BENVENUTO } from "@/lib/impaginazione";
  * Se è già stata vista, lo script in <head> la nasconde prima che compaia (data-benvenuto="visto").
  */
 export function Benvenuto() {
+  const studio = useStudio();
   const [fase, setFase] = useState<"visibile" | "sfuma" | "finita">("visibile");
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function Benvenuto() {
       style={{ opacity: fase === "sfuma" ? 0 : 1 }}
       onClick={() => setFase("sfuma")}
     >
-      <Compasso unaVolta className="w-44 md:w-52" didascalia="Studio Parrinello" />
+      <Compasso unaVolta className="w-44 md:w-52" didascalia={studio.nome} />
     </div>
   );
 }
