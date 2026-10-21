@@ -2,6 +2,7 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Crosshair, Loader2, MapPin, MapPinOff, Wand2 } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Pannello, Pulsante, Vuoto } from "@/components/ui";
@@ -228,11 +229,21 @@ function RigaImmobile({
 
   return (
     <li className={cn(aperta && "bg-superficie-2/60")}>
-      <div role="row" className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-4 md:px-6 ${COLONNE}`}>
+      <div
+        role="row"
+        // Clic sulla riga: apre la scheda dell'immobile (i pulsanti della mappa restano a sé)
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest("button, a")) return;
+          router.push(`/immobili/${i.id}`);
+        }}
+        className={`grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-4 transition-colors hover:bg-superficie-2/50 md:px-6 ${COLONNE}`}
+      >
         <span role="cell" className="flex min-w-0 items-center gap-4">
           <span className="size-2.5 shrink-0 rounded-full" style={{ background: stato.colore }} data-suggerimento={stato.etichetta} />
           <span className="min-w-0">
-            <span className="block truncate font-medium">{i.denominazione ?? i.indirizzo}</span>
+            <Link href={`/immobili/${i.id}`} className="block truncate font-medium hover:underline">
+              {i.denominazione ?? i.indirizzo}
+            </Link>
             <span className="block truncate text-sm text-tenue">
               {[i.indirizzo, pratiche.join(" · ")].filter(Boolean).join("  —  ")}
               <span className="md:hidden">{i.comune ? ` · ${i.comune}` : ""}</span>

@@ -204,3 +204,118 @@ export async function leggiCliente(id: string): Promise<SchedaClienteDati | null
     },
   };
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Scheda anagrafica dell'immobile: dati, identificativi catastali, pratiche
+   svolte sull'immobile, committenti e documenti archiviati sulle sue commesse.
+   ────────────────────────────────────────────────────────────────────────── */
+
+export type Immobile = Tables<"immobili">;
+export type Catasto = Tables<"immobili_catasto">;
+
+export type CommittenteImmobile = { id: string; nome: string; tipo: string; pratiche: number };
+export type DocumentoImmobile = { id: string; titolo: string; categoria: string; data: string; commessa: { id: string; codice: string | null; titolo: string } };
+
+export type SchedaImmobileDati = {
+  immobile: Immobile;
+  catasto: Catasto[];
+  prefattibilita: PraticaCliente[];
+  preventivi: PraticaCliente[];
+  commesse: PraticaCliente[];
+  committenti: CommittenteImmobile[];
+  documenti: DocumentoImmobile[];
+  totaleDocumenti: number;
+};
+
+export async function leggiImmobile(id: string): Promise<SchedaImmobileDati | null> {
+  const supabase = await createClient();
+  const cliente = "cliente:clienti(id, denominazione, tipo)";
+  const [immobile, catasto, commesse, preventivi, prefattibilita] = await Promise.all([
+    supabase.from("immobili").select("*").eq("id", id).maybeSingle(),
+    supabase.from("immobili_catasto").select("*").eq("immobile_id", id).order("catasto").order("foglio").order("particella"),
+    supabase
+      .from("commesse")
+      .select(`id, codice, titolo, stato, onorario_concordato, data_apertura, ${cliente}`)
+      .eq("immobile_id", id)
+      .order("data_apertura", { ascending: false }),
+    supabase
+      .from("preventivi")
+      .select(`id, numero, titolo, oggetto, stato, integrativo, imponibile, data_emissione, ${cliente}`)
+      .eq("immobile_id", id)
+      .order("data_emissione", { ascending: false }),
+    supabase
+      .from("prefattibilita")
+      .select(`id, numero, titolo, stato, onorario, data_redazione, created_at, ${cliente}`)
+      .eq("immobile_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
+  if (immobile.error) throw new Error(`Impossibile leggere l'immobile: ${immobile.error.message}`);
+  if (!immobile.data) return null;
+  for (const r of [catasto, commesse, preventivi, prefattibilita]) {
+    if (r.error) throw new Error(`Impossibile leggere la scheda dell'immobile: ${r.error.message}`);
+  }
+
+  const committenti = new Map<string, CommittenteImmobile>();
+  const segna = (c: { id: string; denominazione: string | null; tipo: string } | null) => {
+    if (!c) return;
+    const voce = committenti.get(c.id) ?? { id: c.id, nome: c.denominazione ?? "Senza nome", tipo: c.tipo, pratiche: 0 };
+    voce.pratiche += 1;
+    committenti.set(c.id, voce);
+  };
+
+  const elencoCommesse: PraticaCliente[] = (commesse.data ?? []).map((c) => {
+    segna(c.cliente);
+    const s = statoCommessa(c.stato);
+    return { id: c.id, sigla: c.codice, titolo: c.titolo, data: c.data_apertura, importo: c.onorario_concordato, stato: c.stato, statoEtichetta: s.etichetta, colore: s.colore, href: `/commesse/${c.id}`, luogo: c.cliente?.denominazione ?? null };
+  });
+  const elencoPreventivi: PraticaCliente[] = (preventivi.data ?? []).map((p) => {
+    segna(p.cliente);
+    const s = STATI_PREVENTIVO[p.stato] ?? { etichetta: p.stato, colore: "var(--tenue)" };
+    return {
+      id: p.id,
+      sigla: p.numero,
+      titolo: (p.titolo ?? p.oggetto ?? "Preventivo") + (p.integrativo ? " · integrativo" : ""),
+      data: p.data_emissione,
+      importo: p.imponibile,
+      stato: p.stato,
+      statoEtichetta: s.etichetta,
+      colore: s.colore,
+      href: `/preventivi/${p.id}`,
+      luogo: p.cliente?.denominazione ?? null,
+    };
+  });
+  const elencoPf: PraticaCliente[] = (prefattibilita.data ?? []).map((p) => {
+    segna(p.cliente);
+    const s = STATI_PREFATTIBILITA[p.stato] ?? { etichetta: p.stato, colore: "var(--tenue)" };
+    return { id: p.id, sigla: p.numero, titolo: p.titolo ?? "Pre-fattibilità", data: p.data_redazione ?? p.created_at, importo: p.onorario, stato: p.stato, statoEtichetta: s.etichetta, colore: s.colore, href: `/prefattibilita/${p.id}`, luogo: p.cliente?.denominazione ?? null };
+  });
+
+  // Documenti archiviati sulle commesse di questo immobile (i più recenti)
+  const idCommesse = (commesse.data ?? []).map((c) => c.id);
+  let documenti: DocumentoImmobile[] = [];
+  let totaleDocumenti = 0;
+  if (idCommesse.length) {
+    const { data, count, error } = await supabase
+      .from("documenti")
+      .select("id, titolo, categoria, created_at, commessa:commesse(id, codice, titolo)", { count: "exact" })
+      .in("commessa_id", idCommesse)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    if (error) throw new Error(`Impossibile leggere i documenti dell'immobile: ${error.message}`);
+    totaleDocumenti = count ?? 0;
+    documenti = (data ?? [])
+      .filter((d) => d.commessa)
+      .map((d) => ({ id: d.id, titolo: d.titolo, categoria: d.categoria, data: d.created_at, commessa: { id: d.commessa!.id, codice: d.commessa!.codice, titolo: d.commessa!.titolo } }));
+  }
+
+  return {
+    immobile: immobile.data,
+    catasto: catasto.data ?? [],
+    prefattibilita: elencoPf,
+    preventivi: elencoPreventivi,
+    commesse: elencoCommesse,
+    committenti: [...committenti.values()].sort((a, b) => b.pratiche - a.pratiche),
+    documenti,
+    totaleDocumenti,
+  };
+}

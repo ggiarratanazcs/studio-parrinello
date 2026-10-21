@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { geocodifica } from "@/lib/geocodifica";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Salvataggi delle schede anagrafiche: cliente e referenti.
@@ -197,5 +198,169 @@ export async function eliminaReferente(id: string): Promise<Esito> {
   if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare un referente." };
   revalidatePath("/clienti");
   revalidatePath("/");
+  return { ok: true, id };
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Immobile e identificativi catastali
+   ────────────────────────────────────────────────────────────────────────── */
+
+export type DatiImmobile = {
+  denominazione: string;
+  indirizzo: string;
+  cap: string;
+  comune: string;
+  provincia: string;
+  zona_urbanistica: string;
+  strumento_urbanistico: string;
+  destinazione_uso: string;
+  superficie_mq: string;
+  anno_costruzione: string;
+  vincoli: string[];
+  note: string;
+};
+
+export type DatiCatasto = {
+  catasto: "fabbricati" | "terreni";
+  sezione: string;
+  foglio: string;
+  particella: string;
+  subalterno: string;
+  categoria: string;
+  classe: string;
+  consistenza: string;
+  rendita: string;
+  intestatari: string;
+  note: string;
+};
+
+export type PossibileDoppioneImmobile = { id: string; nome: string; indirizzo: string };
+
+const numero = (v: string) => {
+  const t = v.trim().replace(/\./g, "").replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : NaN;
+};
+
+function controllaImmobile(d: DatiImmobile): Record<string, string> {
+  const errori: Record<string, string> = {};
+  if (!pulito(d.indirizzo)) errori.indirizzo = "Scrivi indirizzo e numero civico.";
+  if (!pulito(d.comune)) errori.comune = "Scegli il comune.";
+  const sup = numero(d.superficie_mq);
+  if (sup !== null && (Number.isNaN(sup) || sup < 0)) errori.superficie_mq = "Scrivi la superficie in metri quadri, solo numeri.";
+  const anno = numero(d.anno_costruzione);
+  if (anno !== null && (Number.isNaN(anno) || anno < 1000 || anno > new Date().getFullYear() + 5)) errori.anno_costruzione = "Scrivi un anno a quattro cifre.";
+  return errori;
+}
+
+/** Crea (id = null) o aggiorna un immobile; se l'indirizzo è nuovo o cambiato, ne cerca la posizione sulla mappa. */
+export async function salvaImmobile(
+  id: string | null,
+  dati: DatiImmobile,
+): Promise<Esito | { ok: false; errore: string; errori: Record<string, string> }> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const errori = controllaImmobile(dati);
+  if (Object.keys(errori).length) return { ok: false, errore: "Controlla i campi segnati.", errori };
+
+  const riga = {
+    denominazione: pulito(dati.denominazione),
+    indirizzo: pulito(dati.indirizzo)!,
+    cap: pulito(dati.cap),
+    comune: pulito(dati.comune)!,
+    provincia: maiuscolo(dati.provincia),
+    zona_urbanistica: pulito(dati.zona_urbanistica),
+    strumento_urbanistico: pulito(dati.strumento_urbanistico),
+    destinazione_uso: pulito(dati.destinazione_uso),
+    superficie_mq: numero(dati.superficie_mq),
+    anno_costruzione: numero(dati.anno_costruzione),
+    vincoli: dati.vincoli.length ? dati.vincoli : null,
+    note: pulito(dati.note),
+  };
+
+  let rifaiPosizione = true;
+  if (id) {
+    const { data: prima } = await s.supabase.from("immobili").select("indirizzo, cap, comune, latitudine").eq("id", id).maybeSingle();
+    rifaiPosizione = !prima || prima.latitudine == null || prima.indirizzo !== riga.indirizzo || prima.comune !== riga.comune || prima.cap !== riga.cap;
+    const { data, error } = await s.supabase.from("immobili").update(riga).eq("id", id).select("id").maybeSingle();
+    if (error || !data) return { ok: false, errore: "Non è stato possibile salvare le modifiche. Riprova." };
+  } else {
+    const { data, error } = await s.supabase.from("immobili").insert(riga).select("id").single();
+    if (error || !data) return { ok: false, errore: "Non è stato possibile creare l'immobile. Riprova." };
+    id = data.id;
+  }
+
+  // La posizione è un di più: se non si trova, l'immobile resta da posizionare a mano dall'elenco
+  if (rifaiPosizione) {
+    try {
+      const p = await geocodifica({ indirizzo: riga.indirizzo, cap: riga.cap, comune: riga.comune, provincia: riga.provincia });
+      await s.supabase.from("immobili").update({ latitudine: p?.lat ?? null, longitudine: p?.lng ?? null }).eq("id", id);
+    } catch {
+      // nessun blocco
+    }
+  }
+  revalidatePath("/immobili");
+  revalidatePath("/");
+  return { ok: true, id };
+}
+
+/** Immobili già in archivio allo stesso indirizzo nello stesso comune (solo avviso). */
+export async function cercaDoppioniImmobile(dati: DatiImmobile, escludiId: string | null): Promise<PossibileDoppioneImmobile[]> {
+  const s = await sessione();
+  if (!s) return [];
+  const indirizzo = pulito(dati.indirizzo);
+  const comune = pulito(dati.comune);
+  if (!indirizzo || !comune) return [];
+  const { data } = await s.supabase
+    .from("immobili")
+    .select("id, denominazione, indirizzo, comune")
+    .ilike("indirizzo", indirizzo.replace(/[%_]/g, ""))
+    .ilike("comune", comune.replace(/[%_]/g, ""))
+    .limit(3);
+  return (data ?? [])
+    .filter((i) => i.id !== escludiId)
+    .map((i) => ({ id: i.id, nome: i.denominazione || i.indirizzo, indirizzo: `${i.indirizzo}, ${i.comune}` }));
+}
+
+/** Crea (id = null) o aggiorna un identificativo catastale dell'immobile. */
+export async function salvaCatasto(immobileId: string, id: string | null, d: DatiCatasto): Promise<Esito> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  if (!pulito(d.foglio) || !pulito(d.particella)) return { ok: false, errore: "Foglio e particella sono necessari." };
+  const rendita = numero(d.rendita);
+  if (rendita !== null && Number.isNaN(rendita)) return { ok: false, errore: "Scrivi la rendita in euro, solo numeri." };
+  const riga = {
+    catasto: d.catasto === "terreni" ? "terreni" : "fabbricati",
+    sezione: maiuscolo(d.sezione),
+    foglio: pulito(d.foglio)!,
+    particella: pulito(d.particella)!,
+    subalterno: pulito(d.subalterno),
+    categoria: maiuscolo(d.categoria),
+    classe: pulito(d.classe),
+    consistenza: pulito(d.consistenza),
+    rendita,
+    intestatari: pulito(d.intestatari),
+    note: pulito(d.note),
+  };
+  if (id) {
+    const { data, error } = await s.supabase.from("immobili_catasto").update(riga).eq("id", id).select("id").maybeSingle();
+    if (error || !data) return { ok: false, errore: "Non è stato possibile salvare i dati catastali. Riprova." };
+  } else {
+    const { data, error } = await s.supabase.from("immobili_catasto").insert({ ...riga, immobile_id: immobileId }).select("id").single();
+    if (error || !data) return { ok: false, errore: "Non è stato possibile aggiungere i dati catastali. Riprova." };
+    id = data.id;
+  }
+  revalidatePath("/immobili");
+  return { ok: true, id };
+}
+
+export async function eliminaCatasto(id: string): Promise<Esito> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data, error } = await s.supabase.from("immobili_catasto").delete().eq("id", id).select("id");
+  if (error) return { ok: false, errore: "Non è stato possibile eliminare i dati catastali. Riprova." };
+  if (!data?.length) return { ok: false, errore: "Solo titolari e architetti possono eliminare i dati catastali." };
+  revalidatePath("/immobili");
   return { ok: true, id };
 }
