@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Loader2, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, User, WandSparkles } from "lucide-react";
-import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
+import { Campo, AreaTesto, Messaggio, Segmenti, Selezione } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
 import { Chiudi, DatoCopiabile, GruppoPratiche, Indietro, SchedeSezioni, TitoloColonna, classeAzione } from "@/components/anagrafiche/parti";
@@ -13,7 +13,11 @@ import { TIPI_CLIENTE } from "@/lib/dominio";
 import { cn, formattaEuro } from "@/lib/utils";
 import {
   cercaDoppioniCliente,
+  cercaEntiPA,
   datiDaPartitaIva,
+  ufficiFatturazionePA,
+  type EnteIPA,
+  type UfficioIPA,
   eliminaReferente,
   salvaCliente,
   salvaReferente,
@@ -515,6 +519,125 @@ function Referenti({ clienteId, referenti, ente }: { clienteId: string; referent
   );
 }
 
+/* ── Ricerca IndicePA (enti pubblici) ─────────────────────────────────── */
+
+function RicercaIndicePA({ onScelto, onUfficio }: { onScelto: (e: EnteIPA) => void; onUfficio: (codice: string) => void }) {
+  const [testo, setTesto] = useState("");
+  const [enti, setEnti] = useState<EnteIPA[] | null>(null);
+  const [scelto, setScelto] = useState<EnteIPA | null>(null);
+  const [uffici, setUffici] = useState<UfficioIPA[] | null>(null);
+  const [ufficio, setUfficio] = useState("");
+  const [errore, setErrore] = useState<string | null>(null);
+  const [cerca, avviaCerca] = useTransition();
+  const [caricaUffici, avviaUffici] = useTransition();
+  const ultima = useRef(0);
+
+  function cambia(v: string) {
+    setTesto(v);
+    setErrore(null);
+    const numero = ++ultima.current;
+    if (v.trim().length < 3) return setEnti(null);
+    // Attende una breve pausa nella digitazione prima di cercare
+    setTimeout(() => {
+      if (numero !== ultima.current) return;
+      avviaCerca(async () => {
+        const r = await cercaEntiPA(v);
+        if (numero !== ultima.current) return;
+        if (!r.ok) return setErrore(r.errore);
+        setEnti(r.enti);
+      });
+    }, 350);
+  }
+
+  function scegli(e: EnteIPA) {
+    setScelto(e);
+    setEnti(null);
+    setTesto("");
+    setUffici(null);
+    setUfficio("");
+    onScelto(e);
+    avviaUffici(async () => {
+      const r = await ufficiFatturazionePA(e.codiceIPA);
+      if (!r.ok) return setErrore(r.errore);
+      setUffici(r.uffici);
+      // Con un solo ufficio di fatturazione il codice si compila da solo
+      if (r.uffici.length === 1) {
+        setUfficio(r.uffici[0].codice);
+        onUfficio(r.uffici[0].codice);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-[14px] bg-superficie-2/70 p-4">
+      <div className="relative">
+        <Campo
+          etichetta="Cerca l'ente in IndicePA"
+          id="c-ipa-cerca"
+          value={testo}
+          onChange={(e) => cambia(e.target.value)}
+          placeholder="Comune di Noto, oppure il codice fiscale"
+          autoComplete="off"
+          aiuto="Indice delle Pubbliche Amministrazioni (AgID): compila denominazione, codice fiscale, sede e PEC."
+        />
+        {cerca ? <Loader2 aria-hidden className="absolute right-3 top-[2.45rem] size-4 animate-spin text-tenue" /> : null}
+        {enti ? (
+          <ul role="listbox" className="absolute inset-x-0 top-[4.6rem] z-10 max-h-72 overflow-y-auto rounded-medio border border-linea bg-superficie p-1 shadow-[0_18px_40px_-18px_rgba(20,30,50,0.45)]">
+            {enti.length === 0 ? <li className="px-3 py-2.5 text-sm text-tenue">Nessun ente trovato.</li> : null}
+            {enti.map((e) => (
+              <li key={e.codiceIPA}>
+                <button type="button" role="option" aria-selected={false} onClick={() => scegli(e)} className="w-full rounded-piccolo px-3 py-2 text-left hover:bg-superficie-2">
+                  <span className="block text-[0.9375rem] text-inchiostro">{e.denominazione}</span>
+                  <span className="block text-[0.8125rem] text-inchiostro-2">{[e.comune && `${e.comune}${e.provincia ? ` (${e.provincia})` : ""}`, `CF ${e.codiceFiscale}`].filter(Boolean).join(" · ")}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
+      {scelto ? (
+        <div className="mt-4">
+          <p className="text-[0.875rem] text-inchiostro-2">
+            Dati compilati da IndicePA per <span className="font-medium text-inchiostro">{scelto.denominazione}</span>. Scegli l&apos;ufficio a cui intestare le fatture:
+          </p>
+          {caricaUffici ? (
+            <p className="mt-2 flex items-center gap-2 text-sm text-tenue">
+              <Loader2 aria-hidden className="size-4 animate-spin" /> Carico gli uffici di fatturazione…
+            </p>
+          ) : uffici?.length ? (
+            <div className="mt-2">
+              <Selezione
+                etichetta="Ufficio di fatturazione"
+                id="c-ipa-ufficio"
+                value={ufficio}
+                onChange={(e) => {
+                  setUfficio(e.target.value);
+                  onUfficio(e.target.value);
+                }}
+              >
+                <option value="">Scegli l&apos;ufficio…</option>
+                {uffici.map((u) => (
+                  <option key={u.codice} value={u.codice}>
+                    {u.descrizione} — {u.codice}
+                  </option>
+                ))}
+              </Selezione>
+            </div>
+          ) : uffici ? (
+            <p className="mt-2 text-sm text-tenue">L&apos;ente non ha uffici di fatturazione registrati: inserisci il codice univoco a mano.</p>
+          ) : null}
+        </div>
+      ) : null}
+      {errore ? (
+        <div className="mt-2">
+          <Messaggio tipo="errore">{errore}</Messaggio>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /* ── Modifica e creazione ─────────────────────────────────────────────── */
 
 function SezioneModulo({ titolo, children }: { titolo: string; children: ReactNode }) {
@@ -644,7 +767,29 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
               </>
             ) : (
               <>
-              {/* Partita IVA per prima: da qui si possono compilare gli altri dati (VIES, gratuito) */}
+              {ente ? (
+                <div className="md:col-span-2">
+                  <RicercaIndicePA
+                    onScelto={(e) => {
+                      setD((prima) => ({
+                        ...prima,
+                        ragione_sociale: e.denominazione || prima.ragione_sociale,
+                        codice_fiscale: e.codiceFiscale || prima.codice_fiscale,
+                        indirizzo: e.indirizzo || prima.indirizzo,
+                        cap: e.cap || prima.cap,
+                        comune: e.comune || prima.comune,
+                        provincia: e.provincia || prima.provincia,
+                        pec: e.pec || prima.pec,
+                      }));
+                      setErrori({});
+                      setDoppioni(null);
+                    }}
+                    onUfficio={(codice) => setD((prima) => ({ ...prima, codice_ipa: codice }))}
+                  />
+                </div>
+              ) : (
+              <>
+              {/* Aziende: partita IVA per prima, da qui si compilano gli altri dati (VIES, gratuito) */}
               <div className="md:col-span-2">
                 <div className="flex items-end gap-2">
                   <div className="w-full sm:w-64">
@@ -679,6 +824,8 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
                   </div>
                 ) : null}
               </div>
+              </>
+              )}
               <div className="md:col-span-2">
                 <Campo
                   etichetta={ente ? "Denominazione dell'ente" : "Ragione sociale"}
@@ -697,6 +844,7 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
 
         <SezioneModulo titolo="Dati fiscali">
           <div className="grid gap-5 md:grid-cols-2">
+            {ente ? <Campo etichetta="Partita IVA" id="c-piva" value={d.partita_iva} onChange={set("partita_iva")} inputMode="numeric" autoComplete="off" /> : null}
             <Campo etichetta="Codice fiscale" id="c-cf" value={d.codice_fiscale} onChange={set("codice_fiscale")} className="uppercase" autoComplete="off" />
             {ente ? (
               <Campo etichetta="Codice univoco ufficio (IPA)" id="c-ipa" value={d.codice_ipa} onChange={set("codice_ipa")} className="uppercase" aiuto="Per la fattura elettronica alla pubblica amministrazione." />

@@ -523,3 +523,101 @@ export async function trovaParticella(immobileId: string): Promise<ParticellaTro
       : "La cartografia catastale non risponde in questo momento. Riprova tra poco o inserisci foglio e particella a mano.",
   };
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   IndicePA (Indice dei domicili digitali delle Pubbliche Amministrazioni):
+   dati aperti AgID, gratuiti, licenza CC-BY 4.0. Per gli enti pubblici dà
+   denominazione, codice fiscale, sede, PEC e gli uffici che ricevono le
+   fatture elettroniche con il loro codice univoco.
+   ────────────────────────────────────────────────────────────────────────── */
+
+const IPA_API = "https://indicepa.gov.it/ipa-dati/api/3/action/datastore_search";
+const IPA_ENTI = "d09adf99-dc10-4349-8c53-27b1e5aa97b6";
+const IPA_UFFICI_FATTURAZIONE = "57bd2be0-4d3d-41cd-bdb8-2f0a60d6f490";
+
+export type EnteIPA = {
+  codiceIPA: string;
+  denominazione: string;
+  codiceFiscale: string;
+  indirizzo: string;
+  cap: string;
+  comune: string;
+  provincia: string;
+  pec: string;
+};
+export type UfficioIPA = { codice: string; descrizione: string; indirizzo: string };
+
+type RigaIPA = Record<string, string | number | null>;
+
+async function interrogaIPA(parametri: Record<string, string>): Promise<RigaIPA[] | null> {
+  try {
+    const r = await fetch(`${IPA_API}?${new URLSearchParams(parametri).toString()}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+      next: { revalidate: 86400 },
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { success?: boolean; result?: { records?: RigaIPA[] } };
+    return j.success ? (j.result?.records ?? []) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Comune e provincia dal codice catastale (es. I754 → Siracusa, SR), dall'elenco ISTAT già usato dall'app. */
+async function comuneDaCatastale(codice: string): Promise<{ comune: string; provincia: string } | null> {
+  const { default: dati } = await import("../../public/dati/comuni.json");
+  const c = (dati.comuni as [string, string, string, string][]).find((x) => x[2] === codice.toUpperCase());
+  return c ? { comune: c[0], provincia: c[1] } : null;
+}
+
+const testoIPA = (v: string | number | null | undefined) => (v == null ? "" : String(v).trim());
+
+function primaPec(r: RigaIPA) {
+  for (let i = 1; i <= 5; i++) {
+    if (testoIPA(r[`Tipo_Mail${i}`]).toLowerCase() === "pec" && testoIPA(r[`Mail${i}`])) return testoIPA(r[`Mail${i}`]).toLowerCase();
+  }
+  return "";
+}
+
+/** Cerca enti pubblici per nome (almeno 3 lettere) o per codice fiscale. */
+export async function cercaEntiPA(testo: string): Promise<{ ok: true; enti: EnteIPA[] } | { ok: false; errore: string }> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const q = testo.trim();
+  if (q.length < 3) return { ok: true, enti: [] };
+  const cf = q.replace(/\s+/g, "");
+  const righe = /^\d{11}$/.test(cf)
+    ? await interrogaIPA({ resource_id: IPA_ENTI, filters: JSON.stringify({ Codice_fiscale_ente: cf }), limit: "5" })
+    : await interrogaIPA({ resource_id: IPA_ENTI, q, limit: "8" });
+  if (righe === null) return { ok: false, errore: "IndicePA non risponde in questo momento. Riprova tra poco o compila a mano." };
+
+  const enti: EnteIPA[] = [];
+  for (const r of righe) {
+    const luogo = await comuneDaCatastale(testoIPA(r.Codice_catastale_comune));
+    enti.push({
+      codiceIPA: testoIPA(r.Codice_IPA),
+      denominazione: testoIPA(r.Denominazione_ente),
+      codiceFiscale: testoIPA(r.Codice_fiscale_ente),
+      indirizzo: testoIPA(r.Indirizzo),
+      cap: testoIPA(r.CAP),
+      comune: luogo?.comune ?? "",
+      provincia: luogo?.provincia ?? "",
+      pec: primaPec(r),
+    });
+  }
+  return { ok: true, enti };
+}
+
+/** Uffici dell'ente che ricevono le fatture elettroniche, con il codice univoco da usare in fattura. */
+export async function ufficiFatturazionePA(codiceIPA: string): Promise<{ ok: true; uffici: UfficioIPA[] } | { ok: false; errore: string }> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const righe = await interrogaIPA({ resource_id: IPA_UFFICI_FATTURAZIONE, filters: JSON.stringify({ Codice_IPA: codiceIPA }), limit: "300" });
+  if (righe === null) return { ok: false, errore: "IndicePA non risponde: il codice univoco si può inserire a mano." };
+  const uffici = righe
+    .map((r) => ({ codice: testoIPA(r.Codice_uni_uo), descrizione: testoIPA(r.Descrizione_uo), indirizzo: testoIPA(r.Indirizzo) }))
+    .filter((u) => u.codice)
+    .sort((a, b) => a.descrizione.localeCompare(b.descrizione, "it"));
+  return { ok: true, uffici };
+}
