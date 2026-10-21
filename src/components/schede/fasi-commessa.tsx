@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition, type CSSProperties, type PointerEvent as EventoPuntatore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ChartNoAxesGantt, Check, ChevronDown, FileImage, Table2, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, X } from "lucide-react";
+import { Camera, ChartNoAxesGantt, Check, ChevronDown, FileImage, Table2, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, UsersRound, X } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Espandibile, PulsanteEspandi } from "@/components/registro";
-import { aggiungiFase, avanzaFase, eliminaFase, modificaFase, riordinaFasi, type CampoFase } from "@/lib/azioni";
+import { aggiungiFase, avanzaFase, eliminaFase, impostaAssegnati, modificaFase, riordinaFasi, type CampoFase } from "@/lib/azioni";
 import type { Commessa } from "@/lib/dati";
 import { apriDocumento, caricaAllegati, dimensione, eliminaAllegato } from "./allegati-fase";
-import { STATI_FASE } from "@/lib/dominio";
+import { COLORI_FASE, STATI_FASE } from "@/lib/dominio";
 import { Cronoprogramma } from "./cronoprogramma";
 import { cn } from "@/lib/utils";
 
@@ -17,15 +17,7 @@ type Profilo = Commessa["profiliStudio"][number];
 type VoceCatalogo = Commessa["catalogoFasi"][number];
 type Documento = NonNullable<Commessa["documenti"]>[number];
 
-/** Colore per stato della fase (stessa famiglia degli stati di commessa). */
-export const COLORI_FASE: Record<string, string> = {
-  da_avviare: "var(--tenue)",
-  in_corso: "var(--stato-attiva)",
-  in_revisione: "var(--stato-preventivo)",
-  completata: "var(--stato-conclusa)",
-  sospesa: "var(--stato-sospesa)",
-  annullata: "var(--stato-contatto)",
-};
+export { COLORI_FASE };
 
 /** Stato che segue l'avanzamento (sospesa e annullata restano finché non le cambi a mano). */
 function statoAutomatico(avanzamento: number, attuale: string) {
@@ -57,9 +49,13 @@ export function FasiCommessa({
   finePrevista,
   oggi,
   modificabile = true,
+  avanzabile = modificabile,
   allegati = 2,
   eliminabile = true,
   gantt: ganttPermesso = true,
+  ioId,
+  personeFasi = {},
+  assegnazioni = true,
 }: {
   commessaId: string;
   fasi: Fase[];
@@ -73,8 +69,16 @@ export function FasiCommessa({
   oggi: string;
   /** Permesso "Cronoprogramma": mostra il pulsante per la vista Gantt */
   gantt?: boolean;
-  /** Permesso "Fasi" modificabile: aggiunge, riordina e modifica le celle */
+  /** Gestione delle fasi: aggiunge, riordina, cambia date, persone e stato */
   modificabile?: boolean;
+  /** Può far avanzare le fasi (a scatti del 25%) */
+  avanzabile?: boolean;
+  /** Utente collegato: le sue fasi sono quelle di cui è responsabile o a cui è assegnato */
+  ioId?: string;
+  /** Persone assegnate a ogni fase, oltre al responsabile */
+  personeFasi?: Record<string, string[]>;
+  /** Il database permette di assegnare persone alle fasi */
+  assegnazioni?: boolean;
   /** Livello sugli allegati: 0 nascosti, 1 visibili, 2 modificabili */
   allegati?: number;
   /** Può eliminare fasi e allegati ("Completo" sulle commesse) */
@@ -100,12 +104,32 @@ export function FasiCommessa({
 
   const completate = elenco.filter((f) => f.stato === "completata").length;
   const nomi = new Map(profili.map((p) => [p.id, p]));
+  const [assegnatiLocali, setAssegnatiLocali] = useState<Record<string, string[]>>({});
+  const assegnatiDi = (id: string) => assegnatiLocali[id] ?? personeFasi[id] ?? [];
+  const propria = (f: Fase) => !!ioId && (f.responsabile_id === ioId || assegnatiDi(f.id).includes(ioId));
+  const mie = elenco.filter(propria);
+  // Su telefono: si parte dalle proprie fasi, se ce ne sono (e se non sono tutte)
+  const [soloMie, setSoloMie] = useState(true);
+  const filtraMie = mie.length > 0 && mie.length < elenco.length;
+  const elencoTelefono = filtraMie && soloMie ? mie : elenco;
+
+  function assegna(f: Fase, ids: string[]) {
+    const prima = assegnatiLocali[f.id];
+    setAssegnatiLocali((a) => ({ ...a, [f.id]: ids }));
+    esegui(
+      () => impostaAssegnati(f.id, ids),
+      (ok) => {
+        if (!ok) setAssegnatiLocali((a) => ({ ...a, [f.id]: prima ?? personeFasi[f.id] ?? [] }));
+      },
+    );
+  }
 
   const colonne = [
     modificabile ? "1.25rem" : null,
     "3rem",
     "minmax(12rem,1fr)",
     "10rem",
+    assegnazioni ? "6rem" : null,
     "5rem",
     "5rem",
     "7rem",
@@ -245,8 +269,70 @@ export function FasiCommessa({
       {vistaGantt ? (
         <Cronoprogramma fasi={elenco} apertura={apertura} finePrevista={finePrevista} oggi={oggi} />
       ) : (
-      /* Su schermi stretti la tabella scorre in orizzontale */
-      <div className="overflow-x-auto">
+      <>
+      {/* Telefono: una scheda per fase, con le proprie in primo piano */}
+      <div className="md:hidden">
+        {filtraMie ? (
+          <div className="flex gap-5 border-b border-linea px-5 pt-1 text-[0.9375rem]">
+            {[
+              [true, `Le mie fasi · ${mie.length}`],
+              [false, `Tutte · ${elenco.length}`],
+            ].map(([v, e]) => (
+              <button
+                key={String(v)}
+                type="button"
+                onClick={() => setSoloMie(v as boolean)}
+                className={cn("-mb-px border-b-2 py-2.5", soloMie === v ? "border-inchiostro font-medium" : "border-transparent text-tenue")}
+              >
+                {e as string}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <ul className="flex flex-col gap-3 p-4">
+          {elencoTelefono.map((f) => {
+            const colore = COLORI_FASE[f.stato] ?? "var(--tenue)";
+            const docs = documenti.filter((d) => d.fase_id === f.id);
+            return (
+              <li key={f.id} className={cn("rounded-grande border bg-superficie p-4", propria(f) ? "border-linea-forte" : "border-linea")}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium leading-snug">
+                      {f.codice ? <span className="numeri mr-1.5 text-tenue">{f.codice}</span> : null}
+                      {f.nome}
+                    </p>
+                    <p className="numeri mt-0.5 text-sm text-tenue">
+                      {f.data_inizio_prev || f.data_fine_prev ? `${dataBreve(f.data_inizio_prev) ?? "…"} → ${dataBreve(f.data_fine_prev) ?? "…"}` : "Date da definire"}
+                    </p>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 text-sm" style={{ color: colore }}>
+                    <span aria-hidden className="size-2 rounded-full" style={{ background: colore }} />
+                    {STATI_FASE[f.stato] ?? f.stato}
+                  </span>
+                </div>
+                <div className="mt-3.5">
+                  <Tacche
+                    grande
+                    valore={f.avanzamento_pct}
+                    colore={colore}
+                    disabilitato={inCorso}
+                    onCambia={avanzabile ? (n) => cambia(f, { avanzamento_pct: n, stato: statoAutomatico(n, f.stato) }, () => avanzaFase(f.id, n)) : undefined}
+                  />
+                </div>
+                {allegati >= 1 ? (
+                  <div className="mt-3.5 border-t border-linea pt-3">
+                    <CellaAllegati commessaId={commessaId} faseId={f.id} nome={f.nome} documenti={docs} carica={allegati >= 2} eliminabile={eliminabile} foto />
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+          {elencoTelefono.length === 0 ? <li className="py-4 text-[0.9375rem] text-tenue">Nessuna fase.</li> : null}
+        </ul>
+      </div>
+
+      {/* Computer: tabella; su schermi medi scorre in orizzontale */}
+      <div className="hidden overflow-x-auto md:block">
         <div role="table" aria-label="Fasi della commessa" className="min-w-[58rem]">
           {elenco.length ? (
             <div role="row" className={cn("elenco-intestazione etichetta border-b border-linea py-2.5", classeRiga)} style={griglia}>
@@ -254,6 +340,7 @@ export function FasiCommessa({
               <span role="columnheader">Cod.</span>
               <span role="columnheader">Fase</span>
               <span role="columnheader">Responsabile</span>
+              {assegnazioni ? <span role="columnheader">Assegnati</span> : null}
               <span role="columnheader">Inizio</span>
               <span role="columnheader">Fine</span>
               <span role="columnheader">Avanzamento</span>
@@ -335,6 +422,16 @@ export function FasiCommessa({
                     )}
                   </Cella>
 
+                  {assegnazioni ? (
+                    <CellaAssegnati
+                      nome={f.nome}
+                      selezionati={assegnatiDi(f.id)}
+                      profili={profili}
+                      modificabile={modificabile}
+                      onCambia={(ids) => assegna(f, ids)}
+                    />
+                  ) : null}
+
                   {/* Inizio e fine */}
                   <CellaData modificabile={modificabile} etichetta={`Inizio di ${f.nome}`} valore={f.data_inizio_prev} onCambia={(v) => campo(f, "data_inizio_prev", v)} />
                   <CellaData modificabile={modificabile} etichetta={`Fine di ${f.nome}`} valore={f.data_fine_prev} onCambia={(v) => campo(f, "data_fine_prev", v)} />
@@ -346,7 +443,7 @@ export function FasiCommessa({
                       colore={colore}
                       disabilitato={inCorso}
                       onCambia={
-                        modificabile
+                        avanzabile
                           ? (n) => cambia(f, { avanzamento_pct: n, stato: statoAutomatico(n, f.stato) }, () => avanzaFase(f.id, n))
                           : undefined
                       }
@@ -407,6 +504,7 @@ export function FasiCommessa({
           </div>
         </div>
       </div>
+      </>
       )}
 
       {errore ? (
@@ -452,6 +550,90 @@ function Cella({
   );
 }
 
+/** Persone assegnate alla fase: pallini sovrapposti; il clic apre l'elenco con le spunte. */
+function CellaAssegnati({
+  nome,
+  selezionati,
+  profili,
+  modificabile,
+  onCambia,
+}: {
+  nome: string;
+  selezionati: string[];
+  profili: Profilo[];
+  modificabile: boolean;
+  onCambia: (ids: string[]) => void;
+}) {
+  const zona = useRef<HTMLSpanElement>(null);
+  const [aperto, setAperto] = useState<{ top: number; left: number } | null>(null);
+  const persone = selezionati.map((id) => profili.find((p) => p.id === id)).filter(Boolean) as Profilo[];
+
+  useEffect(() => {
+    if (!aperto) return;
+    const fuori = (e: PointerEvent) => !zona.current?.contains(e.target as Node) && setAperto(null);
+    const chiudi = () => setAperto(null);
+    document.addEventListener("pointerdown", fuori);
+    window.addEventListener("scroll", chiudi, true);
+    return () => {
+      document.removeEventListener("pointerdown", fuori);
+      window.removeEventListener("scroll", chiudi, true);
+    };
+  }, [aperto]);
+
+  function apri() {
+    const r = zona.current?.getBoundingClientRect();
+    if (r) setAperto({ top: r.bottom + 4, left: Math.max(8, Math.min(r.left, window.innerWidth - 248)) });
+  }
+
+  const pallini = persone.length ? (
+    <span className="flex -space-x-1.5" title={persone.map((p) => `${p.nome} ${p.cognome}`).join(", ")}>
+      {persone.slice(0, 3).map((p) => (
+        <span key={p.id} className="grid size-6 place-items-center rounded-full bg-superficie text-[0.625rem] font-medium text-inchiostro-2 shadow-[0_0_0_1.5px_var(--superficie),0_0_0_2.5px_var(--linea)]">
+          {p.iniziali ?? p.nome.slice(0, 1)}
+        </span>
+      ))}
+      {persone.length > 3 ? <span className="grid size-6 place-items-center rounded-full bg-superficie-2 text-[0.625rem] text-tenue">+{persone.length - 3}</span> : null}
+    </span>
+  ) : (
+    <span className="text-sm text-tenue">{modificabile ? <UsersRound className="size-4" strokeWidth={1.6} /> : "—"}</span>
+  );
+
+  if (!modificabile) return <span role="cell">{pallini}</span>;
+  return (
+    <span role="cell" ref={zona} className="relative">
+      <button
+        type="button"
+        onClick={() => (aperto ? setAperto(null) : apri())}
+        aria-label={`Persone assegnate a ${nome}`}
+        aria-expanded={!!aperto}
+        data-suggerimento="Assegna persone"
+        className="-mx-1.5 flex h-8 items-center rounded-piccolo px-1.5 transition-colors hover:bg-superficie-2/70"
+      >
+        {pallini}
+      </button>
+      {aperto ? (
+        <span style={aperto} className="fixed z-[80] block w-60 rounded-medio border border-linea bg-superficie p-1.5 shadow-[0_18px_40px_-20px_rgba(43,42,40,0.5)]">
+          <span className="block px-2 pb-1 pt-1.5 text-xs text-tenue">Chi lavora su questa fase vede la commessa</span>
+          {profili.map((p) => {
+            const scelto = selezionati.includes(p.id);
+            return (
+              <label key={p.id} className="flex cursor-pointer items-center gap-2.5 rounded-piccolo px-2 py-1.5 text-sm hover:bg-superficie-2/60">
+                <input
+                  type="checkbox"
+                  checked={scelto}
+                  onChange={() => onCambia(scelto ? selezionati.filter((x) => x !== p.id) : [...selezionati, p.id])}
+                  className="size-4 accent-[var(--accento)]"
+                />
+                {p.nome} {p.cognome}
+              </label>
+            );
+          })}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 /** Data come gg.mm.aa; il clic apre il calendario del browser. */
 function CellaData({ modificabile, etichetta, valore, onCambia }: { modificabile: boolean; etichetta: string; valore: string | null; onCambia: (v: string | null) => void }) {
   const testo = dataBreve(valore);
@@ -480,6 +662,7 @@ function CellaAllegati({
   documenti,
   carica,
   eliminabile,
+  foto,
 }: {
   commessaId: string;
   faseId: string | null;
@@ -487,9 +670,12 @@ function CellaAllegati({
   documenti: Documento[];
   carica: boolean;
   eliminabile: boolean;
+  /** Versione da telefono: pulsanti grandi con "Foto" (fotocamera) e "File" */
+  foto?: boolean;
 }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
+  const fotocamera = useRef<HTMLInputElement>(null);
   const zona = useRef<HTMLSpanElement>(null);
   const [aperto, setAperto] = useState<{ top: number; left: number } | null>(null);
   const [caricamento, setCaricamento] = useState(false);
@@ -525,11 +711,84 @@ function CellaAllegati({
     const esito = await caricaAllegati(commessaId, faseId, Array.from(files));
     setCaricamento(false);
     if (input.current) input.current.value = "";
+    if (fotocamera.current) fotocamera.current.value = "";
     if (esito) {
       setErrore(esito);
       apri();
     }
     router.refresh();
+  }
+
+  if (foto) {
+    const pulsante = "inline-flex h-10 items-center gap-2 rounded-full border border-linea-forte px-4 text-[0.9375rem] transition-colors active:bg-superficie-2 disabled:opacity-50";
+    return (
+      <span ref={zona} className="relative flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => (aperto ? setAperto(null) : documenti.length || errore ? apri() : undefined)}
+          disabled={!documenti.length && !errore}
+          aria-expanded={!!aperto}
+          className="mr-auto inline-flex h-10 min-w-0 items-center gap-2 text-[0.9375rem] text-inchiostro-2 disabled:text-tenue"
+        >
+          <Paperclip className="size-4" strokeWidth={1.8} />
+          {documenti.length ? `${documenti.length} ${documenti.length === 1 ? "allegato" : "allegati"}` : "Nessun allegato"}
+        </button>
+        {carica ? (
+          <>
+            <input ref={fotocamera} type="file" accept="image/*" capture="environment" className="sr-only" tabIndex={-1} onChange={(e) => scegli(e.target.files)} />
+            <input ref={input} type="file" multiple className="sr-only" tabIndex={-1} onChange={(e) => scegli(e.target.files)} />
+            <button type="button" onClick={() => fotocamera.current?.click()} disabled={caricamento} className={pulsante}>
+              {caricamento ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" strokeWidth={1.8} />}
+              Foto
+            </button>
+            <button type="button" onClick={() => input.current?.click()} disabled={caricamento} className={cn(pulsante, "w-10 justify-center px-0")} aria-label={`Aggiungi file a ${nome}`}>
+              <Plus className="size-4" strokeWidth={2} />
+            </button>
+          </>
+        ) : null}
+        {aperto ? elencoFile() : null}
+      </span>
+    );
+  }
+
+  function elencoFile() {
+    return (
+      <span style={aperto ?? undefined} className="fixed z-[80] block w-80 max-w-[calc(100vw-16px)] rounded-medio border border-linea bg-superficie p-1.5 text-left shadow-[0_18px_40px_-20px_rgba(43,42,40,0.5)]">
+        {documenti.map((d) => {
+          const Icona = d.mime_type?.startsWith("image/") ? FileImage : FileText;
+          return (
+            <span key={d.id} className="group flex items-center gap-2.5 rounded-piccolo px-2 py-1.5 hover:bg-superficie-2/60">
+              <Icona className="size-4 shrink-0 text-tenue" strokeWidth={1.6} />
+              <button
+                type="button"
+                onClick={() => apriDocumento(d.storage_path, () => setErrore("Non è stato possibile aprire il file."))}
+                className="min-w-0 flex-1 text-left"
+              >
+                <span className="block truncate text-sm hover:text-accento">{d.nome_file}</span>
+                <span className="block text-xs text-tenue">{dimensione(d.dimensione_byte)}</span>
+              </button>
+              {eliminabile ? (
+                <button
+                  type="button"
+                  aria-label={`Elimina ${d.nome_file}`}
+                  disabled={inCorso}
+                  onClick={() =>
+                    avvia(async () => {
+                      if (!(await eliminaAllegato(d))) setErrore("Il tuo profilo non può eliminare questo allegato.");
+                      router.refresh();
+                    })
+                  }
+                  className="grid size-7 shrink-0 place-items-center rounded-full text-tenue opacity-0 transition hover:bg-superficie hover:text-inchiostro group-hover:opacity-100 [@media(pointer:coarse)]:opacity-60"
+                >
+                  <Trash2 className="size-3.5" strokeWidth={1.8} />
+                </button>
+              ) : null}
+            </span>
+          );
+        })}
+        {errore ? <span className="block px-2 py-1.5 text-xs text-[color:var(--stato-sospesa)]">{errore}</span> : null}
+      </span>
+    );
   }
 
   return (
@@ -564,43 +823,7 @@ function CellaAllegati({
         </>
       ) : null}
 
-      {aperto ? (
-        <span style={aperto} className="fixed z-[80] block w-80 rounded-medio border border-linea bg-superficie p-1.5 text-left shadow-[0_18px_40px_-20px_rgba(43,42,40,0.5)]">
-          {documenti.map((d) => {
-            const Icona = d.mime_type?.startsWith("image/") ? FileImage : FileText;
-            return (
-              <span key={d.id} className="group flex items-center gap-2.5 rounded-piccolo px-2 py-1.5 hover:bg-superficie-2/60">
-                <Icona className="size-4 shrink-0 text-tenue" strokeWidth={1.6} />
-                <button
-                  type="button"
-                  onClick={() => apriDocumento(d.storage_path, () => setErrore("Non è stato possibile aprire il file."))}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <span className="block truncate text-sm hover:text-accento">{d.nome_file}</span>
-                  <span className="block text-xs text-tenue">{dimensione(d.dimensione_byte)}</span>
-                </button>
-                {eliminabile ? (
-                  <button
-                    type="button"
-                    aria-label={`Elimina ${d.nome_file}`}
-                    disabled={inCorso}
-                    onClick={() =>
-                      avvia(async () => {
-                        if (!(await eliminaAllegato(d))) setErrore("Il tuo profilo non può eliminare questo allegato.");
-                        router.refresh();
-                      })
-                    }
-                    className="grid size-7 shrink-0 place-items-center rounded-full text-tenue opacity-0 transition hover:bg-superficie hover:text-inchiostro group-hover:opacity-100"
-                  >
-                    <Trash2 className="size-3.5" strokeWidth={1.8} />
-                  </button>
-                ) : null}
-              </span>
-            );
-          })}
-          {errore ? <span className="block px-2 py-1.5 text-xs text-[color:var(--stato-sospesa)]">{errore}</span> : null}
-        </span>
-      ) : null}
+      {aperto ? elencoFile() : null}
     </span>
   );
 }
@@ -612,9 +835,12 @@ function Tacche({
   colore,
   onCambia,
   disabilitato,
+  grande,
 }: {
   valore: number;
   colore: string;
+  /** Tacche larghe, comode al dito (telefono) */
+  grande?: boolean;
   /** Senza, l'avanzamento è solo da leggere */
   onCambia?: (nuovo: number) => void;
   disabilitato?: boolean;
@@ -622,11 +848,12 @@ function Tacche({
   const v = quarti(valore);
   return (
     <span className="flex items-center gap-2">
-      <span className="flex gap-[3px]" role={onCambia ? "group" : undefined} aria-label={`Avanzamento ${v}%`}>
+      <span className={cn("flex", grande ? "gap-1.5" : "gap-[3px]")} role={onCambia ? "group" : undefined} aria-label={`Avanzamento ${v}%`}>
         {[1, 2, 3, 4].map((k) => {
           const pieno = v >= k * 25;
           const stile = { background: pieno ? colore : undefined };
-          if (!onCambia) return <span key={k} className="h-2 w-3.5 rounded-[2px] bg-linea" style={stile} />;
+          const misura = grande ? "h-3 w-12 rounded-[3px]" : "h-2 w-3.5 rounded-[2px]";
+          if (!onCambia) return <span key={k} className={cn("bg-linea", misura)} style={stile} />;
           // Clic su una tacca: arriva lì; sull'ultima piena: torna indietro di un quarto
           const nuovo = v === k * 25 ? (k - 1) * 25 : k * 25;
           return (
@@ -636,14 +863,14 @@ function Tacche({
               disabled={disabilitato}
               onClick={() => onCambia(nuovo)}
               aria-label={`Porta l'avanzamento al ${nuovo}%`}
-              className="group/tacca -my-2 py-2"
+              className={cn("group/tacca", grande ? "-my-3 py-3" : "-my-2 py-2")}
             >
-              <span className="block h-2 w-3.5 rounded-[2px] bg-linea transition-[transform,background-color] group-hover/tacca:scale-y-150" style={stile} />
+              <span className={cn("block bg-linea transition-[transform,background-color] group-hover/tacca:scale-y-150", misura)} style={stile} />
             </button>
           );
         })}
       </span>
-      <span className="numeri w-8 text-right text-xs text-tenue">{v}%</span>
+      <span className={cn("numeri text-right text-tenue", grande ? "ml-1 w-10 text-sm" : "w-8 text-xs")}>{v}%</span>
     </span>
   );
 }

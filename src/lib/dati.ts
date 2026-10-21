@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/database.types";
 import { senzaImporti, vedeImporti } from "@/lib/permessi";
+import { getProfilo } from "@/lib/auth";
 
 export type CommessaSintesi = Tables<"v_commesse_sintesi">;
 
@@ -152,7 +153,25 @@ export async function leggiCommessa(id: string) {
   commessa.fasi?.sort((a, b) => a.ordine - b.ordine);
   commessa.diario?.sort((a, b) => b.data_evento.localeCompare(a.data_evento));
   commessa.documenti?.sort((a, b) => b.created_at.localeCompare(a.created_at));
-  return { ...commessa, profiliStudio: profili.data ?? [], catalogoFasi: catalogo.data ?? [] };
+
+  // Persone assegnate alle fasi (oltre al responsabile); vuoto finché il database non è aggiornato
+  const idFasi = (commessa.fasi ?? []).map((f) => f.id);
+  const [assegnati, io] = await Promise.all([
+    idFasi.length ? supabase.from("commesse_fasi_persone").select("fase_id, profilo_id").in("fase_id", idFasi) : Promise.resolve({ data: [], error: null }),
+    getProfilo(),
+  ]);
+  const personeFasi: Record<string, string[]> = {};
+  for (const r of assegnati.error ? [] : (assegnati.data ?? [])) (personeFasi[r.fase_id] ??= []).push(r.profilo_id);
+
+  return {
+    ...commessa,
+    profiliStudio: profili.data ?? [],
+    catalogoFasi: catalogo.data ?? [],
+    personeFasi,
+    /** Il database permette di assegnare persone alle fasi (file supabase/collaboratori.sql) */
+    assegnazioniAttive: !assegnati.error,
+    ioId: io.id,
+  };
 }
 
 export type Commessa = NonNullable<Awaited<ReturnType<typeof leggiCommessa>>>;
@@ -220,4 +239,61 @@ export async function commessaPerIntegrativo(id: string) {
     .eq("id", id)
     .maybeSingle();
   return data;
+}
+
+/* ── Le mie commesse (home del collaboratore) ─────────────────────────── */
+
+export type FaseMia = { id: string; codice: string | null; nome: string; stato: string; avanzamento: number; fine: string | null };
+export type CommessaMia = {
+  id: string;
+  codice: string | null;
+  titolo: string;
+  stato: string;
+  luogo: string | null;
+  fasi: FaseMia[];
+  /** Nel team della commessa (anche senza fasi assegnate) */
+  team: boolean;
+};
+
+/**
+ * Commesse in cui l'utente è coinvolto: nel team, responsabile della commessa,
+ * responsabile o assegnato di una fase. Prima quelle aperte, poi le concluse.
+ */
+export async function mieCommesse(io: string): Promise<CommessaMia[]> {
+  const supabase = await createClient();
+  const [team, responsabile, fasiResp, assegnate] = await Promise.all([
+    supabase.from("commesse_team").select("commessa_id").eq("profilo_id", io),
+    supabase.from("commesse").select("id").eq("responsabile_id", io),
+    supabase.from("commesse_fasi").select("id").eq("responsabile_id", io),
+    supabase.from("commesse_fasi_persone").select("fase_id").eq("profilo_id", io),
+  ]);
+  const idFasi = [...new Set([...(fasiResp.data ?? []).map((f) => f.id), ...(assegnate.error ? [] : (assegnate.data ?? [])).map((f) => f.fase_id)])];
+  const { data: fasi } = idFasi.length
+    ? await supabase.from("commesse_fasi").select("id, commessa_id, codice, nome, stato, avanzamento_pct, data_fine_prev, ordine").in("id", idFasi).order("ordine")
+    : { data: [] };
+  const nelTeam = new Set((team.data ?? []).map((t) => t.commessa_id));
+  const ids = [...new Set([...nelTeam, ...(responsabile.data ?? []).map((c) => c.id), ...(fasi ?? []).map((f) => f.commessa_id)])];
+  if (!ids.length) return [];
+
+  const { data: commesse, error } = await supabase
+    .from("commesse")
+    .select("id, codice, titolo, stato, data_apertura, immobile:immobili(denominazione, indirizzo, comune)")
+    .in("id", ids)
+    .not("stato", "in", "(annullata,persa)")
+    .order("data_apertura", { ascending: false });
+  if (error) throw new Error(`Impossibile leggere le tue commesse: ${error.message}`);
+
+  return (commesse ?? [])
+    .map((c) => ({
+      id: c.id,
+      codice: c.codice,
+      titolo: c.titolo,
+      stato: c.stato,
+      luogo: c.immobile ? c.immobile.denominazione || [c.immobile.indirizzo, c.immobile.comune].filter(Boolean).join(", ") : null,
+      team: nelTeam.has(c.id),
+      fasi: (fasi ?? [])
+        .filter((f) => f.commessa_id === c.id)
+        .map((f) => ({ id: f.id, codice: f.codice, nome: f.nome, stato: f.stato, avanzamento: f.avanzamento_pct, fine: f.data_fine_prev })),
+    }))
+    .sort((a, b) => Number(a.stato === "conclusa") - Number(b.stato === "conclusa"));
 }

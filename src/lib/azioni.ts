@@ -353,6 +353,28 @@ export async function modificaFase(id: string, campo: CampoFase, valore: string 
   return { ok: true, id };
 }
 
+/** Persone assegnate a una fase (oltre al responsabile): chi è assegnato vede la commessa. */
+export async function impostaAssegnati(faseId: string, profili: string[]): Promise<Esito> {
+  const supabase = await clientAutenticato();
+  if (!supabase) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: attuali, error } = await supabase.from("commesse_fasi_persone").select("profilo_id").eq("fase_id", faseId);
+  if (error) return { ok: false, errore: "Per assegnare persone alle fasi va aggiornato il database (file collaboratori.sql)." };
+  const prima = new Set((attuali ?? []).map((r) => r.profilo_id));
+  const dopo = new Set(profili);
+  const togliere = [...prima].filter((id) => !dopo.has(id));
+  const aggiungere = [...dopo].filter((id) => !prima.has(id));
+  if (togliere.length) {
+    const { error: e } = await supabase.from("commesse_fasi_persone").delete().eq("fase_id", faseId).in("profilo_id", togliere);
+    if (e) return { ok: false, errore: "Non è stato possibile aggiornare le persone della fase." };
+  }
+  if (aggiungere.length) {
+    const { error: e } = await supabase.from("commesse_fasi_persone").insert(aggiungere.map((profilo_id) => ({ fase_id: faseId, profilo_id })));
+    if (e) return { ok: false, errore: "Non è stato possibile aggiornare le persone della fase." };
+  }
+  aggiornaElenchi("/commesse");
+  return { ok: true, id: faseId };
+}
+
 /** Nuovo ordine delle fasi dopo un trascinamento. */
 export async function riordinaFasi(commessaId: string, ids: string[]): Promise<Esito> {
   const supabase = await clientAutenticato();

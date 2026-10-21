@@ -6,7 +6,7 @@
 export type RuoloConfigurabile = "architetto" | "collaboratore";
 export const RUOLI_CONFIGURABILI: RuoloConfigurabile[] = ["architetto", "collaboratore"];
 
-export type TipoScala = "area" | "ambito" | "parte";
+export type TipoScala = "area" | "ambito" | "fasi" | "parte";
 
 export type VocePermesso = {
   chiave: string;
@@ -20,11 +20,12 @@ export type GruppoPermessi = { titolo: string; descrizione: string; voci: VocePe
 export const SCALE: Record<TipoScala, string[]> = {
   area: ["Nessuno", "Vede", "Modifica", "Completo"],
   ambito: ["Solo il suo team", "Tutte"],
+  fasi: ["Solo le proprie", "Tutte"],
   parte: ["Nascosta", "Visibile", "Modificabile"],
 };
 
 /** Livello massimo di ogni scala (quello del titolare). */
-export const MASSIMO: Record<TipoScala, number> = { area: 3, ambito: 1, parte: 2 };
+export const MASSIMO: Record<TipoScala, number> = { area: 3, ambito: 1, fasi: 1, parte: 2 };
 
 export const GRUPPI_PERMESSI: GruppoPermessi[] = [
   {
@@ -33,7 +34,7 @@ export const GRUPPI_PERMESSI: GruppoPermessi[] = [
     voci: [
       { chiave: "pratiche", etichetta: "Pre-fattibilità e preventivi", scala: "area" },
       { chiave: "commesse", etichetta: "Commesse", scala: "area", nota: "Completo permette anche di cambiare stato (avviare, sospendere, concludere) e di eliminare" },
-      { chiave: "ambito", etichetta: "Commesse visibili", scala: "ambito", nota: "Il team comprende il responsabile e chi ha creato la commessa" },
+      { chiave: "ambito", etichetta: "Commesse visibili", scala: "ambito", nota: "Il team comprende il responsabile, chi ha creato la commessa e chi è assegnato a una fase" },
       { chiave: "economia", etichetta: "Importi, compensi e analisi", scala: "area", nota: "Negli elenchi di commesse e pratiche e nell'analisi del cliente" },
       { chiave: "clienti", etichetta: "Clienti", scala: "area" },
       { chiave: "immobili", etichetta: "Immobili e catasto", scala: "area" },
@@ -53,6 +54,7 @@ export const GRUPPI_PERMESSI: GruppoPermessi[] = [
       { chiave: "c.immobile", etichetta: "Immobile e catasto", scala: "parte" },
       { chiave: "c.pratiche", etichetta: "Pratiche (preventivi e integrativi)", scala: "parte" },
       { chiave: "c.fasi", etichetta: "Fasi", scala: "parte" },
+      { chiave: "fasi_ambito", etichetta: "Fasi visibili", scala: "fasi", nota: "Proprie: quelle di cui è responsabile o a cui è assegnato" },
       { chiave: "c.cronoprogramma", etichetta: "Cronoprogramma", scala: "parte" },
       { chiave: "c.allegati", etichetta: "Allegati", scala: "parte" },
       { chiave: "c.team", etichetta: "Team di commessa", scala: "parte" },
@@ -70,12 +72,12 @@ export const PREDEFINITI: Record<RuoloConfigurabile, Record<string, number>> = {
   architetto: {
     pratiche: 2, commesse: 3, ambito: 1, economia: 1, clienti: 2, immobili: 2, documenti: 3, impostazioni: 0,
     "c.stato": 1, "c.onorario": 1, "c.incarico": 2, "c.importo_lavori": 1, "c.committente": 1, "c.immobile": 1,
-    "c.pratiche": 2, "c.fasi": 2, "c.cronoprogramma": 2, "c.allegati": 2, "c.team": 2, "c.diario": 2,
+    "c.pratiche": 2, "c.fasi": 2, "c.cronoprogramma": 2, "c.allegati": 2, "c.team": 2, "c.diario": 2, fasi_ambito: 1,
   },
   collaboratore: {
-    pratiche: 0, commesse: 2, ambito: 0, economia: 0, clienti: 1, immobili: 1, documenti: 2, impostazioni: 0,
+    pratiche: 0, commesse: 2, ambito: 0, economia: 0, clienti: 0, immobili: 0, documenti: 0, impostazioni: 0,
     "c.stato": 1, "c.onorario": 0, "c.incarico": 1, "c.importo_lavori": 0, "c.committente": 1, "c.immobile": 1,
-    "c.pratiche": 0, "c.fasi": 2, "c.cronoprogramma": 1, "c.allegati": 2, "c.team": 1, "c.diario": 2,
+    "c.pratiche": 0, "c.fasi": 2, "c.cronoprogramma": 1, "c.allegati": 2, "c.team": 1, "c.diario": 0, fasi_ambito: 0,
   },
 };
 

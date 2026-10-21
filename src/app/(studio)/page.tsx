@@ -10,7 +10,8 @@ import { leggiDaFare, ultimeAttivita } from "@/lib/da-fare";
 import { istanteAttuale, oggiIso } from "@/lib/utils";
 import { Cartiglio } from "@/components/cartiglio";
 import { Pannello, Scheletro, StatoBadge, Vuoto } from "@/components/ui";
-import { elencoCommesse, elencoPratiche, type CommessaSintesi } from "@/lib/dati";
+import { elencoCommesse, elencoPratiche, mieCommesse, type CommessaSintesi } from "@/lib/dati";
+import { MieCommesse } from "@/components/mie-commesse";
 
 export async function generateMetadata() {
   const studio = await leggiStudio();
@@ -31,6 +32,20 @@ async function PanoramicaContenuto() {
   const studio = await leggiStudio();
   await connection();
   const oggi = oggiIso();
+
+  // Il collaboratore vede solo le commesse in cui è coinvolto
+  const io = await getProfilo();
+  if (io.ruolo === "collaboratore") {
+    const mie = await mieCommesse(io.id);
+    return (
+      <>
+        <Cartiglio titolo={studio.claim || studio.nome} disegno={DISEGNO_HOME} />
+        <MieCommesse commesse={mie} oggi={oggi} />
+        <div aria-hidden className="h-16 lg:hidden" />
+      </>
+    );
+  }
+
   const adesso = istanteAttuale();
   const [commesse, preventivi, prefattibilita, daFare, attivita, profilo] = await Promise.all([
     elencoCommesse(),

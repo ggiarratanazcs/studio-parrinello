@@ -15,6 +15,7 @@ import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
 import { AllegatiFase } from "./allegati-fase";
+import { ScattaFoto } from "./scatta-foto";
 import { Cronoprogramma } from "./cronoprogramma";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
@@ -184,8 +185,18 @@ export async function SchedaCommessa({ id }: { id: string }) {
     </div>
   );
 
+  // Fasi proprie: responsabile o assegnato (per proporre dove salvare le foto)
+  const fasiFoto = fasi.map((f) => ({
+    id: f.id,
+    nome: [f.codice, f.nome].filter(Boolean).join(" · "),
+    propria: f.responsabile_id === c.ioId || (c.personeFasi[f.id] ?? []).includes(c.ioId),
+    inCorso: f.stato === "in_corso" || f.stato === "in_revisione",
+  }));
+
   return (
     <>
+      {/* Telefono: fotocamera sempre a portata, per chi può caricare allegati */}
+      {liv("c.allegati") >= 2 ? <ScattaFoto commessaId={c.id} fasi={fasiFoto} /> : null}
       <TestataScheda
         sigla={`Commessa ${c.codice}`}
         titolo={c.titolo}
@@ -248,7 +259,11 @@ export async function SchedaCommessa({ id }: { id: string }) {
                     finePrevista={c.data_fine_prevista}
                     oggi={oggiIso()}
                     gantt={vede.cronoprogramma}
-                    modificabile={liv("c.fasi") >= 2}
+                    modificabile={liv("c.fasi") >= 2 && completo}
+                    avanzabile={liv("c.fasi") >= 2}
+                    ioId={c.ioId}
+                    personeFasi={c.personeFasi}
+                    assegnazioni={c.assegnazioniAttive}
                     allegati={liv("c.allegati")}
                     eliminabile={completo}
                   />
@@ -299,6 +314,8 @@ export async function SchedaCommessa({ id }: { id: string }) {
           },
         ].filter((x) => !!x)}
       />
+      {/* spazio per i pulsanti della fotocamera, su telefono */}
+      {liv("c.allegati") >= 2 ? <div aria-hidden className="h-20 md:hidden" /> : null}
     </>
   );
 }

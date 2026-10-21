@@ -386,6 +386,21 @@ export type Database = {
           },
         ]
       }
+      commesse_fasi_persone: {
+        Row: {
+          fase_id: string
+          profilo_id: string
+        }
+        Insert: {
+          fase_id: string
+          profilo_id: string
+        }
+        Update: {
+          fase_id?: string
+          profilo_id?: string
+        }
+        Relationships: []
+      }
       commesse_team: {
         Row: { commessa_id: string; profilo_id: string; ruolo_commessa: string | null }
         Insert: { commessa_id: string; profilo_id: string; ruolo_commessa?: string | null }

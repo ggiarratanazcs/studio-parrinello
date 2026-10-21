@@ -66,6 +66,27 @@ function nomeSicuro(nome: string) {
 
 
 /**
+ * Foto più leggere prima dell'invio: lato lungo al massimo 2560 px, JPEG di buona qualità.
+ * Se il browser non riesce a leggerla (formati particolari) parte l'originale.
+ */
+async function comprimi(file: File): Promise<File> {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 1.5 * 1024 * 1024) return file;
+  try {
+    const immagine = await createImageBitmap(file);
+    const scala = Math.min(1, 2560 / Math.max(immagine.width, immagine.height));
+    const tela = document.createElement("canvas");
+    tela.width = Math.round(immagine.width * scala);
+    tela.height = Math.round(immagine.height * scala);
+    tela.getContext("2d")?.drawImage(immagine, 0, 0, tela.width, tela.height);
+    const blob = await new Promise<Blob | null>((ok) => tela.toBlob(ok, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg", lastModified: file.lastModified });
+  } catch {
+    return file;
+  }
+}
+
+/**
  * Carica i file nello spazio "documenti" sotto {commessa}/{fase o "generali"}/ e li registra.
  * Le immagini caricate come elaborato grafico diventano foto. Restituisce un messaggio d'errore o null.
  */
@@ -83,7 +104,8 @@ export async function caricaAllegati(
   const supabase = createClient();
   progresso?.(0, elenco.length);
   const falliti: string[] = [];
-  for (const [i, file] of elenco.entries()) {
+  for (const [i, originale] of elenco.entries()) {
+    const file = await comprimi(originale);
     const cartella = immobileId && !commessaId ? `immobili/${immobileId}` : `${commessaId}/${faseId ?? "generali"}`;
     const percorso = `${cartella}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
     const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });

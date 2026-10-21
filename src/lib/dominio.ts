@@ -99,3 +99,13 @@ export const ESITI_PREFATTIBILITA: Record<string, string> = {
   da_approfondire: "Da approfondire",
   non_fattibile: "Non fattibile",
 };
+
+/** Colore per stato della fase (stessa famiglia degli stati di commessa). */
+export const COLORI_FASE: Record<string, string> = {
+  da_avviare: "var(--tenue)",
+  in_corso: "var(--stato-attiva)",
+  in_revisione: "var(--stato-preventivo)",
+  completata: "var(--stato-conclusa)",
+  sospesa: "var(--stato-sospesa)",
+  annullata: "var(--stato-contatto)",
+};
