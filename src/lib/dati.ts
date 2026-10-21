@@ -135,7 +135,7 @@ export async function leggiCommessa(id: string) {
          cliente:clienti(*),
          immobile:immobili(*, catasto:immobili_catasto(*)),
          responsabile:profili!commesse_responsabile_id_fkey(nome, cognome),
-         fasi:commesse_fasi(*, responsabile:profili(id, nome, cognome, iniziali)),
+         fasi:commesse_fasi(*, responsabile:profili!commesse_fasi_responsabile_id_fkey(id, nome, cognome, iniziali)),
          team:commesse_team(profilo_id, ruolo_commessa, profilo:profili(id, nome, cognome, iniziali, qualifica)),
          diario:commesse_diario(id, tipo, testo, data_evento, autore:profili(nome, cognome, iniziali)),
          documenti(id, fase_id, categoria, titolo, nome_file, mime_type, dimensione_byte, storage_path, created_at),
