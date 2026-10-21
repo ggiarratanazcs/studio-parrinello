@@ -89,7 +89,8 @@ export function Segmenti<T extends string>({
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-sm font-medium text-inchiostro-2">{etichetta}</span>
-      <div role="radiogroup" aria-label={etichetta} className="inline-flex w-fit flex-wrap gap-1 rounded-medio bg-superficie-2 p-1">
+      {/* Stesso stile delle schede degli elenchi: testo con una riga sotto l'opzione scelta */}
+      <div role="radiogroup" aria-label={etichetta} className="flex w-fit flex-wrap items-center gap-x-5 gap-y-1 border-b border-linea">
         {opzioni.map((o) => (
           <button
             key={o.valore}
@@ -98,8 +99,8 @@ export function Segmenti<T extends string>({
             aria-checked={o.valore === valore}
             onClick={() => onCambia(o.valore)}
             className={cn(
-              "rounded-piccolo px-3 py-1.5 text-sm transition-colors",
-              o.valore === valore ? "bg-superficie text-inchiostro shadow-[0_0_0_1px_var(--linea)]" : "text-tenue hover:text-inchiostro",
+              "-mb-px h-9 border-b-2 text-[0.9375rem] transition-colors duration-200",
+              o.valore === valore ? "border-inchiostro font-medium text-inchiostro" : "border-transparent text-inchiostro-2 hover:text-inchiostro",
             )}
           >
             {o.etichetta}

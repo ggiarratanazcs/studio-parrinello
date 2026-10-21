@@ -94,7 +94,7 @@ export function DaFare({
               {quante === 0 ? "Niente in sospeso" : quante === 1 ? "1 cosa da seguire" : `${quante} cose da seguire`}
             </p>
           </div>
-          <div role="radiogroup" aria-label="Mostra" className="flex gap-1.5">
+          <div role="radiogroup" aria-label="Mostra" className="flex gap-5">
             {(
               [
                 ["tutti", "Tutto lo studio"],
@@ -108,10 +108,8 @@ export function DaFare({
                 aria-checked={filtro === valore}
                 onClick={() => setFiltro(valore)}
                 className={cn(
-                  "h-8 rounded-full border px-3.5 text-[0.8125rem] transition-colors",
-                  filtro === valore
-                    ? "border-inchiostro bg-inchiostro text-superficie"
-                    : "border-linea-forte text-inchiostro-2 hover:bg-superficie-2",
+                  "h-8 border-b-2 text-[0.875rem] transition-colors duration-200",
+                  filtro === valore ? "border-inchiostro font-medium text-inchiostro" : "border-transparent text-inchiostro-2 hover:text-inchiostro",
                 )}
               >
                 {etichetta}
