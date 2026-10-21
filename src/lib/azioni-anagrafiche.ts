@@ -448,3 +448,78 @@ export async function datiDaPartitaIva(partitaIva: string): Promise<DatiDaPartit
     provincia: m ? m[3].toUpperCase() : "",
   };
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Foglio e particella dalla cartografia catastale dell'Agenzia delle Entrate
+   (servizio WMS INSPIRE, gratuito, licenza CC-BY 4.0: va citata la fonte).
+   Si interroga il punto dell'immobile sulla mappa; il risultato è una proposta
+   da confermare, perché il punto calcolato dall'indirizzo può cadere sulla
+   strada o sulla particella vicina.
+   ────────────────────────────────────────────────────────────────────────── */
+
+export type ParticellaTrovata =
+  | { ok: true; foglio: string; particella: string; codiceComune: string; riferimento: string }
+  | { ok: false; errore: string };
+
+const WMS_CATASTO = "https://wms.cartografia.agenziaentrate.gov.it/inspire/wms/ows01.php";
+
+/**
+ * Riferimento catastale nazionale INSPIRE, es. "I754_0018A0.402":
+ * codice del comune, foglio su 4 cifre, allegato e sviluppo (0 se assenti), particella.
+ */
+const RIFERIMENTO = /\b([A-Z]\d{3})_(\d{4})([0-9A-Z])([0-9A-Z])\.([0-9A-Z]+)\b/;
+
+function leggiRiferimento(testo: string) {
+  const m = testo.match(RIFERIMENTO);
+  if (!m) return null;
+  const [riferimento, codiceComune, foglio4, allegato] = m;
+  const foglio = String(Number(foglio4)) + (allegato !== "0" ? allegato : "");
+  return { riferimento, codiceComune, foglio, particella: m[5].replace(/^0+(?=\d)/, "") };
+}
+
+/** Richieste da provare, dalla più comune: versioni e formati diversi del servizio. */
+function richieste(lat: number, lng: number) {
+  const d = 0.00025; // circa 25 metri attorno al punto
+  const base = { SERVICE: "WMS", REQUEST: "GetFeatureInfo", LAYERS: "CP.CadastralParcel", QUERY_LAYERS: "CP.CadastralParcel", STYLES: "", WIDTH: "101", HEIGHT: "101", FEATURE_COUNT: "1" };
+  const v111 = { ...base, VERSION: "1.1.1", SRS: "EPSG:4326", BBOX: `${lng - d},${lat - d},${lng + d},${lat + d}`, X: "50", Y: "50" };
+  const v130 = { ...base, VERSION: "1.3.0", CRS: "EPSG:6706", BBOX: `${lat - d},${lng - d},${lat + d},${lng + d}`, I: "50", J: "50" };
+  return [
+    { ...v111, INFO_FORMAT: "text/html" },
+    { ...v111, INFO_FORMAT: "application/vnd.ogc.gml" },
+    { ...v111, INFO_FORMAT: "text/plain" },
+    { ...v130, INFO_FORMAT: "text/html" },
+    { ...v130, INFO_FORMAT: "application/vnd.ogc.gml" },
+  ].map((p) => `${WMS_CATASTO}?${new URLSearchParams(p).toString()}`);
+}
+
+export async function trovaParticella(immobileId: string): Promise<ParticellaTrovata> {
+  const s = await sessione();
+  if (!s) return { ok: false, errore: SESSIONE_SCADUTA };
+  const { data: imm } = await s.supabase.from("immobili").select("latitudine, longitudine").eq("id", immobileId).maybeSingle();
+  if (!imm || imm.latitudine == null || imm.longitudine == null) {
+    return { ok: false, errore: "L'immobile non è ancora sulla mappa: posizionalo dall'elenco immobili, poi riprova." };
+  }
+
+  let rispostoAlmenoUnaVolta = false;
+  for (const url of richieste(imm.latitudine, imm.longitudine)) {
+    try {
+      const r = await fetch(url, {
+        headers: { "User-Agent": "StudioParrinello-Gestionale/1.0 (cartografia catastale, uso professionale)" },
+        signal: AbortSignal.timeout(8000),
+        cache: "no-store",
+      });
+      if (!r.ok) continue;
+      rispostoAlmenoUnaVolta = true;
+      const trovato = leggiRiferimento(await r.text());
+      if (trovato) return { ok: true, ...trovato };
+    } catch {
+      // si prova la richiesta successiva
+    }
+  }
+  return {
+    ok: false,
+    errore: rispostoAlmenoUnaVolta
+      ? "Nel punto dell'immobile la cartografia non riporta una particella (il punto potrebbe cadere sulla strada). Correggi la posizione dall'elenco immobili o inserisci foglio e particella a mano."
+      : "La cartografia catastale non risponde in questo momento. Riprova tra poco o inserisci foglio e particella a mano.",
+  };
+}

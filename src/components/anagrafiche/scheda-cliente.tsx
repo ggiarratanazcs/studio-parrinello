@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, User } from "lucide-react";
+import { Building2, Loader2, Mail, MapPin, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, User, WandSparkles } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
@@ -646,8 +646,8 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
               <>
               {/* Partita IVA per prima: da qui si possono compilare gli altri dati (VIES, gratuito) */}
               <div className="md:col-span-2">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <div className="sm:w-64">
+                <div className="flex items-end gap-2">
+                  <div className="w-full sm:w-64">
                     <Campo
                       etichetta="Partita IVA"
                       id="c-piva"
@@ -665,10 +665,12 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
                     type="button"
                     onClick={compilaDaVies}
                     disabled={cercaVies || d.partita_iva.replace(/\s+/g, "").replace(/^IT/i, "").length !== 11}
-                    className={cn(classePillola, "h-11 rounded-medio")}
-                    data-suggerimento="Cerca denominazione e indirizzo nel servizio europeo VIES"
+                    className={cn(classeAzione, "size-11 h-11 shrink-0 disabled:cursor-not-allowed disabled:opacity-40")}
+                    aria-label="Compila dalla partita IVA"
+                    data-suggerimento="Compila dalla partita IVA (VIES)"
+                    data-suggerimento-lato="sotto"
                   >
-                    {cercaVies ? "Ricerca…" : "Compila dalla partita IVA"}
+                    {cercaVies ? <Loader2 className="size-[18px] animate-spin" strokeWidth={1.8} /> : <WandSparkles className="size-[18px]" strokeWidth={1.7} />}
                   </button>
                 </div>
                 {vies ? (

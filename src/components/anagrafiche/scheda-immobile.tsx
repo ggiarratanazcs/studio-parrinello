@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, FileText, House, Landmark, MapPin, Navigation, Pencil, Plus, Trash2, User, View } from "lucide-react";
+import { Building2, FileText, House, Landmark, Loader2, MapPin, MapPinned, Navigation, Pencil, Plus, Trash2, User, View } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
@@ -16,6 +16,7 @@ import {
   cercaDoppioniImmobile,
   eliminaCatasto,
   salvaCatasto,
+  trovaParticella,
   salvaImmobile,
   type DatiCatasto,
   type DatiImmobile,
@@ -224,7 +225,7 @@ function VistaImmobile({ scheda, onModifica }: { scheda: SchedaImmobileDati; onM
               <GruppoPratiche titolo="Commesse" colore="var(--stato-attiva)" pratiche={scheda.commesse} vuoto="Nessuna commessa su questo immobile." importo="Onorario" />
             </div>
           ) : vista === "catasto" ? (
-            <CatastoImmobile immobileId={i.id} righe={scheda.catasto} />
+            <CatastoImmobile immobileId={i.id} righe={scheda.catasto} posizionato={coordinate !== null} />
           ) : vista === "committenti" ? (
             <Committenti committenti={scheda.committenti} />
           ) : (
@@ -327,15 +328,32 @@ function daCatasto(r: Catasto): DatiCatasto {
   };
 }
 
-function CatastoImmobile({ immobileId, righe }: { immobileId: string; righe: Catasto[] }) {
+function CatastoImmobile({ immobileId, righe, posizionato }: { immobileId: string; righe: Catasto[]; posizionato: boolean }) {
   const router = useRouter();
   const [aperto, setAperto] = useState<string | null>(null);
   const [dati, setDati] = useState<DatiCatasto>(catastoVuoto);
   const [errore, setErrore] = useState<string | null>(null);
   const [daEliminare, setDaEliminare] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
+  const [proposta, setProposta] = useState<string | null>(null);
+  const [cercando, avviaRicerca] = useTransition();
+
+  /** Propone foglio e particella dalla cartografia catastale nel punto dell'immobile */
+  function trova() {
+    setErrore(null);
+    setProposta(null);
+    avviaRicerca(async () => {
+      const r = await trovaParticella(immobileId);
+      if (!r.ok) return setErrore(r.errore);
+      setDaEliminare(null);
+      setDati({ ...catastoVuoto, foglio: r.foglio, particella: r.particella, note: "Da cartografia catastale (Agenzia delle Entrate)" });
+      setAperto("nuovo");
+      setProposta(`Nel punto dell'immobile la cartografia indica foglio ${r.foglio}, particella ${r.particella}. Verifica e completa prima di aggiungere.`);
+    });
+  }
 
   function apri(r?: Catasto) {
+    setProposta(null);
     setErrore(null);
     setDaEliminare(null);
     setDati(r ? daCatasto(r) : catastoVuoto);
@@ -449,14 +467,28 @@ function CatastoImmobile({ immobileId, righe }: { immobileId: string; righe: Cat
           </div>
         ),
       )}
+      {aperto === "nuovo" && proposta ? <Messaggio tipo="ok">{proposta}</Messaggio> : null}
       {aperto === "nuovo" ? modulo : null}
       {errore && aperto === null ? <Messaggio tipo="errore">{errore}</Messaggio> : null}
       {aperto === null ? (
-        <button type="button" onClick={() => apri()} className="inline-flex w-fit items-center gap-1 text-[0.875rem] text-accento hover:underline">
-          <Plus className="size-4" strokeWidth={2} />
-          Aggiungi identificativo
-        </button>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <button type="button" onClick={() => apri()} className="inline-flex w-fit items-center gap-1 text-[0.875rem] text-accento hover:underline">
+            <Plus className="size-4" strokeWidth={2} />
+            Aggiungi identificativo
+          </button>
+          <button
+            type="button"
+            onClick={trova}
+            disabled={cercando || !posizionato}
+            className="inline-flex w-fit items-center gap-1.5 text-[0.875rem] text-accento hover:underline disabled:cursor-not-allowed disabled:text-tenue disabled:no-underline"
+            data-suggerimento={posizionato ? "Cerca nella cartografia catastale nel punto dell'immobile" : "Prima posiziona l'immobile sulla mappa"}
+          >
+            {cercando ? <Loader2 className="size-4 animate-spin" strokeWidth={1.8} /> : <MapPinned className="size-4" strokeWidth={1.8} />}
+            Trova foglio e particella
+          </button>
+        </div>
       ) : null}
+      <p className="mt-2 text-[0.75rem] text-tenue">Foglio e particella proposti dalla cartografia catastale dell&apos;Agenzia delle Entrate (licenza CC-BY 4.0), senza valore certificativo.</p>
     </div>
   );
 }
