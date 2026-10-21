@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Monogramma } from "@/components/monogramma";
 import { NavLaterale, NavMobile, NavSuperiore } from "@/components/navigazione";
 import { SalutoUtente, UtenteLaterale, UtenteMobile, UtenteSegnaposto } from "@/components/utente";
-import { PulsanteBarra } from "@/components/pulsante-barra";
+import { LogoBarra, PulsanteBarra } from "@/components/pulsante-barra";
 import { Benvenuto } from "@/components/benvenuto";
 import { CursoreCompasso } from "@/components/cursore-compasso";
 
@@ -22,15 +22,15 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
       <aside className="barra-laterale solo-laterale sticky top-0 z-40 hidden h-dvh shrink-0 p-3 lg:block">
         <div className="relative flex h-full flex-col rounded-[22px] border border-linea/70 bg-superficie px-3 py-5 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.35),0_8px_16px_-12px_rgba(43,42,40,0.2)]">
           <PulsanteBarra />
-          <Link href="/" data-suggerimento="Home" data-suggerimento-lato="destra" data-suggerimento-se-barra-chiusa className="mb-8 flex items-center gap-3 px-1.5">
-            <Monogramma className="h-9 shrink-0" />
+          {/* Il monogramma apre e chiude la barra; la home resta la prima voce del menu */}
+          <LogoBarra className="mb-8 px-1.5">
             <span className="solo-barra-aperta leading-tight">
               <span className="block whitespace-nowrap text-[1.0625rem] font-medium" style={{ fontVariationSettings: '"wdth" 112' }}>
                 Studio Parrinello
               </span>
               <span className="etichetta block whitespace-nowrap">Architettura e design</span>
             </span>
-          </Link>
+          </LogoBarra>
 
           <NavLaterale />
 
@@ -66,16 +66,19 @@ export default function LayoutStudio({ children, modale }: LayoutProps<"/">) {
 
         {/* Barra in alto — schermi grandi, impaginazione "materia": capsula fluttuante sopra la testata */}
         <header className="barra-materia solo-materia absolute inset-x-0 top-0 z-40 hidden px-6 pt-5 lg:block">
-          <div className="flex items-center justify-between gap-6 rounded-[22px] border border-linea/70 bg-superficie/95 py-2 pl-5 pr-3 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.45),0_8px_16px_-12px_rgba(43,42,40,0.25)] backdrop-blur-md">
+          <div className="capsula flex items-center justify-between gap-6 rounded-[22px] border border-linea/70 bg-superficie/95 py-2 pl-5 pr-3 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_24px_48px_-24px_rgba(43,42,40,0.45),0_8px_16px_-12px_rgba(43,42,40,0.25)] backdrop-blur-md">
             <div className="flex items-center gap-6">
-              <Link href="/" aria-label="Home">
-                <Monogramma className="h-8" />
-              </Link>
-              <NavSuperiore />
+              {/* Il monogramma richiude la capsula fino a lasciare solo sé stesso */}
+              <LogoBarra classeLogo="h-8" lato="sotto" />
+              <div className="contenuto-capsula">
+                <NavSuperiore />
+              </div>
             </div>
-            <Suspense fallback={<UtenteSegnaposto compatto />}>
-              <SalutoUtente />
-            </Suspense>
+            <div className="contenuto-capsula">
+              <Suspense fallback={<UtenteSegnaposto compatto />}>
+                <SalutoUtente />
+              </Suspense>
+            </div>
           </div>
         </header>
 

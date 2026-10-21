@@ -97,17 +97,99 @@
 }
 .barra-laterale {
   width: var(--larghezza-barra);
-  transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: width var(--durata-barra) var(--curva-barra);
+}
+:root {
+  --durata-barra: 420ms;
+  --curva-barra: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Etichette: alla chiusura sfumano e si stringono, alla riapertura ricompaiono dopo che la barra si è allargata */
+.barra-laterale .solo-barra-aperta {
+  max-width: 15rem;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    opacity 220ms ease 160ms,
+    max-width var(--durata-barra) var(--curva-barra);
 }
 [data-barra="chiusa"] .barra-laterale .solo-barra-aperta {
-  display: none;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    max-width var(--durata-barra) var(--curva-barra);
+}
+.barra-laterale .voce-barra,
+.barra-laterale .blocco-utente,
+.barra-laterale .logo-barra {
+  transition:
+    gap var(--durata-barra) var(--curva-barra),
+    padding var(--durata-barra) var(--curva-barra),
+    background-color 200ms,
+    color 200ms,
+    box-shadow 200ms;
 }
 [data-barra="chiusa"] .barra-laterale .voce-barra {
   justify-content: center;
   padding-inline: 0;
+  gap: 0;
 }
-[data-barra="chiusa"] .barra-laterale .blocco-utente {
+[data-barra="chiusa"] .barra-laterale .blocco-utente,
+[data-barra="chiusa"] .barra-laterale .logo-barra {
   justify-content: center;
+  gap: 0;
+}
+
+/* Capsula in alto (Materia): si richiude verso il monogramma, che resta solo */
+.barra-materia .capsula {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    width var(--durata-barra) var(--curva-barra),
+    padding var(--durata-barra) var(--curva-barra);
+}
+/* I contenuti non si stringono: restano alla loro misura e la capsula li nasconde chiudendosi */
+.barra-materia .capsula > *,
+.barra-materia .capsula > * > * {
+  flex-shrink: 0;
+}
+[data-barra="chiusa"] .barra-materia .capsula {
+  width: 4rem;
+  padding-inline: 1.25rem;
+}
+.barra-materia .contenuto-capsula {
+  transition:
+    opacity 220ms ease 180ms,
+    transform 320ms var(--curva-barra) 120ms;
+}
+[data-barra="chiusa"] .barra-materia .contenuto-capsula {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 140ms ease,
+    transform 200ms ease,
+    visibility 0s linear 200ms;
+}
+
+/* Monogramma che apre e chiude la barra: mezzo giro sul suo asse, come un foglio voltato */
+.logo-barra {
+  cursor: pointer;
+}
+.logo-barra:focus-visible {
+  outline: 2px solid var(--accento);
+  outline-offset: 3px;
+}
+@keyframes logo-volta {
+  0% { transform: perspective(240px) rotateY(0deg) scale(1); }
+  45% { transform: perspective(240px) rotateY(180deg) scale(0.88); }
+  100% { transform: perspective(240px) rotateY(360deg) scale(1); }
+}
+.logo-volta {
+  animation: logo-volta 620ms var(--curva-barra);
 }
 
 @theme inline {
@@ -365,13 +447,13 @@ body {
     margin-left: calc(-1 * (var(--larghezza-barra) + 2.5rem));
     margin-right: -2.5rem;
     box-shadow: 0 18px 40px -30px rgba(43, 42, 40, 0.6);
-    transition: margin-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: margin-left var(--durata-barra) var(--curva-barra);
   }
   [data-impaginazione="laterale"] .testata-pagina .testata-contenuto {
     padding-left: calc(var(--larghezza-barra) + 5rem);
     padding-top: calc(3.5rem + 2.5rem);
     min-height: calc(14rem + 2.5rem);
-    transition: padding-left 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: padding-left var(--durata-barra) var(--curva-barra);
   }
 }
 
