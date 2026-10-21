@@ -126,20 +126,18 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
   const sede = [c.indirizzo, localita].filter(Boolean).join(", ");
   const scrivi = c.pec ?? c.email;
   const totale = scheda.prefattibilita.length + scheda.preventivi.length + scheda.commesse.length;
-  const solo = (coppie: [string, string | null | undefined | false][]) => coppie.filter((x): x is [string, string] => !!x[1]);
-  const codici = solo([
-    ["Partita IVA", c.tipo !== "persona_fisica" && c.partita_iva],
+  // Tutti i campi, anche quelli non compilati (mostrati con un trattino)
+  const codici: [string, string | null][] = [
+    ...(c.tipo !== "persona_fisica" ? ([["Partita IVA", c.partita_iva]] as [string, string | null][]) : []),
     ["Cod. fiscale", c.codice_fiscale],
     [ente ? "Codice IPA" : "Codice SDI", ente ? c.codice_ipa : c.codice_sdi],
-  ]);
-  const contatti: [string, string, typeof Mail][] = (
-    [
-      ["PEC", c.pec, ShieldCheck],
-      ["Email", c.email, Mail],
-      ["Telefono", c.telefono, Phone],
-      ["Sede", sede, MapPin],
-    ] as [string, string | null, typeof Mail][]
-  ).filter((x): x is [string, string, typeof Mail] => !!x[1]);
+  ];
+  const contatti: [string, string | null, typeof Mail][] = [
+    ["PEC", c.pec, ShieldCheck],
+    ["Email", c.email, Mail],
+    ["Telefono", c.telefono, Phone],
+    ["Sede", sede || null, MapPin],
+  ];
   const azione = "grid h-10 place-items-center rounded-[10px] bg-superficie-2 text-inchiostro transition-colors hover:bg-linea";
 
   return (
@@ -211,11 +209,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
             ))}
           </dl>
         ) : null}
-        {!codici.length && !contatti.length ? (
-          <button type="button" onClick={onModifica} className="mt-5 text-[0.875rem] text-accento hover:underline">
-            Completa i dati del cliente
-          </button>
-        ) : null}
+
 
         <Referenti clienteId={c.id} referenti={referenti} ente={ente} />
 
@@ -288,9 +282,10 @@ function TitoloColonna({ children, azione }: { children: ReactNode; azione?: Rea
 }
 
 /** Dato con pulsante per copiarlo negli appunti. */
-function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: string; valore: string; codice?: boolean; riga?: boolean; icona?: typeof Mail }) {
+function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: string; valore: string | null; codice?: boolean; riga?: boolean; icona?: typeof Mail }) {
   const [copiato, setCopiato] = useState(false);
   async function copia() {
+    if (!valore) return;
     try {
       await navigator.clipboard.writeText(valore);
       setCopiato(true);
@@ -299,7 +294,7 @@ function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: str
       // appunti non disponibili: nessun messaggio, il dato resta selezionabile
     }
   }
-  const pulsante = (
+  const pulsante = !valore ? null : (
     <button
       type="button"
       onClick={copia}
@@ -312,9 +307,11 @@ function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: str
   const testo = cn(
     "min-w-0 text-inchiostro [overflow-wrap:anywhere]",
     // Gli indirizzi email lunghi (PEC degli enti) stanno su una riga con un corpo appena più piccolo
-    valore.includes("@") || codice ? "text-[0.84375rem] leading-6" : "text-[0.9375rem]",
+    valore?.includes("@") || codice ? "text-[0.84375rem] leading-6" : "text-[0.9375rem]",
     codice && "numeri tracking-[0.02em]",
+    !valore && "text-tenue",
   );
+  const mostrato = valore ?? "—";
   if (Icona) {
     // Recapito: icona al posto dell'etichetta, su una riga
     return (
@@ -323,7 +320,7 @@ function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: str
           <Icona aria-hidden className="size-4" strokeWidth={1.7} />
           <span className="sr-only">{voce}</span>
         </dt>
-        <dd className={cn(testo, "flex-1")}>{valore}</dd>
+        <dd className={cn(testo, "flex-1")}>{valore ?? `${voce} —`}</dd>
         {pulsante}
       </div>
     );
@@ -332,7 +329,7 @@ function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: str
     return (
       <div className="group flex items-center gap-2">
         <dt className="w-[5.25rem] shrink-0 text-[0.8125rem] text-inchiostro-2">{voce}</dt>
-        <dd className={cn(testo, "flex-1")}>{valore}</dd>
+        <dd className={cn(testo, "flex-1")}>{mostrato}</dd>
         {pulsante}
       </div>
     );
@@ -341,7 +338,7 @@ function DatoCopiabile({ voce, valore, codice, riga, icona: Icona }: { voce: str
     <div className="group min-w-0">
       <dt className="text-[0.75rem] text-inchiostro-2">{voce}</dt>
       <dd className="mt-0.5 flex items-start gap-1.5">
-        <span className={cn(testo, "flex-1")}>{valore}</span>
+        <span className={cn(testo, "flex-1")}>{mostrato}</span>
         {pulsante}
       </dd>
     </div>

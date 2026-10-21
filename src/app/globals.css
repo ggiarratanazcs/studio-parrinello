@@ -637,7 +637,7 @@ html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
 @media (min-width: 1024px) {
   .scheda-profilo {
     width: min(60rem, 100%);
-    height: min(44rem, calc(100dvh - 5rem));
+    height: min(48rem, calc(100dvh - 4rem));
     margin-inline: auto;
   }
 }
