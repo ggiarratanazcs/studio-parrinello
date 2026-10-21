@@ -134,7 +134,8 @@ export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, errore: "L'indirizzo email non sembra corretto." };
   if (!(d.ruolo in RUOLI)) return { ok: false, errore: "Scegli il ruolo." };
 
-  const { clientAmministratore } = await import("@/lib/supabase/admin");
+  const { clientAmministratore, formaChiave } = await import("@/lib/supabase/admin");
+  const forma = formaChiave();
   const admin = clientAmministratore();
   if (!admin) {
     return {
@@ -142,17 +143,33 @@ export async function creaUtente(d: DatiNuovoUtente): Promise<EsitoNuovoUtente> 
       errore: "Per creare utenti manca la chiave segreta di Supabase sul server: aggiungi SUPABASE_SECRET_KEY nelle impostazioni del progetto su Vercel.",
     };
   }
+  if (forma === "pubblica") {
+    return { ok: false, errore: "Su Vercel è stata inserita la chiave pubblica (sb_publishable_…): serve quella segreta (sb_secret_…)." };
+  }
 
   const password = passwordProvvisoria();
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { nome: pulito(d.nome), cognome: pulito(d.cognome), password_provvisoria: true },
-  });
+  let esito: Awaited<ReturnType<typeof admin.auth.admin.createUser>>;
+  try {
+    esito = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { nome: pulito(d.nome), cognome: pulito(d.cognome), password_provvisoria: true },
+    });
+  } catch (e) {
+    console.error("creaUtente: richiesta non partita", e);
+    return { ok: false, errore: `Non è stato possibile contattare Supabase (chiave: ${forma}). Dettaglio: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  const { data, error } = esito;
   if (error || !data.user) {
+    console.error("creaUtente:", error?.status, error?.message);
     const giaPresente = /already|registered|exists/i.test(error?.message ?? "");
-    return { ok: false, errore: giaPresente ? "Esiste già un utente con questa email." : "Non è stato possibile creare l'utente. Riprova." };
+    if (giaPresente) return { ok: false, errore: "Esiste già un utente con questa email." };
+    const chiaveRifiutata = error?.status === 401 || error?.status === 403 || /invalid api key|jwt|unauthori[sz]ed|forbidden/i.test(error?.message ?? "");
+    if (chiaveRifiutata) {
+      return { ok: false, errore: "Supabase ha rifiutato la chiave segreta: probabilmente su Vercel c'è ancora quella vecchia, revocata. Copia la nuova chiave sb_secret_… e rifai il Redeploy." };
+    }
+    return { ok: false, errore: `Non è stato possibile creare l'utente (chiave: ${forma}). Dettaglio: ${error?.status ?? ""} ${error?.message ?? "nessuna risposta"}`.trim() };
   }
 
   // Il profilo nasce da solo (trigger sul database): qui si completano ruolo e stato
