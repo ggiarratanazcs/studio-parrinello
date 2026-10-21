@@ -45,7 +45,7 @@ export function FinestraAnagrafica({ etichetta, children }: { etichetta: string;
         role="dialog"
         aria-modal="true"
         aria-label={etichetta}
-        className="pt-sicuro mx-auto w-full max-w-[1120px] px-3 pb-10 pt-4 md:px-8 md:pt-10"
+        className="pt-sicuro mx-auto w-full max-w-[60rem] px-3 pb-10 pt-4 md:px-8 md:pt-10 lg:px-0"
       >
         <InFinestra.Provider value={true}>{children}</InFinestra.Provider>
       </div>

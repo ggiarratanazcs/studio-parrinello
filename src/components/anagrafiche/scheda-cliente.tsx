@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Mail, MapPin, Pencil, Phone, Plus, Star, Trash2, X } from "lucide-react";
+import { Building2, Check, ChevronDown, Copy, Mail, MapPin, Pencil, Phone, Plus, Star, Trash2, User, X } from "lucide-react";
 import { Campo, AreaTesto, Messaggio, Segmenti } from "@/components/campo";
 import { SceltaLocalita } from "@/components/procedura/scelta-localita";
 import { classePillola } from "@/components/anagrafiche/carta";
@@ -70,19 +70,26 @@ function daCliente(c: Cliente): DatiCliente {
   };
 }
 
-/** Colore del quadrato con le iniziali, per tipo di cliente */
+/** Colore del quadrato con l'icona, per tipo di cliente */
 const COLORE_TIPO: Record<string, string> = {
   persona_fisica: "var(--stato-attiva)",
   azienda: "var(--stato-preventivo)",
   ente_pubblico: "var(--stato-prefattibilita)",
 };
 
-function iniziali(c: Cliente) {
-  const parole =
-    c.tipo === "persona_fisica"
-      ? [c.nome, c.cognome].filter(Boolean)
-      : (c.ragione_sociale ?? "").split(/\s+/).filter((p) => p.length > 2 && !/^(di|del|della|dei|srl|s\.r\.l\.|spa|s\.p\.a\.)$/i.test(p));
-  return (parole.slice(0, 2).map((p) => p!.charAt(0)).join("") || "?").toUpperCase();
+/** Icona del tipo di cliente: persona per i privati, edificio per le aziende, edificio con "PA" per gli enti. */
+function IconaTipo({ tipo }: { tipo: string }) {
+  const Icona = tipo === "persona_fisica" ? User : Building2;
+  return (
+    <span aria-hidden className="relative grid size-14 shrink-0 place-items-center rounded-[14px] text-white" style={{ background: COLORE_TIPO[tipo] ?? "var(--tenue)" }}>
+      <Icona className="size-6" strokeWidth={1.6} />
+      {tipo === "ente_pubblico" ? (
+        <span className="absolute -right-2 -top-2 rounded-full border border-linea-forte bg-superficie px-1.5 py-px text-[0.625rem] font-semibold leading-tight tracking-[0.06em] text-inchiostro">
+          PA
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 const classeIcona =
@@ -128,17 +135,11 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
   const totale = scheda.prefattibilita.length + scheda.preventivi.length + scheda.commesse.length;
 
   return (
-    <div className="grid lg:grid-cols-[21.5rem_minmax(0,1fr)]">
+    <div className="grid lg:h-full lg:grid-cols-[20rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
       {/* ── Colonna dell'identità ── */}
-      <aside className="border-b border-linea bg-superficie-2/45 px-5 py-6 lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
+      <aside className="border-b border-linea bg-superficie-2/45 px-5 py-6 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-6 lg:py-7">
         <div className="flex items-start justify-between gap-3">
-          <span
-            aria-hidden
-            className="grid size-14 place-items-center rounded-[12px] text-lg font-medium tracking-[0.04em] text-white"
-            style={{ background: COLORE_TIPO[c.tipo] ?? "var(--tenue)" }}
-          >
-            {iniziali(c)}
-          </span>
+          <IconaTipo tipo={c.tipo} />
           <span className="lg:hidden">
             <Chiudi />
           </span>
@@ -146,8 +147,6 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
         <h1 className="titolo-display mt-4 text-[1.5rem] leading-tight">{c.denominazione ?? "Senza nome"}</h1>
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           <Etichetta>{TIPI_CLIENTE[c.tipo] ?? c.tipo}</Etichetta>
-          {c.comune ? <Etichetta>{c.comune}</Etichetta> : null}
-          <Etichetta>dal {new Date(c.created_at).getFullYear()}</Etichetta>
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -201,7 +200,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
       </aside>
 
       {/* ── Pratiche e analisi ── */}
-      <section className="min-w-0 px-5 py-6 lg:px-8 lg:py-7">
+      <section className="min-w-0 px-5 py-6 lg:overflow-y-auto lg:px-8 lg:py-7">
         <div className="flex items-center justify-between gap-3">
           <div role="tablist" aria-label="Sezioni" className="inline-flex gap-1 rounded-full bg-superficie-2 p-1">
             {(
@@ -231,7 +230,7 @@ function VistaCliente({ scheda, onModifica }: { scheda: SchedaClienteDati; onMod
         </div>
 
         {vista === "pratiche" ? (
-          <div className="mt-6 flex flex-col gap-8">
+          <div className="mt-6 flex flex-col gap-6">
             <GruppoPratiche titolo="Pre-fattibilità" pratiche={scheda.prefattibilita} vuoto="Nessuna pre-fattibilità per questo cliente." importo="Onorario" />
             <GruppoPratiche titolo="Preventivi" pratiche={scheda.preventivi} vuoto="Nessun preventivo per questo cliente." importo="Imponibile" />
             <GruppoPratiche titolo="Commesse" pratiche={scheda.commesse} vuoto="Nessuna commessa per questo cliente." importo="Onorario" />
@@ -274,7 +273,15 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
     <div className="group">
       <dt className="text-[0.75rem] text-tenue">{voce}</dt>
       <dd className="mt-0.5 flex items-start gap-1.5">
-        <span className={cn("min-w-0 flex-1 text-[0.9375rem] [overflow-wrap:anywhere]", codice && "numeri tracking-[0.02em]", !valore && "text-tenue")}>
+        <span
+          className={cn(
+            "min-w-0 flex-1 [overflow-wrap:anywhere]",
+            // Gli indirizzi email lunghi (PEC degli enti) stanno su una riga con un corpo appena più piccolo
+            valore?.includes("@") ? "text-[0.8125rem] leading-6" : "text-[0.9375rem]",
+            codice && "numeri tracking-[0.02em]",
+            !valore && "text-tenue",
+          )}
+        >
           {valore ?? "—"}
         </span>
         {valore ? (
@@ -293,19 +300,31 @@ function DatoCopiabile({ voce, valore, codice }: { voce: string; valore: string 
 }
 
 function GruppoPratiche({ titolo, pratiche, vuoto, importo }: { titolo: string; pratiche: PraticaCliente[]; vuoto: string; importo: string }) {
+  // Aperti i gruppi con qualcosa dentro, chiusi quelli vuoti
+  const [aperto, setAperto] = useState(pratiche.length > 0);
   return (
     <section>
-      <div className="mb-2 flex items-baseline justify-between gap-3 border-b border-linea pb-2">
-        <h2 className="text-[1rem] font-medium">
-          {titolo}
-          <span className="numeri ml-2 text-[0.875rem] font-normal text-tenue">{pratiche.length}</span>
-        </h2>
-        {pratiche.length ? <span className="text-[0.75rem] text-tenue">{importo}</span> : null}
-      </div>
-      {pratiche.length === 0 ? (
-        <p className="py-2 text-[0.875rem] text-tenue">{vuoto}</p>
+      <button
+        type="button"
+        onClick={() => setAperto(!aperto)}
+        aria-expanded={aperto}
+        className="flex w-full items-center justify-between gap-3 border-b border-linea pb-2 text-left"
+      >
+        <span className="flex items-center gap-2">
+          <ChevronDown
+            aria-hidden
+            className={cn("size-4 text-tenue transition-transform duration-200", !aperto && "-rotate-90")}
+            strokeWidth={1.8}
+          />
+          <span className="text-[1rem] font-medium">{titolo}</span>
+          <span className="numeri text-[0.875rem] text-tenue">{pratiche.length}</span>
+        </span>
+        {aperto && pratiche.length ? <span className="text-[0.75rem] text-tenue">{importo}</span> : null}
+      </button>
+      {!aperto ? null : pratiche.length === 0 ? (
+        <p className="py-2.5 text-[0.875rem] text-tenue">{vuoto}</p>
       ) : (
-        <ul>
+        <ul className="pt-1">
           {pratiche.map((p) => (
             <li key={p.id}>
               <Link
@@ -655,7 +674,7 @@ function ModuloCliente({ scheda, onFatto }: { scheda: SchedaClienteDati | null; 
         salva(false);
       }}
       noValidate
-      className="px-5 py-6 md:px-8 md:py-7"
+      className="px-5 py-6 md:px-8 md:py-7 lg:h-full lg:overflow-y-auto"
     >
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">

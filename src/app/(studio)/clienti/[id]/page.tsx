@@ -6,7 +6,7 @@ export const metadata = { title: "Cliente" };
 /** Scheda del cliente a pagina intera (aperta da un collegamento diretto o ricaricando la pagina). */
 export default function PaginaCliente({ params }: PageProps<"/clienti/[id]">) {
   return (
-    <div className="mx-auto max-w-[1120px]">
+    <div className="mx-auto max-w-[60rem]">
       <Suspense fallback={<SegnapostoAnagrafica />}>
         <Contenuto params={params} />
       </Suspense>
