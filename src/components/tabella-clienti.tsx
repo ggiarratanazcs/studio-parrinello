@@ -50,7 +50,7 @@ export function TabellaClienti({ clienti }: { clienti: ClienteRiga[] }) {
 
   return (
     <>
-      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca nome, comune, email, telefono…">
+      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca">
         <FiltroGruppi gruppi={GRUPPI} ordine={ORDINE_TIPI} info={info} stati={clienti.map((c) => c.tipo)} scelto={r.scelto} onScegli={r.setScelto} nome="Tipo di cliente" />
       </BarraRegistro>
       <div role="table" aria-label="Clienti">

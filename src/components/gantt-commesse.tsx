@@ -97,7 +97,7 @@ export function GanttCommesse({ commesse, fasi, oggi }: { commesse: CommessaSint
 
   return (
     <>
-      <BarraRegistro cerca={cerca} onCerca={setCerca} segnaposto="Cerca codice, titolo, committente, comune…">
+      <BarraRegistro cerca={cerca} onCerca={setCerca} segnaposto="Cerca">
         <FiltroGruppi
           gruppi={GRUPPI}
           ordine={ORDINE_STATI}

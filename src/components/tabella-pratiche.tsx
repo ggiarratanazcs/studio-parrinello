@@ -62,7 +62,7 @@ export function TabellaPratiche({ tipo, pratiche }: { tipo: "preventivo" | "pref
 
   return (
     <>
-      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca numero, titolo, committente, comune…">
+      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca">
         <FiltroGruppi
           gruppi={c.gruppi}
           ordine={ordineStati}

@@ -143,7 +143,7 @@ function ElencoImmobili({ immobili, children }: { immobili: ImmobileElenco[]; ch
   const nMappa = immobili.filter(sullaMappa).length;
   return (
     <>
-      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca nome, indirizzo, comune, commessa…">
+      <BarraRegistro cerca={r.cerca} onCerca={r.setCerca} segnaposto="Cerca">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
           <SchedeElenco
             nome="Posizione"

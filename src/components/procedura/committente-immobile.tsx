@@ -151,7 +151,7 @@ export function PassoCommittente({
         <SceltaDaElenco
           cerca={ctl.cercaCliente}
           onCerca={ctl.setCercaCliente}
-          segnaposto="Cerca per nome o comune"
+          segnaposto="Cerca"
           vuoto={ctl.dati.clienti.length === 0 ? "L'archivio clienti è vuoto: crea il primo committente." : "Nessun committente corrisponde alla ricerca."}
           errore={errori.cliente}
           voci={clienti.map((c) => ({
@@ -198,7 +198,7 @@ export function PassoImmobile({
         <SceltaDaElenco
           cerca={ctl.cercaImmobile}
           onCerca={ctl.setCercaImmobile}
-          segnaposto="Cerca per indirizzo, nome o comune"
+          segnaposto="Cerca"
           vuoto={ctl.dati.immobili.length === 0 ? "Nessun immobile in archivio: inseriscine uno nuovo." : "Nessun immobile corrisponde alla ricerca."}
           errore={errori.immobile}
           voci={immobili.map((i) => ({

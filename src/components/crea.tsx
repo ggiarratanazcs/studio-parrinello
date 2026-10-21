@@ -195,7 +195,7 @@ export function Crea() {
                 setScelta(0);
               }}
               onKeyDown={tastiCampo}
-              placeholder="Cosa vuoi creare?"
+              placeholder="Cerca"
               autoComplete="off"
               tabIndex={aperto ? 0 : -1}
               className="h-10 w-full rounded-piccolo border border-linea bg-sfondo pl-9 pr-3 text-sm outline-none placeholder:text-tenue focus:border-linea-forte"

@@ -583,7 +583,7 @@ function RicercaIndicePA({ onScelto, onUfficio }: { onScelto: (e: EnteIPA) => vo
           id="c-ipa-cerca"
           value={testo}
           onChange={(e) => cambia(e.target.value)}
-          placeholder="Comune di Noto, oppure il codice fiscale"
+          placeholder="Cerca"
           autoComplete="off"
           aiuto="Indice delle Pubbliche Amministrazioni (AgID): compila denominazione, codice fiscale, sede e PEC."
         />

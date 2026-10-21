@@ -77,7 +77,7 @@ export function TabellaCommesse({ commesse }: { commesse: CommessaSintesi[] }) {
       <BarraRegistro
         cerca={r.cerca}
         onCerca={r.setCerca}
-        segnaposto="Cerca codice, titolo, committente, comune…"
+        segnaposto="Cerca"
       >
         <FiltroGruppi
           gruppi={GRUPPI}
