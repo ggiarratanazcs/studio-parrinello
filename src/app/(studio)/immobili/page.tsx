@@ -32,6 +32,7 @@ async function ElencoImmobili() {
   return (
     <>
       <Cartiglio
+        nuovo={{ href: "/immobili/nuovo", etichetta: "Nuovo immobile", testo: "Nuovo" }}
         titolo="Immobili"
         disegno={DISEGNO_IMMOBILI}
         celle={[

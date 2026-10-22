@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { LucideProps } from "lucide-react";
 import { LogoImmagine } from "@/components/studio-contesto";
 import { leggiStudio } from "@/lib/studio";
-import { Tessere, type Cella } from "@/components/tessere";
+import { PulsanteNuovo, PulsanteNuovoMobile, Tessere, type Cella } from "@/components/tessere";
 import { FONDI, type TipoFondo } from "@/lib/fondi";
 
 export type { Cella };
@@ -22,7 +22,10 @@ export async function Cartiglio({
   sopratitolo,
   icona: IconaTitolo,
   disegno,
+  nuovo,
 }: {
+  /** Pulsante per creare un nuovo elemento: pillola tra le azioni su schermi grandi, tondo galleggiante su telefono */
+  nuovo?: { href: string; etichetta: string; testo: string };
   titolo: string;
   sottotitolo?: string;
   celle?: Cella[];
@@ -84,12 +87,23 @@ export async function Cartiglio({
 
       {crea ? <div className="relative z-30 lg:-mt-7 lg:px-10">{crea}</div> : null}
 
-      {celle.length > 0 || azioni ? (
-        <div className="mt-4 flex flex-col gap-4 md:flex-row-reverse md:items-start md:justify-between md:px-6">
+      {/* Riquadri e azioni solo da tablet in su: su telefono lasciano spazio all'elenco */}
+      {celle.length > 0 || azioni || nuovo ? (
+        <div className="mt-4 hidden md:flex md:flex-row-reverse md:items-start md:justify-between md:gap-4 md:px-6">
           {celle.length > 0 ? <Tessere celle={celle} className="relative z-10 md:-mt-12 md:justify-end" /> : null}
-          {azioni ? <div className="flex flex-wrap gap-2 md:pt-1">{azioni}</div> : null}
+          {azioni || nuovo ? (
+            <div className="flex flex-wrap gap-2 md:pt-1">
+              {nuovo ? (
+                <PulsanteNuovo href={nuovo.href} tipo={tipo} className="hidden lg:inline-flex">
+                  {nuovo.testo}
+                </PulsanteNuovo>
+              ) : null}
+              {azioni}
+            </div>
+          ) : null}
         </div>
       ) : null}
+      {nuovo ? <PulsanteNuovoMobile href={nuovo.href} tipo={tipo} etichetta={nuovo.etichetta} /> : null}
     </header>
   );
 }

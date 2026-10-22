@@ -77,14 +77,8 @@ async function ElencoCommesse({ searchParams }: { searchParams: PageProps<"/comm
               ]
             : []
         }
-        azioni={
-          crea || gestisce ? (
-            <>
-              {crea ? nuovaCommessa : null}
-              {gestisce ? <PulsanteVista gantt={gantt} /> : null}
-            </>
-          ) : null
-        }
+        nuovo={crea ? { href: "/nuova/commessa", etichetta: "Nuova commessa", testo: "Nuova" } : undefined}
+        azioni={gestisce ? <PulsanteVista gantt={gantt} /> : null}
       />
 
       <Pannello>

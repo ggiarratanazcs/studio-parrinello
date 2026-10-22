@@ -94,7 +94,7 @@ export default async function LayoutStudio({ children, modale }: LayoutProps<"/"
           </div>
         </header>
 
-        <main className="area-lavoro px-4 pb-28 pt-6 md:px-8 md:pt-10 lg:px-10 lg:pb-16">
+        <main className="area-lavoro px-4 pb-36 pt-6 md:px-8 md:pt-10 lg:px-10 lg:pb-16">
           <div className="w-full">{children}</div>
         </main>
       </div>

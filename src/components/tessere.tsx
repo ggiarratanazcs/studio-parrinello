@@ -63,6 +63,7 @@ export function PulsanteNuovo({
   return (
     <Link
       href={href}
+      data-crea={href}
       className={cn("pulsante-nuovo inline-flex h-11 items-center gap-2.5 rounded-full py-1 pl-1.5 pr-5 text-[0.9375rem] font-medium", className)}
       style={{ background: `linear-gradient(145deg, ${f.chiaro} 0%, ${f.base} 100%)`, ["--ombra" as string]: f.rgb, ...style }}
       {...props}
@@ -71,6 +72,25 @@ export function PulsanteNuovo({
         <Plus className="size-4" strokeWidth={2.2} />
       </span>
       {children}
+    </Link>
+  );
+}
+
+/**
+ * "Nuovo" su telefono e tablet: pulsante tondo che galleggia in basso a destra, sopra la barra
+ * di navigazione, come nelle app. Non occupa spazio nella pagina; scompare a chi non può creare.
+ */
+export function PulsanteNuovoMobile({ href, tipo, etichetta }: { href: string; tipo: TipoFondo; etichetta: string }) {
+  const f = FONDI[tipo];
+  return (
+    <Link
+      href={href}
+      data-crea={href}
+      aria-label={etichetta}
+      className="pulsante-nuovo crea-mobile fixed right-4 z-40 grid size-14 place-items-center rounded-full lg:hidden"
+      style={{ background: `linear-gradient(145deg, ${f.chiaro} 0%, ${f.base} 100%)`, ["--ombra" as string]: f.rgb }}
+    >
+      <Plus className="size-6" strokeWidth={2} />
     </Link>
   );
 }

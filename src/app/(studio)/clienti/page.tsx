@@ -32,6 +32,7 @@ async function ElencoClienti() {
   return (
     <>
       <Cartiglio
+        nuovo={{ href: "/clienti/nuovo", etichetta: "Nuovo cliente", testo: "Nuovo" }}
         titolo="Clienti"
         disegno={DISEGNO_CLIENTI}
         celle={[

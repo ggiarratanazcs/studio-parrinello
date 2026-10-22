@@ -50,7 +50,7 @@ export function ElencoPratiche({ tipo, pratiche }: { tipo: "preventivo" | "prefa
           { etichetta: "In commessa", valore: convertite, icona: ArrowRightLeft },
           { etichetta: "Conversione", valore: tasso === null ? "—" : `${tasso}%`, icona: Percent },
         ]}
-        azioni={nuovo}
+        nuovo={{ href: t.href, etichetta: t.titolo === "Preventivi" ? "Nuovo preventivo" : "Nuova pre-fattibilità", testo: t.nuovo }}
       />
       <Pannello>
         {pratiche.length === 0 ? (
