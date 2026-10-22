@@ -33,7 +33,7 @@ export function PorteHome() {
           key={p.href}
           href={p.href}
           data-sezione={p.sezione}
-          className="porta-home group relative block h-48 overflow-hidden rounded-grande md:h-64"
+          className="porta-home group relative block h-48 overflow-hidden rounded-grande md:h-64 lg:h-80"
           style={{ background: p.fondo.base }}
         >
           {/* Foto in bianco e nero, poi colorata dal fondo della sezione */}
