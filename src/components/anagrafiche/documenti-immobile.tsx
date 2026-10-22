@@ -7,6 +7,7 @@ import { ArrowUpRight, ChevronRight, FileImage, FileText, Folder, FolderOpen, Lo
 import { Messaggio } from "@/components/campo";
 import { CATEGORIE_DOCUMENTO, apriDocumento, caricaAllegati, dimensione, eliminaAllegato } from "@/components/schede/allegati-fase";
 import type { DocumentoImmobile } from "@/lib/anagrafiche";
+import { PulsanteAllegato } from "@/components/schede/carica-apribile";
 import { cn, formattaData } from "@/lib/utils";
 
 type Nodo = { id: string; nome: string; dettaglio?: string; href?: string; documenti: DocumentoImmobile[]; figli: Nodo[] };
@@ -63,6 +64,7 @@ export function DocumentiImmobile({
   const [categoria, setCategoria] = useState("elaborato_grafico");
   const [caricamento, setCaricamento] = useState<{ fatti: number; totali: number } | null>(null);
   const [sopra, setSopra] = useState(false);
+  const [caricaAperto, setCaricaAperto] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
 
@@ -168,8 +170,9 @@ export function DocumentiImmobile({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Ricerca */}
-      <label className="relative block">
+      {/* Ricerca e pulsante per aggiungere documenti */}
+      <div className="flex items-center gap-2">
+      <label className="relative block flex-1">
         <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-tenue" strokeWidth={1.8} />
         <input
           type="search"
@@ -185,9 +188,11 @@ export function DocumentiImmobile({
           </button>
         ) : null}
       </label>
+      {caricabili ? <PulsanteAllegato aperto={caricaAperto} onClick={() => setCaricaAperto(!caricaAperto)} className="size-10" /> : null}
+      </div>
 
-      {/* Caricamento sull'immobile, senza commessa */}
-      {caricabili ? (
+      {/* Caricamento sull'immobile, senza commessa: si apre dal pulsante */}
+      {caricabili && caricaAperto ? (
         <div
           className={cn("flex flex-wrap items-center gap-2 rounded-medio border border-dashed p-2 transition-colors", sopra ? "border-accento bg-accento/5" : "border-linea")}
           onDragOver={(e) => {

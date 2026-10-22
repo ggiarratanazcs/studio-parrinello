@@ -16,6 +16,7 @@ import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
 import { AllegatiFase } from "./allegati-fase";
 import { ScattaFoto } from "./scatta-foto";
+import { IntestazioneConCaricamento } from "./carica-apribile";
 import { Cronoprogramma } from "./cronoprogramma";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
 import { DiarioCommessa, TeamCommessa } from "./team-diario";
@@ -288,15 +289,11 @@ export async function SchedaCommessa({ id }: { id: string }) {
             sottotitolo: documenti.length ? plurale(documenti.length, "allegato", "allegati") : "Nessun allegato",
             contenuto: (
               <Pannello>
-                <TitoloSezione
+                <IntestazioneConCaricamento
                   titolo="Allegati"
-                  descrizione="Tutti i file della commessa, divisi per fase. Qui puoi caricare anche documenti che non appartengono a una fase."
+                  descrizione="Tutti i file della commessa, divisi per fase."
+                  caricamento={liv("c.allegati") >= 2 ? <AllegatiFase commessaId={c.id} faseId={null} documenti={[]} soloCaricamento /> : undefined}
                 />
-                {liv("c.allegati") >= 2 ? (
-                  <div className="border-b border-linea px-5 py-4 md:px-6">
-                    <AllegatiFase commessaId={c.id} faseId={null} documenti={[]} soloCaricamento />
-                  </div>
-                ) : null}
                 <AlberoAllegati codice={c.codice ?? ""} fasi={fasi} documenti={documenti} />
               </Pannello>
             ),
