@@ -59,9 +59,10 @@ export function Modale({
         className="relative flex h-full w-full max-w-[1400px] flex-col overflow-hidden bg-sfondo outline-none md:h-full md:rounded-grande md:shadow-[0_30px_80px_-24px_rgba(43,42,40,0.55)]"
       >
         <TestataModale etichetta={etichetta} tipo={tipo}>
+          {/* Su telefono la finestra occupa già tutto lo schermo: il pulsante serve solo da computer */}
           <a
             href={paginaIntera}
-            className="grid size-9 place-items-center rounded-full bg-white/10 text-[#f3ece0] backdrop-blur-md transition-colors hover:bg-white/20"
+            className="hidden size-9 place-items-center rounded-full bg-white/10 lg:grid text-[#f3ece0] backdrop-blur-md transition-colors hover:bg-white/20"
             data-suggerimento="Apri a pagina intera"
             data-suggerimento-lato="sotto"
           >
