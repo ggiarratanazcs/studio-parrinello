@@ -1,6 +1,6 @@
 import { LogoImmagine } from "@/components/studio-contesto";
 import { leggiStudio } from "@/lib/studio";
-import { DISEGNO_HOME, FONDI } from "@/lib/fondi";
+import { FONDI } from "@/lib/fondi";
 
 export default async function LayoutAccesso({ children }: LayoutProps<"/">) {
   // Nome, claim e logo dalla configurazione dello studio (lettura pubblica, in memoria)
@@ -10,10 +10,11 @@ export default async function LayoutAccesso({ children }: LayoutProps<"/">) {
       {/* Pannello del marchio (solo su schermi grandi): fondo scuro dello studio con la mappa di Ortigia
           a linee in trasparenza, come nella testata della home; logo, nome e claim in alto */}
       <aside className="relative hidden overflow-hidden text-[#f3ece0] lg:block" style={{ background: FONDI.studio.base }}>
+        {/* La mappa intera, ritagliata dalla striscia della home, appoggiata nella parte bassa */}
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-[position:72%_center] opacity-60"
-          style={{ backgroundImage: `url(${DISEGNO_HOME})` }}
+          className="absolute inset-0 bg-[length:118%_auto] bg-[position:40%_78%] bg-no-repeat opacity-60"
+          style={{ backgroundImage: "url(/brand/ortigia-accesso.webp)" }}
         />
         <div
           aria-hidden
