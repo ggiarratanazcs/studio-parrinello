@@ -77,7 +77,7 @@ export function PulsanteNuovo({
 }
 
 /**
- * "Nuovo" su telefono e tablet: pulsante tondo che galleggia in basso a destra, sopra la barra
+ * "Nuovo" su telefono e tablet: pulsante tondo che galleggia in basso a sinistra (a destra c'è l'assistente), sopra la barra
  * di navigazione, come nelle app. Non occupa spazio nella pagina; scompare a chi non può creare.
  */
 export function PulsanteNuovoMobile({ href, tipo, etichetta }: { href: string; tipo: TipoFondo; etichetta: string }) {
@@ -87,7 +87,7 @@ export function PulsanteNuovoMobile({ href, tipo, etichetta }: { href: string; t
       href={href}
       data-crea={href}
       aria-label={etichetta}
-      className="pulsante-nuovo crea-mobile fixed right-4 z-40 grid size-14 place-items-center rounded-full lg:hidden"
+      className="pulsante-nuovo crea-mobile fixed left-4 z-40 grid size-14 place-items-center rounded-full lg:hidden"
       style={{ background: `linear-gradient(145deg, ${f.chiaro} 0%, ${f.base} 100%)`, ["--ombra" as string]: f.rgb }}
     >
       <Plus className="size-6" strokeWidth={2} />

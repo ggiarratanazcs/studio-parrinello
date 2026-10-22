@@ -9,6 +9,7 @@ import { CursoreCompasso } from "@/components/cursore-compasso";
 import { LogoImmagine, StudioProvider } from "@/components/studio-contesto";
 import { leggiStudio } from "@/lib/studio";
 import { NascondiSezioni } from "@/components/permessi";
+import { AssistenteStudio } from "@/components/assistente/assistente-studio";
 
 /**
  * Area riservata. Contiene entrambe le impaginazioni: il CSS mostra quella scelta
@@ -100,6 +101,10 @@ export default async function LayoutStudio({ children, modale }: LayoutProps<"/"
       </div>
 
       <NavMobile />
+      {/* Assistente dello studio (titolare e architetti) */}
+      <Suspense fallback={null}>
+        <AssistenteStudio />
+      </Suspense>
       {modale}
     </div>
     </StudioProvider>

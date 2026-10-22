@@ -618,6 +618,18 @@ html[data-theme="navy"] .barra-materia > div .bg-inchiostro {
   bottom: calc(76px + env(safe-area-inset-bottom));
 }
 
+/* Campo dell'assistente: il bordo evidenziato è già sulla capsula che lo contiene */
+.campo-assistente:focus-visible {
+  outline: none;
+}
+
+/* Assistente: sopra la barra di navigazione su telefono e tablet, in basso a destra su schermi grandi */
+@media (max-width: 1023.98px) {
+  .assistente-pulsante {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Schede anagrafiche: righe da registro con puntini tra voce e valore */
 .riga-registro .puntini {
   border-bottom: 1px dotted var(--linea-forte);
