@@ -8,6 +8,7 @@ import { Messaggio } from "@/components/campo";
 import { CATEGORIE_DOCUMENTO, apriDocumento, caricaAllegati, dimensione, eliminaAllegato } from "@/components/schede/allegati-fase";
 import type { DocumentoImmobile } from "@/lib/anagrafiche";
 import { PulsanteAllegato } from "@/components/schede/carica-apribile";
+import { Tendina } from "@/components/scelta";
 import { cn, formattaData } from "@/lib/utils";
 
 type Nodo = { id: string; nome: string; dettaglio?: string; href?: string; documenti: DocumentoImmobile[]; figli: Nodo[] };
@@ -206,18 +207,9 @@ export function DocumentiImmobile({
             carica(e.dataTransfer.files);
           }}
         >
-          <select
-            aria-label="Categoria dei file"
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            className="h-9 rounded-medio border border-linea-forte bg-superficie px-2.5 text-sm"
-          >
-            {Object.entries(CATEGORIE_DOCUMENTO).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
+          <div className="w-48">
+            <Tendina etichetta="Categoria dei file" valore={categoria} onCambia={setCategoria} opzioni={Object.entries(CATEGORIE_DOCUMENTO).map(([valore, etichetta]) => ({ valore, etichetta }))} variante="compatta" />
+          </div>
           <input ref={input} type="file" multiple className="sr-only" id={`file-immobile-${immobileId}`} onChange={(e) => carica(e.target.files)} />
           <label
             htmlFor={`file-immobile-${immobileId}`}

@@ -8,6 +8,7 @@ import { LogoImmagine } from "@/components/studio-contesto";
 import { Pulsante } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { RUOLI } from "@/lib/dominio";
+import { Tendina } from "@/components/scelta";
 import type { MappaPermessi, RuoloConfigurabile } from "@/lib/permessi-catalogo";
 import { PermessiPersonali } from "@/components/ruoli-permessi";
 import { aggiornaUtente, creaUtente, impostaLogo, salvaStudio, type DatiStudioModulo } from "@/lib/azioni-studio";
@@ -212,19 +213,15 @@ export function UtentiStudio({
                   </button>
                 ) : null}
               </div>
-              <select
-                aria-label={`Ruolo di ${u.nome}`}
-                value={u.ruolo}
-                disabled={inModifica === u.id}
-                onChange={(e) => cambia(u.id, { ruolo: e.target.value })}
-                className="h-10 w-full rounded-medio border border-linea-forte bg-superficie px-3 text-[0.9375rem] text-inchiostro outline-none focus:border-accento focus:ring-2 focus:ring-accento/20 disabled:opacity-60"
-              >
-                {Object.entries(RUOLI).map(([valore, etichetta]) => (
-                  <option key={valore} value={valore}>
-                    {etichetta}
-                  </option>
-                ))}
-              </select>
+              <Tendina
+                etichetta={`Ruolo di ${u.nome}`}
+                valore={u.ruolo}
+                disabilitata={inModifica === u.id}
+                onCambia={(v) => cambia(u.id, { ruolo: v })}
+                opzioni={Object.entries(RUOLI).map(([valore, etichetta]) => ({ valore, etichetta }))}
+                variante="compatta"
+                className="h-10"
+              />
               <div className="md:text-right">
                 {io ? (
                   <span className="text-[0.8125rem] text-tenue">—</span>
@@ -321,13 +318,14 @@ function NuovoUtente() {
         <input aria-label="Nome" placeholder="Nome" value={d.nome} onChange={set("nome")} className={campo} autoComplete="off" />
         <input aria-label="Cognome" placeholder="Cognome" value={d.cognome} onChange={set("cognome")} className={campo} autoComplete="off" />
         <input aria-label="Email" placeholder="nome@studio.it" type="email" value={d.email} onChange={set("email")} className={campo} autoComplete="off" />
-        <select aria-label="Ruolo" value={d.ruolo} onChange={set("ruolo")} className={campo}>
-          {Object.entries(RUOLI).map(([valore, etichetta]) => (
-            <option key={valore} value={valore}>
-              {etichetta}
-            </option>
-          ))}
-        </select>
+        <Tendina
+          etichetta="Ruolo"
+          valore={d.ruolo}
+          onCambia={(v) => setD({ ...d, ruolo: v })}
+          opzioni={Object.entries(RUOLI).map(([valore, etichetta]) => ({ valore, etichetta }))}
+          variante="compatta"
+          className="h-10"
+        />
         <Pulsante type="submit" disabled={inCorso} className="h-10">
           {inCorso ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" strokeWidth={1.8} />}
           Aggiungi

@@ -8,6 +8,7 @@ import { Pulsante } from "@/components/ui";
 import type { Commessa } from "@/lib/dati";
 import { createClient } from "@/lib/supabase/client";
 import { Compasso } from "@/components/compasso";
+import { Tendina } from "@/components/scelta";
 import { cn, formattaData } from "@/lib/utils";
 
 type Documento = NonNullable<Commessa["documenti"]>[number];
@@ -274,18 +275,9 @@ export function AllegatiFase({
             carica(e.dataTransfer.files);
           }}
         >
-        <select
-          aria-label="Categoria dei file"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-          className="h-10 rounded-medio border border-linea-forte bg-superficie px-3 text-sm"
-        >
-          {Object.entries(CATEGORIE_DOCUMENTO).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </select>
+        <div className="w-52">
+          <Tendina etichetta="Categoria dei file" valore={categoria} onCambia={setCategoria} opzioni={Object.entries(CATEGORIE_DOCUMENTO).map(([valore, etichetta]) => ({ valore, etichetta }))} variante="compatta" />
+        </div>
         <input ref={input} type="file" multiple className="sr-only" id={idFile} onChange={(e) => carica(e.target.files)} />
         <label
           htmlFor={idFile}

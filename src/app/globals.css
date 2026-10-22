@@ -698,3 +698,19 @@ html[data-theme="navy"] .carta-scura {
 html[data-theme="navy"] :is(.barra-laterale, .barra-materia) img.logo-studio {
   filter: brightness(0) invert(0.94);
 }
+
+/* Tendine e calendari del portale (componenti in scelta.tsx): comparsa morbida */
+@keyframes sospeso-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+.sospeso {
+  animation: sospeso-entra 140ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sospeso {
+    animation: none;
+  }
+}

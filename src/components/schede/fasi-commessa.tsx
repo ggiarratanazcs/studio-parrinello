@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type CSSProperties, type PointerEvent as EventoPuntatore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, ChartNoAxesGantt, Check, ChevronDown, FileImage, Table2, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, UsersRound, X } from "lucide-react";
+import { Camera, ChartNoAxesGantt, Check, FileImage, Table2, FileText, GripVertical, Loader2, Minus, Paperclip, Plus, Trash2, UsersRound, X } from "lucide-react";
 import { Messaggio } from "@/components/campo";
 import { Espandibile, PulsanteEspandi } from "@/components/registro";
 import { aggiungiFase, avanzaFase, eliminaFase, impostaAssegnati, modificaFase, riordinaFasi, type CampoFase } from "@/lib/azioni";
@@ -10,6 +10,7 @@ import type { Commessa } from "@/lib/dati";
 import { apriDocumento, caricaAllegati, dimensione, eliminaAllegato } from "./allegati-fase";
 import { COLORI_FASE, STATI_FASE } from "@/lib/dominio";
 import { Cronoprogramma } from "./cronoprogramma";
+import { CellaCalendario, Tendina } from "@/components/scelta";
 import { cn } from "@/lib/utils";
 
 type Fase = NonNullable<Commessa["fasi"]>[number];
@@ -536,16 +537,16 @@ function Cella({
 }) {
   if (!modificabile) return <span role="cell">{children}</span>;
   return (
-    <span role="cell" className="group/cella relative -mx-1.5 flex h-8 items-center rounded-piccolo px-1.5 transition-colors hover:bg-superficie-2/70">
-      {children}
-      <ChevronDown aria-hidden className="ml-auto size-3 shrink-0 text-tenue opacity-0 transition-opacity group-hover/cella:opacity-100" strokeWidth={2} />
-      <select aria-label={etichetta} value={valore} onChange={(e) => onCambia(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0">
-        {opzioni.map(([v, e]) => (
-          <option key={v} value={v}>
-            {e}
-          </option>
-        ))}
-      </select>
+    <span role="cell" className="min-w-0">
+      <Tendina
+        etichetta={etichetta}
+        valore={valore}
+        onCambia={onCambia}
+        opzioni={opzioni.map(([v, e]) => ({ valore: v, etichetta: e }))}
+        variante="cella"
+      >
+        {children}
+      </Tendina>
     </span>
   );
 }
@@ -636,20 +637,9 @@ function CellaAssegnati({
 
 /** Data come gg.mm.aa; il clic apre il calendario del browser. */
 function CellaData({ modificabile, etichetta, valore, onCambia }: { modificabile: boolean; etichetta: string; valore: string | null; onCambia: (v: string | null) => void }) {
-  const testo = dataBreve(valore);
-  const contenuto = <span className={cn("numeri text-sm", !testo && "text-tenue")}>{testo ?? "—"}</span>;
-  if (!modificabile) return <span role="cell">{contenuto}</span>;
   return (
-    <span role="cell" className="relative -mx-1.5 flex h-8 items-center rounded-piccolo px-1.5 transition-colors hover:bg-superficie-2/70">
-      {contenuto}
-      <input
-        type="date"
-        aria-label={etichetta}
-        value={valore ?? ""}
-        onChange={(e) => onCambia(e.target.value || null)}
-        onClick={(e) => e.currentTarget.showPicker?.()}
-        className="absolute inset-0 w-full cursor-pointer opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:size-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-      />
+    <span role="cell">
+      <CellaCalendario modificabile={modificabile} etichetta={etichetta} valore={valore} onCambia={onCambia} />
     </span>
   );
 }

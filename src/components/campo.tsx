@@ -1,5 +1,23 @@
-import type { ComponentProps, ReactNode } from "react";
+import { Children, isValidElement, type ChangeEvent, type ComponentProps, type ReactElement, type ReactNode } from "react";
+import { SceltaData, Tendina, type Opzione } from "@/components/scelta";
 import { cn } from "@/lib/utils";
+
+/** Ricava le opzioni dagli <option> figli, per usare la tendina del portale come un <select>. */
+export function opzioniDaFigli(children: ReactNode): Opzione[] {
+  const elenco: Opzione[] = [];
+  Children.forEach(children, (c) => {
+    if (!isValidElement(c)) return;
+    const el = c as ReactElement<{ value?: string | number; children?: ReactNode; disabled?: boolean }>;
+    if (el.type === "option") {
+      const testo = Children.toArray(el.props.children).join("");
+      elenco.push({ valore: String(el.props.value ?? testo), etichetta: testo, disabilitata: el.props.disabled });
+    } else if (el.props.children) elenco.push(...opzioniDaFigli(el.props.children));
+  });
+  return elenco;
+}
+
+/** Evento minimo come quello dei campi del browser, per chi legge e.target.value. */
+const evento = <T,>(value: string) => ({ target: { value }, currentTarget: { value } }) as unknown as ChangeEvent<T>;
 
 const stileControllo =
   "w-full rounded-medio border border-linea-forte bg-superficie px-3 text-base text-inchiostro outline-none transition-colors placeholder:text-tenue/70 focus:border-accento focus:ring-2 focus:ring-accento/20 aria-[invalid=true]:border-[color:var(--stato-sospesa)]";
@@ -21,8 +39,24 @@ function Aiuto({ testo, errore }: { testo?: ReactNode; errore?: string | null })
 
 type Extra = { etichetta: string; id: string; aiuto?: ReactNode; errore?: string | null; obbligatorio?: boolean };
 
-/** Campo di testo con etichetta sopra. */
+/** Campo di testo con etichetta sopra. Con type="date" usa il calendario del portale. */
 export function Campo({ etichetta, id, aiuto, errore, obbligatorio, className, ...props }: ComponentProps<"input"> & Extra) {
+  if (props.type === "date") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <Etichetta id={id} etichetta={etichetta} obbligatorio={obbligatorio} />
+        <SceltaData
+          id={id}
+          valore={props.value ? String(props.value) : null}
+          onCambia={(v) => props.onChange?.(evento<HTMLInputElement>(v ?? ""))}
+          invalida={!!errore}
+          disabilitata={props.disabled}
+          className={className}
+        />
+        <Aiuto testo={aiuto} errore={errore} />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col gap-1.5">
       <Etichetta id={id} etichetta={etichetta} obbligatorio={obbligatorio} />
@@ -46,18 +80,15 @@ export function Selezione({
   return (
     <div className="flex flex-col gap-1.5">
       <Etichetta id={id} etichetta={etichetta} obbligatorio={obbligatorio} />
-      <select
+      <Tendina
         id={id}
-        aria-invalid={errore ? true : undefined}
-        className={cn(stileControllo, "h-11 appearance-none bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pr-9", className)}
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e685e' stroke-width='1.8'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-        }}
-        {...props}
-      >
-        {children}
-      </select>
+        valore={String(props.value ?? "")}
+        onCambia={(v) => props.onChange?.(evento<HTMLSelectElement>(v))}
+        opzioni={opzioniDaFigli(children)}
+        invalida={!!errore}
+        disabilitata={props.disabled}
+        className={className}
+      />
       <Aiuto testo={aiuto} errore={errore} />
     </div>
   );
