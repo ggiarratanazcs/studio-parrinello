@@ -15,7 +15,6 @@ import { FasiCommessa } from "./fasi-commessa";
 import { PraticheCommessa } from "./pratiche-commessa";
 import { AlberoAllegati } from "./albero-allegati";
 import { AllegatiFase } from "./allegati-fase";
-import { ScattaFoto } from "./scatta-foto";
 import { IntestazioneConCaricamento } from "./carica-apribile";
 import { Cronoprogramma } from "./cronoprogramma";
 import { Cartelle, SezioniScheda } from "./sezioni-scheda";
@@ -186,27 +185,18 @@ export async function SchedaCommessa({ id }: { id: string }) {
     </div>
   );
 
-  // Fasi proprie: responsabile o assegnato (per proporre dove salvare le foto)
-  const fasiFoto = fasi.map((f) => ({
-    id: f.id,
-    nome: [f.codice, f.nome].filter(Boolean).join(" · "),
-    propria: f.responsabile_id === c.ioId || (c.personeFasi[f.id] ?? []).includes(c.ioId),
-    inCorso: f.stato === "in_corso" || f.stato === "in_revisione",
-  }));
-
   return (
     <>
-      {/* Telefono: fotocamera sempre a portata, per chi può caricare allegati */}
-      {liv("c.allegati") >= 2 ? <ScattaFoto commessaId={c.id} fasi={fasiFoto} /> : null}
       <TestataScheda
         sigla={`Commessa ${c.codice}`}
         titolo={c.titolo}
         sottotitolo={[cliente?.denominazione, immobile?.comune].filter(Boolean).join(", ")}
+        compatta
         celle={[
           ...(vede.stato
             ? [
                 { etichetta: "Stato", valore: statoCommessa(c.stato).etichetta, tinta: statoCommessa(c.stato).colore, icona: CircleDot },
-                { etichetta: "Apertura", valore: formattaData(c.data_apertura), icona: CalendarDays },
+                { etichetta: "Apertura", valore: `aperta il ${formattaData(c.data_apertura)}`, icona: CalendarDays },
               ]
             : []),
           ...(vede.onorario ? [{ etichetta: "Onorario", valore: formattaEuro(c.onorario_concordato), icona: Euro }] : []),
@@ -311,8 +301,6 @@ export async function SchedaCommessa({ id }: { id: string }) {
           },
         ].filter((x) => !!x)}
       />
-      {/* spazio per i pulsanti della fotocamera, su telefono */}
-      {liv("c.allegati") >= 2 ? <div aria-hidden className="h-20 md:hidden" /> : null}
     </>
   );
 }

@@ -11,13 +11,48 @@ export function TestataScheda({
   sottotitolo,
   celle,
   azioni,
+  compatta,
 }: {
   sigla?: string | null;
   titolo: string;
   sottotitolo?: string | null;
   celle?: Cella[];
   azioni?: ReactNode;
+  /** Dati in una riga sottile sotto il titolo, al posto dei riquadri: lascia spazio alle sezioni */
+  compatta?: boolean;
 }) {
+  if (compatta) {
+    return (
+      <header className="mb-5 flex flex-col gap-3 border-b border-linea-forte pb-4 md:flex-row md:items-end md:justify-between md:gap-6">
+        <div className="min-w-0">
+          {sigla ? <p className="numeri etichetta">{sigla}</p> : null}
+          <h1 className="titolo-display mt-0.5 text-[1.5rem] leading-tight md:text-[1.875rem]">{titolo}</h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.875rem] text-tenue">
+            {celle?.map((c, i) => {
+              return (
+                <span key={c.etichetta} className="inline-flex items-center gap-1.5" title={c.etichetta}>
+                  {i ? <span aria-hidden className="mr-1.5 text-linea-forte">·</span> : null}
+                  {/* Solo lo stato ha il pallino colorato: gli altri dati si leggono da soli */}
+                  {c.tinta ? <span aria-hidden className="size-2 rounded-full" style={{ background: c.tinta }} /> : null}
+                  <span className="sr-only">{c.etichetta}: </span>
+                  <span className={cn(c.tinta ? "font-medium" : "text-inchiostro-2")} style={c.tinta ? { color: c.tinta } : undefined}>
+                    {c.valore}
+                  </span>
+                </span>
+              );
+            })}
+            {sottotitolo ? (
+              <span className="inline-flex min-w-0 items-center">
+                {celle?.length ? <span aria-hidden className="mr-3 text-linea-forte">·</span> : null}
+                <span className="truncate">{sottotitolo}</span>
+              </span>
+            ) : null}
+          </p>
+        </div>
+        {azioni ? <div className="flex shrink-0 flex-wrap items-center gap-2">{azioni}</div> : null}
+      </header>
+    );
+  }
   return (
     <header className="mb-6 flex flex-col gap-5 border-b border-linea-forte pb-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
