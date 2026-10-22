@@ -97,7 +97,7 @@ export async function caricaAllegati(
   elenco: File[],
   categoria = "elaborato_grafico",
   progresso?: (fatti: number, totali: number) => void,
-  /** Documento dell'immobile, senza commessa */
+  /** Documento dell'immobile, senza commessa; senza commessa né immobile è un documento dello studio */
   immobileId?: string,
 ): Promise<string | null> {
   const troppoGrandi = elenco.filter((f) => f.size > MAX_BYTE);
@@ -107,7 +107,7 @@ export async function caricaAllegati(
   const falliti: string[] = [];
   for (const [i, originale] of elenco.entries()) {
     const file = await comprimi(originale);
-    const cartella = immobileId && !commessaId ? `immobili/${immobileId}` : `${commessaId}/${faseId ?? "generali"}`;
+    const cartella = commessaId ? `${commessaId}/${faseId ?? "generali"}` : immobileId ? `immobili/${immobileId}` : "archivio";
     const percorso = `${cartella}/${Date.now()}-${i}-${nomeSicuro(file.name)}`;
     const su = await supabase.storage.from("documenti").upload(percorso, file, { contentType: file.type || undefined });
     if (su.error) {

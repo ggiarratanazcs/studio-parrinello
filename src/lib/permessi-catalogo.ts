@@ -38,7 +38,7 @@ export const GRUPPI_PERMESSI: GruppoPermessi[] = [
       { chiave: "economia", etichetta: "Importi, compensi e analisi", scala: "area", nota: "Negli elenchi di commesse e pratiche e nell'analisi del cliente" },
       { chiave: "clienti", etichetta: "Clienti", scala: "area" },
       { chiave: "immobili", etichetta: "Immobili e catasto", scala: "area" },
-      { chiave: "documenti", etichetta: "Documenti", scala: "area" },
+      { chiave: "documenti", etichetta: "Archivio", scala: "area", nota: "Documenti dello studio e degli immobili; gli allegati delle commesse seguono anche il permesso Allegati" },
       { chiave: "impostazioni", etichetta: "Impostazioni dello studio", scala: "area", nota: "Utenti e permessi restano sempre del titolare" },
     ],
   },
@@ -88,7 +88,7 @@ export const AREA_DI_SEZIONE: Record<string, string> = {
   "/commesse": "commesse",
   "/clienti": "clienti",
   "/immobili": "immobili",
-  "/documenti": "documenti",
+  "/archivio": "documenti",
 };
 
 /** Permessi già risolti per l'utente corrente: chiave → livello. */

@@ -2,8 +2,8 @@
 import {
   Building2,
   DraftingCompass,
+  Archive,
   Ellipsis,
-  Files,
   LandPlot,
   House,
   ReceiptText,
@@ -34,7 +34,7 @@ export const VOCI: Voce[] = [
   { href: "/commesse", etichetta: "Commesse", icona: DraftingCompass, mobile: true, superiore: true, laterale: true },
   { href: "/clienti", etichetta: "Clienti", icona: Users, mobile: false, superiore: true, laterale: true },
   { href: "/immobili", etichetta: "Immobili", icona: Building2, mobile: false, superiore: true, laterale: true },
-  { href: "/documenti", etichetta: "Documenti", icona: Files, mobile: false, superiore: true, laterale: true },
+  { href: "/archivio", etichetta: "Archivio", icona: Archive, mobile: false, superiore: true, laterale: true },
   { href: "/impostazioni", etichetta: "Impostazioni", icona: Settings2, mobile: false, superiore: false, laterale: true },
   { href: "/altro", etichetta: "Altro", icona: Ellipsis, mobile: true, superiore: false, laterale: false },
 ];

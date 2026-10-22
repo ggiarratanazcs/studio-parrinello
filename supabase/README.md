@@ -18,3 +18,4 @@ Dopo ogni migrazione rigenerare i tipi in `src/lib/database.types.ts`.
    funzioni `permesso(chiave)` e `vede_commessa(id)`, regole di accesso riscritte sui permessi
 7. `documenti_immobile.sql` — documenti caricati direttamente su un immobile (colonna `immobile_id`, commessa facoltativa)
 8. `collaboratori.sql` — persone assegnate alle fasi, permesso "Fasi visibili", commesse visibili a chi ha una fase, valori del Collaboratore
+9. `archivio.sql` — Archivio: documenti generali dello studio, senza commessa né immobile

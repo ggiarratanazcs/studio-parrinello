@@ -12,12 +12,12 @@ const PORTE = [
     sezione: "/commesse",
   },
   {
-    href: "/documenti",
+    href: "/archivio",
     titolo: "Archivio",
     testo: "Tavole, relazioni, foto e documenti",
     immagine: "/brand/home-archivio.webp",
     fondo: FONDI.studio,
-    sezione: "/documenti",
+    sezione: "/archivio",
   },
 ];
 

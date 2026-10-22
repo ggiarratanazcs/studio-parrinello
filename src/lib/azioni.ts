@@ -25,7 +25,7 @@ async function clientAutenticato() {
  * La pagina su cui si trova l'utente si aggiorna da sola (router.refresh o navigazione alla nuova scheda):
  * così il salvataggio non ricalcola tutta l'app, che rallentava ogni modifica.
  */
-type Elenco = "/" | "/commesse" | "/preventivi" | "/prefattibilita" | "/clienti" | "/immobili" | "/documenti";
+type Elenco = "/" | "/commesse" | "/preventivi" | "/prefattibilita" | "/clienti" | "/immobili" | "/archivio";
 function aggiornaElenchi(...elenchi: Elenco[]) {
   for (const percorso of new Set<Elenco>(["/", ...elenchi])) revalidatePath(percorso);
 }

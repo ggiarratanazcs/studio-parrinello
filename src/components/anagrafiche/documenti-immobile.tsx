@@ -61,7 +61,7 @@ export function DocumentiImmobile({
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [cerca, setCerca] = useState("");
-  const [aperte, setAperte] = useState<Set<string>>(() => new Set(["immobile"]));
+  const [aperte, setAperte] = useState<Set<string>>(() => new Set());
   const [categoria, setCategoria] = useState("elaborato_grafico");
   const [caricamento, setCaricamento] = useState<{ fatti: number; totali: number } | null>(null);
   const [sopra, setSopra] = useState(false);

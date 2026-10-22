@@ -88,7 +88,7 @@ function File({ d, livello, onApri }: { d: Documento; livello: number; onApri: (
  */
 export function AlberoAllegati({ codice, fasi, documenti }: { codice: string; fasi: Fase[]; documenti: Documento[] }) {
   const radice = "radice";
-  const [aperte, setAperte] = useState<Set<string>>(() => new Set([radice]));
+  const [aperte, setAperte] = useState<Set<string>>(() => new Set());
   const [errore, setErrore] = useState<string | null>(null);
 
   const cartelleFase = [
@@ -106,7 +106,7 @@ export function AlberoAllegati({ codice, fasi, documenti }: { codice: string; fa
   }
 
   function tutte(apri: boolean) {
-    if (!apri) return setAperte(new Set([radice]));
+    if (!apri) return setAperte(new Set());
     const ids = [radice];
     for (const c of cartelleFase) {
       ids.push(c.id);
