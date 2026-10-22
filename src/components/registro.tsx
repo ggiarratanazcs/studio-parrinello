@@ -196,7 +196,7 @@ export function PulsanteEspandi({ className }: { className?: string }) {
       type="button"
       onClick={e.cambia}
       className={cn(
-        "ml-auto hidden size-10 shrink-0 place-items-center rounded-full border border-linea text-tenue transition-colors hover:border-linea-forte hover:text-inchiostro md:grid",
+        "ml-auto hidden size-10 shrink-0 place-items-center rounded-full border border-linea text-tenue transition-colors hover:border-linea-forte hover:text-inchiostro lg:grid",
         className,
       )}
       data-suggerimento={e.espanso ? "Riduci (Esc)" : "A tutto schermo"}

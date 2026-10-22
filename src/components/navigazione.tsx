@@ -81,14 +81,14 @@ function NavMobileCorpo({ pathname }: { pathname: string | null }) {
       aria-label="Sezioni"
       className="pb-sicuro fixed inset-x-0 bottom-0 z-40 border-t border-linea bg-superficie/95 backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5">
+      <ul className="mx-auto flex max-w-lg">
         {VOCI.filter((v) => v.mobile).map(({ href, etichetta, breve, icona: Icona, soloIcona }) => {
           const corrente = attiva(pathname, href);
           return (
-            <li key={href}>
+            // Le voci si dividono lo spazio: se una sezione è nascosta, le altre si allargano
+            <li key={href} data-sezione={href} className="min-w-0 flex-1">
               <Link
                 href={href}
-                data-sezione={href}
                 aria-label={soloIcona ? etichetta : undefined}
                 aria-current={corrente ? "page" : undefined}
                 className={cn(

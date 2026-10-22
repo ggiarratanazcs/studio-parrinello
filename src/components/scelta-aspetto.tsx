@@ -44,7 +44,8 @@ export function SceltaAspetto() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Riga etichetta="Impaginazione" nota={descrizione}>
+      {/* L'impaginazione (barra laterale o Materia) conta solo su schermi grandi */}
+      <Riga etichetta="Impaginazione" nota={descrizione} className="hidden lg:grid">
         {IMPAGINAZIONI.map((i) => (
           <Opzione key={i.id} scelta={i.id === impaginazione} onClick={() => imposta("data-impaginazione", CHIAVE_IMPAGINAZIONE, i.id)}>
             {i.nome}
@@ -52,7 +53,7 @@ export function SceltaAspetto() {
         ))}
       </Riga>
       <Riga etichetta="Tema" nota={TEMI.find((t) => t.id === tema)?.descrizione}>
-        {TEMI.map((t) => (
+        {TEMI.filter((t) => t.disponibile).map((t) => (
           <Opzione key={t.id} scelta={t.id === tema} disabilitata={!t.disponibile} onClick={() => imposta("data-theme", CHIAVE_TEMA, t.id)}>
             {CAMPIONI[t.id] ? (
               <span aria-hidden className="flex -space-x-1">
@@ -77,14 +78,15 @@ export function RiepilogoAspetto() {
   const tema = useAttributo<IdTema>("data-theme", TEMA_PREDEFINITO);
   return (
     <>
-      {IMPAGINAZIONI.find((i) => i.id === impaginazione)?.nome} · {TEMI.find((t) => t.id === tema)?.nome}
+      <span className="hidden lg:inline">{IMPAGINAZIONI.find((i) => i.id === impaginazione)?.nome} · </span>
+      {TEMI.find((t) => t.id === tema)?.nome}
     </>
   );
 }
 
-function Riga({ etichetta, nota, children }: { etichetta: string; nota?: string; children: React.ReactNode }) {
+function Riga({ etichetta, nota, className, children }: { etichetta: string; nota?: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-1 md:grid-cols-[8rem_minmax(0,1fr)] md:items-start">
+    <div className={cn("grid gap-1 md:grid-cols-[8rem_minmax(0,1fr)] md:items-start", className)}>
       <span className="pt-2 text-[0.875rem] text-inchiostro-2">{etichetta}</span>
       <div>
         <div role="radiogroup" aria-label={etichetta} className="flex w-fit flex-wrap items-center gap-x-5 gap-y-1 border-b border-linea">

@@ -10,6 +10,7 @@ import { GanttChart, Table2 } from "lucide-react";
 import { GanttCommesse } from "@/components/gantt-commesse";
 import { Espandibile } from "@/components/registro";
 import { oggiIso } from "@/lib/utils";
+import { getPermessi } from "@/lib/permessi";
 
 export const metadata = { title: "Commesse" };
 
@@ -39,7 +40,7 @@ export default function PaginaCommesse({ searchParams }: PageProps<"/commesse">)
     <Suspense
       fallback={
         <>
-          <Cartiglio tipo="commessa" titolo="Commesse" azioni={nuovaCommessa} />
+          <Cartiglio tipo="commessa" titolo="Commesse" />
           <Pannello className="p-6">
             <Scheletro className="h-4 w-full" />
             <Scheletro className="mt-4 h-4 w-5/6" />
@@ -54,7 +55,11 @@ export default function PaginaCommesse({ searchParams }: PageProps<"/commesse">)
 }
 
 async function ElencoCommesse({ searchParams }: { searchParams: PageProps<"/commesse">["searchParams"] }) {
-  const gantt = (await searchParams).vista === "gantt";
+  const permessi = await getPermessi();
+  // Chi gestisce le commesse vede conteggi e Gantt; chi le consulta (es. collaboratori) solo l'elenco
+  const gestisce = permessi.liv("commesse") >= 3;
+  const crea = permessi.liv("commesse") >= 2;
+  const gantt = gestisce && (await searchParams).vista === "gantt";
   const [commesse, fasi] = await Promise.all([elencoCommesse(), gantt ? fasiPerGantt() : Promise.resolve([])]);
   const pubbliche = commesse.filter((c) => c.committenza === "pubblica").length;
 
@@ -63,23 +68,29 @@ async function ElencoCommesse({ searchParams }: { searchParams: PageProps<"/comm
       <Cartiglio tipo="commessa"
         titolo="Commesse"
         sottotitolo="Ogni incarico dello studio, dal primo contatto alla chiusura."
-        celle={[
-          { etichetta: "Totale", valore: commesse.length, icona: Layers },
-          { etichetta: "Private", valore: commesse.length - pubbliche, icona: User },
-          { etichetta: "Pubbliche", valore: pubbliche, icona: Landmark },
-        ]}
+        celle={
+          gestisce
+            ? [
+                { etichetta: "Totale", valore: commesse.length, icona: Layers },
+                { etichetta: "Private", valore: commesse.length - pubbliche, icona: User },
+                { etichetta: "Pubbliche", valore: pubbliche, icona: Landmark },
+              ]
+            : []
+        }
         azioni={
-          <>
-            {nuovaCommessa}
-            <PulsanteVista gantt={gantt} />
-          </>
+          crea || gestisce ? (
+            <>
+              {crea ? nuovaCommessa : null}
+              {gestisce ? <PulsanteVista gantt={gantt} /> : null}
+            </>
+          ) : null
         }
       />
 
       <Pannello>
         {commesse.length === 0 ? (
           <Vuoto
-            azione={nuovaCommessa}
+            azione={crea ? nuovaCommessa : undefined}
             titolo="Ancora nessuna commessa"
             testo={
               <>
