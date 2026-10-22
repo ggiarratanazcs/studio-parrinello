@@ -40,14 +40,17 @@ export function FinestraAnagrafica({ etichetta, children }: { etichetta: string;
         if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.fuori === "si") router.back();
       }}
     >
-      <div
-        data-fuori="si"
-        role="dialog"
-        aria-modal="true"
-        aria-label={etichetta}
-        className="pt-sicuro mx-auto w-full max-w-[60rem] px-3 pb-10 pt-4 md:px-8 md:pt-10 lg:px-0"
-      >
-        <InFinestra.Provider value={true}>{children}</InFinestra.Provider>
+      {/* Il foglio sta al centro dello schermo; se è più alto della finestra, si scorre */}
+      <div data-fuori="si" className="flex min-h-full flex-col justify-center">
+        <div
+          data-fuori="si"
+          role="dialog"
+          aria-modal="true"
+          aria-label={etichetta}
+          className="pt-sicuro mx-auto w-full max-w-[60rem] px-3 pb-10 pt-4 md:px-8 md:py-10 lg:px-0"
+        >
+          <InFinestra.Provider value={true}>{children}</InFinestra.Provider>
+        </div>
       </div>
     </div>
   );
