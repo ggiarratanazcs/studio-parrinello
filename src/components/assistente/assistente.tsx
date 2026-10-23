@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
   ArrowUp,
   Building2,
   ChevronRight,
@@ -423,10 +422,6 @@ export function Assistente() {
               <ArrowUp className="size-4" strokeWidth={2.2} />
             </button>
           </form>
-          <p className="mt-1.5 flex items-center gap-1 px-2 text-[0.6875rem] text-tenue">
-            <AlertCircle className="size-3" strokeWidth={1.9} />
-            Chiamate e mail partono solo quando le confermi tu.
-          </p>
         </div>
       </section>
     </>
